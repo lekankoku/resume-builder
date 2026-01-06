@@ -45,142 +45,125 @@
                 background-color: white !important; 
                 margin: 0; 
                 padding: 0; 
-                counter-reset: page;
             }
             .no-print { display: none !important; }
+            .print-footer { display: none !important; }
             @page { 
                 size: A4; 
                 margin: 0; 
-                orphans: 3;
-                widows: 3;
             }
-            .resume-container {
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 13mm 15mm 15mm 15mm !important; /* Compact for 2 pages */
-                box-shadow: none !important;
-                border: none !important;
-                min-height: auto !important;
-                max-height: none !important; /* Ensure no height restriction */
-                overflow: visible !important; /* Make sure nothing is hidden */
-                position: relative;
-            }
-            /* Hide page boundary indicators when printing */
+            /* Hide page indicators when printing */
             .resume-container::before,
             .resume-container::after {
                 display: none !important;
             }
-            /* Compact font sizes for print - fits in 2 pages */
-            .resume-container h1 {
-                font-size: 1.8rem !important; /* Name */
-                margin-bottom: 0.3rem !important;
-                line-height: 1.1 !important;
+
+            /* ==== VARIANT 1: CONTINUOUS FLOW (Default) ==== */
+            .resume-container.continuous {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 15mm 18mm !important;
+                box-shadow: none !important;
+                border: none !important;
             }
-            .resume-container h1 + p {
-                font-size: 0.95rem !important; /* Title under name */
-                margin-bottom: 0.45rem !important;
+            /* Natural, readable sizing */
+            .resume-container.continuous h1 {
+                font-size: 1.9rem !important;
+                margin-bottom: 0.4rem !important;
             }
-            .resume-container h2 {
-                font-size: 0.6rem !important; /* Section headers */
-                margin-bottom: 0.75rem !important;
-                margin-top: 0.25rem !important;
+            .resume-container.continuous h1 + p {
+                font-size: 1rem !important;
             }
-            .resume-container h3 {
-                font-size: 0.8rem !important; /* Job titles, degrees */
-                line-height: 1.2 !important;
-                margin-bottom: 0.2rem !important;
+            .resume-container.continuous h2 {
+                font-size: 0.65rem !important;
+                margin-bottom: 0.85rem !important;
             }
-            .resume-container h4 {
-                font-size: 0.52rem !important;
+            .resume-container.continuous h3 {
+                font-size: 0.85rem !important;
             }
-            .resume-container section {
-                margin-bottom: 1.2rem !important;
+            .resume-container.continuous p,
+            .resume-container.continuous li,
+            .resume-container.continuous span,
+            .resume-container.continuous a {
+                font-size: 0.66rem !important;
+                line-height: 1.4 !important;
             }
-            /* Body text - readable but compact */
-            .resume-container p,
-            .resume-container li,
-            .resume-container span,
-            .resume-container a {
-                font-size: 0.64rem !important; /* ~10.2pt */
-                line-height: 1.38 !important;
+            .resume-container.continuous section {
+                margin-bottom: 1.25rem !important;
             }
-            /* Compact spacing - fits in 2 pages */
-            .resume-container header {
-                margin-bottom: 1.3rem !important;
-                padding-bottom: 1.3rem !important;
-            }
-            .resume-container .space-y-7 > * + * {
+            .resume-container.continuous .space-y-7 > * + * {
                 margin-top: 1.1rem !important;
             }
-            .resume-container .space-y-6 > * + * {
-                margin-top: 0.95rem !important;
-            }
-            .resume-container .space-y-5 > * + * {
-                margin-top: 0.8rem !important;
-            }
-            .resume-container .space-y-4 > * + * {
-                margin-top: 0.6rem !important;
-            }
-            .resume-container .space-y-3 > * + * {
-                margin-top: 0.5rem !important;
-            }
-            .resume-container .gap-8 {
-                gap: 1.6rem !important;
-            }
-            /* Compact list spacing */
-            .resume-container ul {
-                margin-top: 0.3rem !important;
-                margin-bottom: 0.2rem !important;
-            }
-            .resume-container ul li {
-                margin-bottom: 0.25rem !important;
-                padding-bottom: 0.1rem !important;
-            }
-            /* Sidebar spacing */
-            .resume-container aside {
-                padding-left: 1.2rem !important;
-            }
-            .resume-container aside section {
-                margin-bottom: 1rem !important;
-            }
-            /* Grid sections spacing */
-            .resume-container .grid > main,
-            .resume-container .grid > aside {
-                padding-top: 0.2rem !important;
-            }
-            .resume-container .space-y-8 > * + * {
-                margin-top: 1.25rem !important;
-            }
-            .resume-container .space-y-6 > * + * {
+            .resume-container.continuous .space-y-6 > * + * {
                 margin-top: 1rem !important;
             }
-            .resume-container .space-y-10 > * + * {
-                margin-top: 1.5rem !important;
+            .resume-container.continuous .space-y-5 > * + * {
+                margin-top: 0.9rem !important;
             }
-            /* Footer hidden - removed page numbers */
-            .print-footer {
-                display: none !important;
+            /* Smart page breaks - avoid mid-item breaks */
+            .resume-container.continuous .avoid-break {
+                page-break-inside: avoid;
+                break-inside: avoid;
             }
-            /* Remove all page break restrictions */
-            * {
+
+            /* ==== VARIANT 2: STRICT 2-PAGE ==== */
+            .resume-container.strict-2-page {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 12mm 15mm !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+            /* Aggressive compression for 2 pages max */
+            .resume-container.strict-2-page h1 {
+                font-size: 1.7rem !important;
+                margin-bottom: 0.3rem !important;
+            }
+            .resume-container.strict-2-page h1 + p {
+                font-size: 0.92rem !important;
+            }
+            .resume-container.strict-2-page h2 {
+                font-size: 0.58rem !important;
+                margin-bottom: 0.7rem !important;
+            }
+            .resume-container.strict-2-page h3 {
+                font-size: 0.78rem !important;
+            }
+            .resume-container.strict-2-page p,
+            .resume-container.strict-2-page li,
+            .resume-container.strict-2-page span,
+            .resume-container.strict-2-page a {
+                font-size: 0.62rem !important;
+                line-height: 1.35 !important;
+            }
+            .resume-container.strict-2-page section {
+                margin-bottom: 1rem !important;
+            }
+            .resume-container.strict-2-page .space-y-7 > * + * {
+                margin-top: 0.9rem !important;
+            }
+            .resume-container.strict-2-page .space-y-6 > * + * {
+                margin-top: 0.8rem !important;
+            }
+            .resume-container.strict-2-page .space-y-5 > * + * {
+                margin-top: 0.7rem !important;
+            }
+            .resume-container.strict-2-page ul li {
+                margin-bottom: 0.2rem !important;
+            }
+            /* Allow breaks to fit in 2 pages */
+            .resume-container.strict-2-page * {
                 page-break-inside: auto !important;
                 break-inside: auto !important;
             }
-            /* Ensure all content is visible */
-            .resume-container,
-            .resume-container section,
-            .resume-container main,
-            .resume-container aside {
+
+            /* Common rules for both variants */
+            .resume-container {
+                min-height: auto !important;
+                overflow: visible !important;
                 opacity: 1 !important;
                 visibility: visible !important;
-                max-height: none !important;
-                overflow: visible !important;
             }
-            /* Force sections to show */
-            .resume-container section {
-                min-height: 10px !important;
-            }
-            /* Keep grid layout intact */
             .resume-container .grid-cols-12 {
                 display: grid !important;
             }
@@ -200,8 +183,8 @@
             flex-shrink: 0;
             position: relative;
         }
-        /* Visual page boundary indicator */
-        .resume-container::before {
+        /* Visual page boundary indicator - only for strict-2-page variant */
+        .resume-container.strict-2-page::before {
             content: '';
             position: absolute;
             left: 0;
@@ -219,8 +202,8 @@
             pointer-events: none;
             opacity: 0.3;
         }
-        .resume-container::after {
-            content: 'Page 1 ends here • Page 2 starts below';
+        .resume-container.strict-2-page::after {
+            content: 'Page 1 ends here • Page 2 ends at bottom';
             position: absolute;
             left: 50%;
             transform: translateX(-50%);

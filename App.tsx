@@ -29,6 +29,7 @@ const App: React.FC = () => {
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(true);
   const [activeTab, setActiveTab] = useState('personal');
+  const [printVariant, setPrintVariant] = useState<'strict-2-page' | 'continuous'>('continuous');
 
   useEffect(() => {
     setJsonInput(JSON.stringify(data, null, 2));
@@ -174,13 +175,38 @@ const App: React.FC = () => {
   return (
     <div className="flex flex-col items-center min-h-screen pb-20 print:pb-0 bg-slate-100/30 font-sans">
       <nav className="no-print sticky top-0 z-50 w-full flex justify-center py-4 bg-white/95 backdrop-blur-md border-b border-slate-200 mb-10">
-        <div className="max-w-6xl w-full flex justify-between px-6">
+        <div className="max-w-6xl w-full flex justify-between items-center px-6">
           <button 
             onClick={() => setIsEditing(true)}
             className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-900 font-bold rounded-xl hover:bg-slate-50 transition-colors uppercase tracking-widest text-[10px]"
           >
             <ChevronLeft size={14} /> Back to Editor
           </button>
+          
+          <div className="flex items-center gap-3 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+            <span className="text-[9px] font-mono font-black text-slate-400 uppercase tracking-widest px-2">Print Mode:</span>
+            <button
+              onClick={() => setPrintVariant('continuous')}
+              className={`px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all ${
+                printVariant === 'continuous' 
+                  ? 'bg-accent text-white shadow-md' 
+                  : 'bg-white text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              Continuous Flow
+            </button>
+            <button
+              onClick={() => setPrintVariant('strict-2-page')}
+              className={`px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all ${
+                printVariant === 'strict-2-page' 
+                  ? 'bg-accent text-white shadow-md' 
+                  : 'bg-white text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              Strict 2 Pages
+            </button>
+          </div>
+
           <button 
             onClick={() => window.print()}
             className="flex items-center gap-2 px-8 py-2.5 bg-accent text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all uppercase tracking-widest text-[10px]"
@@ -191,7 +217,7 @@ const App: React.FC = () => {
       </nav>
 
       <div className="resume-viewport">
-        <article className="resume-container flex flex-col text-slate-900">
+        <article className={`resume-container ${printVariant} flex flex-col text-slate-900`}>
           {/* Main Header Block */}
           <header className="mb-7 pb-6 border-b-2 border-slate-900">
             <div className="flex justify-between items-start mb-5">
