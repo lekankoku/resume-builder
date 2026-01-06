@@ -20,8 +20,29 @@ import {
   Github,
   Mail,
   MapPin,
-  Phone
+  Phone,
+  GripVertical,
+  Plus,
+  Trash2,
+  Edit
 } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // Default personal info (excluding title which comes from JSON)
 const getDefaultPersonalInfo = (): Omit<PersonalInfo, 'title'> => {
@@ -30,6 +51,44 @@ const getDefaultPersonalInfo = (): Omit<PersonalInfo, 'title'> => {
 };
 
 const STORAGE_KEY = 'resume-identity-attributes';
+
+// Sortable Item Component
+interface SortableItemProps {
+  id: string;
+  children: React.ReactNode;
+}
+
+const SortableItem: React.FC<SortableItemProps> = ({ id, children }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="relative group">
+      <div className="absolute left-0 top-0 bottom-0 flex items-start pt-4 -ml-8 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          {...attributes}
+          {...listeners}
+          className="p-1.5 hover:bg-slate-100 rounded cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600"
+        >
+          <GripVertical size={16} />
+        </button>
+      </div>
+      {children}
+    </div>
+  );
+};
 
 const App: React.FC = () => {
   const [data, setData] = useState<ResumeData>(() => {
@@ -84,6 +143,13 @@ const App: React.FC = () => {
     }
   };
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const updateField = (section: keyof ResumeData | 'personal', field: string, value: any, index?: number) => {
     const newData = { ...data };
     if (section === 'personal') {
@@ -98,6 +164,76 @@ const App: React.FC = () => {
       (newData as any)[section] = array;
     }
     setData(newData);
+  };
+
+  const updateArrayField = (section: keyof ResumeData, index: number, field: string, value: any) => {
+    const newData = { ...data };
+    const array = [...(newData[section] as any[])];
+    array[index] = { ...array[index], [field]: value };
+    (newData as any)[section] = array;
+    setData(newData);
+  };
+
+  const updateNestedArrayField = (section: keyof ResumeData, index: number, field: string, itemIndex: number, value: any) => {
+    const newData = { ...data };
+    const array = [...(newData[section] as any[])];
+    const item = { ...array[index] };
+    const nestedArray = [...item[field]];
+    nestedArray[itemIndex] = value;
+    item[field] = nestedArray;
+    array[index] = item;
+    (newData as any)[section] = array;
+    setData(newData);
+  };
+
+  const addArrayItem = (section: keyof ResumeData, template: any) => {
+    const newData = { ...data };
+    const array = [...(newData[section] as any[])];
+    array.push(template);
+    (newData as any)[section] = array;
+    setData(newData);
+  };
+
+  const removeArrayItem = (section: keyof ResumeData, index: number) => {
+    const newData = { ...data };
+    const array = [...(newData[section] as any[])];
+    array.splice(index, 1);
+    (newData as any)[section] = array;
+    setData(newData);
+  };
+
+  const addNestedArrayItem = (section: keyof ResumeData, index: number, field: string, value: string) => {
+    const newData = { ...data };
+    const array = [...(newData[section] as any[])];
+    const item = { ...array[index] };
+    item[field] = [...item[field], value];
+    array[index] = item;
+    (newData as any)[section] = array;
+    setData(newData);
+  };
+
+  const removeNestedArrayItem = (section: keyof ResumeData, index: number, field: string, itemIndex: number) => {
+    const newData = { ...data };
+    const array = [...(newData[section] as any[])];
+    const item = { ...array[index] };
+    const nestedArray = [...item[field]];
+    nestedArray.splice(itemIndex, 1);
+    item[field] = nestedArray;
+    array[index] = item;
+    (newData as any)[section] = array;
+    setData(newData);
+  };
+
+  const handleDragEnd = (section: keyof ResumeData) => (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const newData = { ...data };
+      const array = newData[section] as any[];
+      const oldIndex = array.findIndex((_, idx) => `${section}-${idx}` === active.id);
+      const newIndex = array.findIndex((_, idx) => `${section}-${idx}` === over.id);
+      (newData as any)[section] = arrayMove(array, oldIndex, newIndex);
+      setData(newData);
+    }
   };
 
   const cleanUrl = (url: string) => {
@@ -146,6 +282,7 @@ const App: React.FC = () => {
               { id: 'experiences', label: 'Experience', icon: Briefcase },
               { id: 'projects', label: 'Projects', icon: Terminal },
               { id: 'abilities', label: 'Job related abilities', icon: Code },
+              { id: 'technicalProficiency', label: 'Tech Stack', icon: Code },
               { id: 'education', label: 'Education', icon: GraduationCap },
               { id: 'languages', label: 'Languages', icon: Languages },
               { id: 'references', label: 'References', icon: Users },
@@ -197,11 +334,498 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {['experiences', 'projects', 'education', 'abilities', 'languages', 'references'].includes(activeTab) && (
-              <div className="flex flex-col items-center justify-center h-full py-20 text-center opacity-40">
-                <Settings2 size={48} className="text-slate-200 mb-4" />
-                <h3 className="text-lg font-display text-slate-900 mb-2">{activeTab.toUpperCase()} Data</h3>
-                <p className="max-w-xs text-sm text-slate-500 mb-6 leading-relaxed">Please use the <button onClick={() => setActiveTab('json')} className="text-accent font-bold hover:underline">Raw JSON</button> tab to directly modify this section. Form-based editing for this module is coming soon.</p>
+            {activeTab === 'experiences' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center border-b pb-4">
+                  <h2 className="text-xl font-display text-slate-900">Experience History</h2>
+                  <button
+                    onClick={() => addArrayItem('experiences', { role: '', company: '', location: '', period: '', bullets: [''] })}
+                    className="flex items-center gap-2 px-4 py-2 bg-accent text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-accent/90"
+                  >
+                    <Plus size={14} /> Add Experience
+                  </button>
+                </div>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd('experiences')}>
+                  <SortableContext items={data.experiences.map((_, idx) => `experiences-${idx}`)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-6">
+                      {data.experiences.map((exp, idx) => (
+                        <SortableItem key={`experiences-${idx}`} id={`experiences-${idx}`}>
+                          <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
+                            <div className="flex justify-between items-start">
+                              <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Experience #{idx + 1}</h3>
+                              <button
+                                onClick={() => removeArrayItem('experiences', idx)}
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Role</label>
+                                <input
+                                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                  value={exp.role}
+                                  onChange={(e) => updateArrayField('experiences', idx, 'role', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Company</label>
+                                <input
+                                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                  value={exp.company}
+                                  onChange={(e) => updateArrayField('experiences', idx, 'company', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Location</label>
+                                <input
+                                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                  value={exp.location}
+                                  onChange={(e) => updateArrayField('experiences', idx, 'location', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Period</label>
+                                <input
+                                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                  value={exp.period}
+                                  onChange={(e) => updateArrayField('experiences', idx, 'period', e.target.value)}
+                                />
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Highlights</label>
+                                <button
+                                  onClick={() => addNestedArrayItem('experiences', idx, 'bullets', '')}
+                                  className="text-[10px] font-bold text-accent hover:text-accent/80 uppercase tracking-wider"
+                                >
+                                  + Add Bullet
+                                </button>
+                              </div>
+                              {exp.bullets.map((bullet, bIdx) => (
+                                <div key={bIdx} className="flex gap-2">
+                                  <textarea
+                                    className="flex-1 p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none min-h-[60px]"
+                                    value={bullet}
+                                    onChange={(e) => updateNestedArrayField('experiences', idx, 'bullets', bIdx, e.target.value)}
+                                  />
+                                  <button
+                                    onClick={() => removeNestedArrayItem('experiences', idx, 'bullets', bIdx)}
+                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg h-fit"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </SortableItem>
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
+            )}
+
+            {activeTab === 'projects' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center border-b pb-4">
+                  <h2 className="text-xl font-display text-slate-900">Key Projects</h2>
+                  <button
+                    onClick={() => addArrayItem('projects', { title: '', company: '', scope: '', bullets: [''] })}
+                    className="flex items-center gap-2 px-4 py-2 bg-accent text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-accent/90"
+                  >
+                    <Plus size={14} /> Add Project
+                  </button>
+                </div>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd('projects')}>
+                  <SortableContext items={data.projects.map((_, idx) => `projects-${idx}`)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-6">
+                      {data.projects.map((proj, idx) => (
+                        <SortableItem key={`projects-${idx}`} id={`projects-${idx}`}>
+                          <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
+                            <div className="flex justify-between items-start">
+                              <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Project #{idx + 1}</h3>
+                              <button
+                                onClick={() => removeArrayItem('projects', idx)}
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Title</label>
+                                <input
+                                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                  value={proj.title}
+                                  onChange={(e) => updateArrayField('projects', idx, 'title', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Company</label>
+                                <input
+                                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                  value={proj.company}
+                                  onChange={(e) => updateArrayField('projects', idx, 'company', e.target.value)}
+                                />
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-mono font-black uppercase text-slate-400">Scope</label>
+                              <input
+                                className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                value={proj.scope}
+                                onChange={(e) => updateArrayField('projects', idx, 'scope', e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Details</label>
+                                <button
+                                  onClick={() => addNestedArrayItem('projects', idx, 'bullets', '')}
+                                  className="text-[10px] font-bold text-accent hover:text-accent/80 uppercase tracking-wider"
+                                >
+                                  + Add Detail
+                                </button>
+                              </div>
+                              {proj.bullets.map((bullet, bIdx) => (
+                                <div key={bIdx} className="flex gap-2">
+                                  <textarea
+                                    className="flex-1 p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none min-h-[60px]"
+                                    value={bullet}
+                                    onChange={(e) => updateNestedArrayField('projects', idx, 'bullets', bIdx, e.target.value)}
+                                  />
+                                  <button
+                                    onClick={() => removeNestedArrayItem('projects', idx, 'bullets', bIdx)}
+                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg h-fit"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </SortableItem>
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
+            )}
+
+            {activeTab === 'education' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center border-b pb-4">
+                  <h2 className="text-xl font-display text-slate-900">Academic Background</h2>
+                  <button
+                    onClick={() => addArrayItem('education', { degree: '', institution: '', location: '', period: '' })}
+                    className="flex items-center gap-2 px-4 py-2 bg-accent text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-accent/90"
+                  >
+                    <Plus size={14} /> Add Education
+                  </button>
+                </div>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd('education')}>
+                  <SortableContext items={data.education.map((_, idx) => `education-${idx}`)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-6">
+                      {data.education.map((edu, idx) => (
+                        <SortableItem key={`education-${idx}`} id={`education-${idx}`}>
+                          <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
+                            <div className="flex justify-between items-start">
+                              <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Education #{idx + 1}</h3>
+                              <button
+                                onClick={() => removeArrayItem('education', idx)}
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Degree</label>
+                                <input
+                                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                  value={edu.degree}
+                                  onChange={(e) => updateArrayField('education', idx, 'degree', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Institution</label>
+                                <input
+                                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                  value={edu.institution}
+                                  onChange={(e) => updateArrayField('education', idx, 'institution', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Location</label>
+                                <input
+                                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                  value={edu.location}
+                                  onChange={(e) => updateArrayField('education', idx, 'location', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Period</label>
+                                <input
+                                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                  value={edu.period}
+                                  onChange={(e) => updateArrayField('education', idx, 'period', e.target.value)}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </SortableItem>
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
+            )}
+
+            {activeTab === 'abilities' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center border-b pb-4">
+                  <h2 className="text-xl font-display text-slate-900">Job Related Abilities</h2>
+                  <button
+                    onClick={() => addArrayItem('abilities', { title: '', bullets: [''] })}
+                    className="flex items-center gap-2 px-4 py-2 bg-accent text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-accent/90"
+                  >
+                    <Plus size={14} /> Add Ability
+                  </button>
+                </div>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd('abilities')}>
+                  <SortableContext items={data.abilities.map((_, idx) => `abilities-${idx}`)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-6">
+                      {data.abilities.map((ability, idx) => (
+                        <SortableItem key={`abilities-${idx}`} id={`abilities-${idx}`}>
+                          <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
+                            <div className="flex justify-between items-start">
+                              <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Ability #{idx + 1}</h3>
+                              <button
+                                onClick={() => removeArrayItem('abilities', idx)}
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-mono font-black uppercase text-slate-400">Title</label>
+                              <input
+                                className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                value={ability.title}
+                                onChange={(e) => updateArrayField('abilities', idx, 'title', e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Points</label>
+                                <button
+                                  onClick={() => addNestedArrayItem('abilities', idx, 'bullets', '')}
+                                  className="text-[10px] font-bold text-accent hover:text-accent/80 uppercase tracking-wider"
+                                >
+                                  + Add Point
+                                </button>
+                              </div>
+                              {ability.bullets.map((bullet, bIdx) => (
+                                <div key={bIdx} className="flex gap-2">
+                                  <input
+                                    className="flex-1 p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                    value={bullet}
+                                    onChange={(e) => updateNestedArrayField('abilities', idx, 'bullets', bIdx, e.target.value)}
+                                  />
+                                  <button
+                                    onClick={() => removeNestedArrayItem('abilities', idx, 'bullets', bIdx)}
+                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg h-fit"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </SortableItem>
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
+            )}
+
+            {activeTab === 'languages' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center border-b pb-4">
+                  <h2 className="text-xl font-display text-slate-900">Language Proficiency</h2>
+                  <button
+                    onClick={() => addArrayItem('languages', { name: '', level: '' })}
+                    className="flex items-center gap-2 px-4 py-2 bg-accent text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-accent/90"
+                  >
+                    <Plus size={14} /> Add Language
+                  </button>
+                </div>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd('languages')}>
+                  <SortableContext items={data.languages.map((_, idx) => `languages-${idx}`)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-6">
+                      {data.languages.map((lang, idx) => (
+                        <SortableItem key={`languages-${idx}`} id={`languages-${idx}`}>
+                          <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
+                            <div className="flex justify-between items-start">
+                              <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Language #{idx + 1}</h3>
+                              <button
+                                onClick={() => removeArrayItem('languages', idx)}
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Name</label>
+                                <input
+                                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                  value={lang.name}
+                                  onChange={(e) => updateArrayField('languages', idx, 'name', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Level</label>
+                                <input
+                                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                  value={lang.level}
+                                  onChange={(e) => updateArrayField('languages', idx, 'level', e.target.value)}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </SortableItem>
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
+            )}
+
+            {activeTab === 'technicalProficiency' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center border-b pb-4">
+                  <h2 className="text-xl font-display text-slate-900">Technical Proficiency</h2>
+                  <button
+                    onClick={() => addArrayItem('technicalProficiency', { category: '', skills: '' })}
+                    className="flex items-center gap-2 px-4 py-2 bg-accent text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-accent/90"
+                  >
+                    <Plus size={14} /> Add Category
+                  </button>
+                </div>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd('technicalProficiency')}>
+                  <SortableContext items={data.technicalProficiency.map((_, idx) => `technicalProficiency-${idx}`)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-6">
+                      {data.technicalProficiency.map((tech, idx) => (
+                        <SortableItem key={`technicalProficiency-${idx}`} id={`technicalProficiency-${idx}`}>
+                          <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
+                            <div className="flex justify-between items-start">
+                              <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Category #{idx + 1}</h3>
+                              <button
+                                onClick={() => removeArrayItem('technicalProficiency', idx)}
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                            <div className="space-y-4">
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Category</label>
+                                <input
+                                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                  value={tech.category}
+                                  onChange={(e) => updateArrayField('technicalProficiency', idx, 'category', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Skills</label>
+                                <textarea
+                                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none min-h-[80px]"
+                                  value={tech.skills}
+                                  onChange={(e) => updateArrayField('technicalProficiency', idx, 'skills', e.target.value)}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </SortableItem>
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
+            )}
+
+            {activeTab === 'references' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center border-b pb-4">
+                  <h2 className="text-xl font-display text-slate-900">Professional References</h2>
+                  <button
+                    onClick={() => addArrayItem('references', { name: '', role: '', company: '', linkedin: '' })}
+                    className="flex items-center gap-2 px-4 py-2 bg-accent text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-accent/90"
+                  >
+                    <Plus size={14} /> Add Reference
+                  </button>
+                </div>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd('references')}>
+                  <SortableContext items={data.references.map((_, idx) => `references-${idx}`)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-6">
+                      {data.references.map((ref, idx) => (
+                        <SortableItem key={`references-${idx}`} id={`references-${idx}`}>
+                          <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
+                            <div className="flex justify-between items-start">
+                              <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Reference #{idx + 1}</h3>
+                              <button
+                                onClick={() => removeArrayItem('references', idx)}
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Name</label>
+                                <input
+                                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                  value={ref.name}
+                                  onChange={(e) => updateArrayField('references', idx, 'name', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Role</label>
+                                <input
+                                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                  value={ref.role}
+                                  onChange={(e) => updateArrayField('references', idx, 'role', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">Company</label>
+                                <input
+                                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                  value={ref.company}
+                                  onChange={(e) => updateArrayField('references', idx, 'company', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-mono font-black uppercase text-slate-400">LinkedIn</label>
+                                <input
+                                  className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                                  value={ref.linkedin}
+                                  onChange={(e) => updateArrayField('references', idx, 'linkedin', e.target.value)}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </SortableItem>
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
               </div>
             )}
           </section>
