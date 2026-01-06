@@ -57,45 +57,81 @@
             .resume-container {
                 width: 100% !important;
                 margin: 0 !important;
-                padding: 15mm 15mm 25mm 15mm !important;
+                padding: 12mm 15mm 15mm 15mm !important; /* Reduced padding */
                 box-shadow: none !important;
                 border: none !important;
                 min-height: auto !important;
-                max-height: 594mm !important; /* 2 pages max */
                 position: relative;
-                overflow: hidden;
             }
             /* Hide page boundary indicators when printing */
             .resume-container::before,
             .resume-container::after {
                 display: none !important;
             }
-            /* Tighter spacing and smaller fonts for print to fit 2 pages */
+            /* Aggressive font size reduction for print to fit all content in 2 pages */
             .resume-container h1 {
-                font-size: 2.25rem !important; /* Reduced from ~3.75rem */
+                font-size: 1.75rem !important; /* Name - smaller */
                 margin-bottom: 0.25rem !important;
+                line-height: 1.1 !important;
+            }
+            .resume-container h1 + p {
+                font-size: 1rem !important; /* Title under name */
             }
             .resume-container h2 {
-                font-size: 0.65rem !important; /* Slightly smaller section headers */
-                margin-bottom: 1rem !important;
+                font-size: 0.55rem !important; /* Section headers - very compact */
+                margin-bottom: 0.75rem !important;
             }
             .resume-container h3 {
-                font-size: 0.95rem !important; /* Slightly smaller */
+                font-size: 0.75rem !important; /* Job titles, degrees */
+                line-height: 1.2 !important;
+            }
+            .resume-container h4 {
+                font-size: 0.5rem !important;
             }
             .resume-container section {
-                margin-bottom: 1.5rem !important;
+                margin-bottom: 1rem !important;
             }
-            /* Reduce body text sizes */
+            /* Reduce all text sizes aggressively */
             .resume-container p,
             .resume-container li,
-            .resume-container span {
-                font-size: 0.7rem !important; /* Slightly smaller for better fit */
-                line-height: 1.4 !important;
+            .resume-container span,
+            .resume-container a {
+                font-size: 0.6rem !important; /* ~9.6pt - smaller but readable */
+                line-height: 1.35 !important;
             }
-            /* Adjust header padding */
+            /* Tighter spacing */
             .resume-container header {
-                margin-bottom: 1.5rem !important;
-                padding-bottom: 1.5rem !important;
+                margin-bottom: 1.25rem !important;
+                padding-bottom: 1.25rem !important;
+            }
+            .resume-container .space-y-7 > * + * {
+                margin-top: 1rem !important;
+            }
+            .resume-container .space-y-5 > * + * {
+                margin-top: 0.75rem !important;
+            }
+            .resume-container .space-y-4 > * + * {
+                margin-top: 0.5rem !important;
+            }
+            .resume-container .space-y-3 > * + * {
+                margin-top: 0.4rem !important;
+            }
+            .resume-container .gap-8 {
+                gap: 1.5rem !important;
+            }
+            /* Reduce list spacing */
+            .resume-container ul {
+                margin-top: 0.25rem !important;
+            }
+            .resume-container ul li {
+                margin-bottom: 0.15rem !important;
+            }
+            /* Make sidebar more compact */
+            .resume-container aside {
+                padding-left: 1rem !important;
+            }
+            .resume-container aside section {
+                margin-bottom: 0.85rem !important;
             }
             .resume-container .space-y-8 > * + * {
                 margin-top: 1.25rem !important;
@@ -106,26 +142,9 @@
             .resume-container .space-y-10 > * + * {
                 margin-top: 1.5rem !important;
             }
-            /* Fixed footer for every printed page */
+            /* Footer hidden - removed page numbers */
             .print-footer {
-                display: flex !important;
-                position: fixed;
-                bottom: 10mm;
-                left: 15mm;
-                right: 15mm;
-                justify-content: space-between;
-                align-items: flex-end;
-                border-top: 1px solid #f1f5f9;
-                padding-top: 2mm;
-                z-index: 9999;
-                pointer-events: none;
-            }
-            .print-footer a {
-                pointer-events: auto;
-            }
-            .page-counter::after {
-                counter-increment: page;
-                content: "Page " counter(page);
+                display: none !important;
             }
             /* Prevent page breaks in critical areas */
             .avoid-break {
@@ -147,7 +166,6 @@
         .resume-container {
             width: var(--print-width);
             min-height: var(--print-height);
-            max-height: calc(var(--print-height) * 2); /* Max 2 pages */
             background: white;
             box-shadow: 0 40px 100px -20px rgba(0,0,0,0.1);
             padding: 20mm;

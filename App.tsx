@@ -193,8 +193,8 @@ const App: React.FC = () => {
       <div className="resume-viewport">
         <article className="resume-container flex flex-col text-slate-900">
           {/* Main Header Block */}
-          <header className="mb-10 pb-10 border-b-2 border-slate-900">
-            <div className="flex justify-between items-start mb-8">
+          <header className="mb-7 pb-6 border-b-2 border-slate-900">
+            <div className="flex justify-between items-start mb-5">
               <div className="pt-2">
                 <h1 className="text-6xl font-display text-slate-900 leading-tight mb-2 uppercase tracking-tighter">
                   {data.personal.name}
@@ -238,28 +238,28 @@ const App: React.FC = () => {
             </div>
           </header>
 
-          <div className="grid grid-cols-12 gap-10 flex-1">
+          <div className="grid grid-cols-12 gap-8 flex-1">
             {/* Main Content Column */}
-            <main className="col-span-8 space-y-10">
+            <main className="col-span-8 space-y-7">
               
               {/* Experience Section */}
               <section>
-                <h2 className="text-[12px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-6 flex items-center gap-4">
+                <h2 className="text-[12px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4 flex items-center gap-4">
                   Experience <div className="flex-1 h-[2px] bg-slate-900" />
                 </h2>
-                <div className="space-y-8">
+                <div className="space-y-5">
                   {data.experiences.map((exp, idx) => (
                     <div key={idx} className="avoid-break">
                       <div className="flex justify-between items-baseline mb-1">
                         <h3 className="text-lg font-display text-slate-900 uppercase tracking-tight">{exp.role}</h3>
                         <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">{exp.period}</span>
                       </div>
-                      <div className="flex items-center gap-2 mb-3">
+                      <div className="flex items-center gap-2 mb-2">
                         <span className="text-sm font-bold text-slate-600 uppercase tracking-tight">{exp.company}</span>
                         <span className="text-slate-200">|</span>
                         <span className="text-[10px] uppercase font-mono text-slate-400 font-bold">{exp.location}</span>
                       </div>
-                      <ul className="list-disc ml-4 space-y-1.5 text-[13px] leading-relaxed text-slate-600 marker:text-accent">
+                      <ul className="list-disc ml-4 space-y-1 text-[13px] leading-snug text-slate-600 marker:text-accent">
                         {exp.bullets.map((b, bi) => <li key={bi} className="pl-1">{b}</li>)}
                       </ul>
                     </div>
@@ -269,18 +269,18 @@ const App: React.FC = () => {
 
               {/* Projects Section */}
               <section className="avoid-break">
-                <h2 className="text-[12px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-6 flex items-center gap-4">
+                <h2 className="text-[12px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4 flex items-center gap-4">
                   Key Projects <div className="flex-1 h-[2px] bg-slate-900" />
                 </h2>
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {data.projects.map((proj, idx) => (
-                    <div key={idx} className="p-5 border border-slate-100 rounded-xl bg-slate-50/20">
-                      <div className="flex justify-between items-start mb-2">
+                    <div key={idx}>
+                      <div className="flex justify-between items-start mb-1">
                         <h3 className="text-md font-display text-slate-900 uppercase">{proj.title}</h3>
-                        <span className="text-[9px] font-mono font-bold text-slate-300 uppercase tracking-widest">{proj.company}</span>
+                        <span className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest">{proj.company}</span>
                       </div>
-                      <p className="text-[11px] font-bold text-slate-500 italic mb-3 opacity-80">{proj.scope}</p>
-                      <ul className="space-y-1.5 text-[12.5px] text-slate-600">
+                      <p className="text-[11px] font-bold text-slate-500 italic mb-2">{proj.scope}</p>
+                      <ul className="space-y-1 text-[12.5px] text-slate-600">
                         {proj.bullets.map((b, bi) => <li key={bi} className="flex gap-2 leading-tight"><span className="text-accent font-black">›</span> {b}</li>)}
                       </ul>
                     </div>
@@ -290,10 +290,10 @@ const App: React.FC = () => {
 
               {/* Education (Academic) - Main Column as requested */}
               <section className="avoid-break">
-                <h2 className="text-[12px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-6 flex items-center gap-4">
+                <h2 className="text-[12px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4 flex items-center gap-4">
                   Academic <div className="flex-1 h-[2px] bg-slate-900" />
                 </h2>
-                <div className="space-y-6">
+                <div className="space-y-3">
                   {data.education.map((edu, idx) => (
                     <div key={idx} className="flex justify-between items-start group">
                       <div className="space-y-0.5">
@@ -311,15 +311,15 @@ const App: React.FC = () => {
             </main>
 
             {/* Sidebar Column */}
-            <aside className="col-span-4 space-y-10 border-l border-slate-50 pl-8">
+            <aside className="col-span-4 space-y-6 border-l border-slate-50 pl-8">
               
               <section>
-                <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-6 uppercase tracking-[0.1em]">Job related abilities</h2>
-                <div className="space-y-8">
+                <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4 uppercase tracking-[0.1em]">Job related abilities</h2>
+                <div className="space-y-5">
                   {data.abilities.map((ability, idx) => (
                     <div key={idx} className="avoid-break">
-                      <h3 className="text-[11px] font-mono font-black text-slate-900 uppercase border-b border-slate-900/5 pb-2 mb-3 tracking-tighter">{ability.title}</h3>
-                      <ul className="space-y-2 text-[12px] text-slate-500 italic font-medium leading-snug">
+                      <h3 className="text-[11px] font-mono font-black text-slate-900 uppercase border-b border-slate-900/5 pb-1.5 mb-2 tracking-tighter">{ability.title}</h3>
+                      <ul className="space-y-1.5 text-[12px] text-slate-500 italic font-medium leading-snug">
                         {ability.bullets.map((b, bi) => <li key={bi} className="flex gap-2"><span className="text-accent font-black">•</span> {b}</li>)}
                       </ul>
                     </div>
@@ -328,8 +328,8 @@ const App: React.FC = () => {
               </section>
 
               <section className="avoid-break">
-                <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-6">Tech Stack</h2>
-                <div className="space-y-5">
+                <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4">Tech Stack</h2>
+                <div className="space-y-3">
                   {data.technicalProficiency.map((tp, idx) => (
                     <div key={idx} className="space-y-1.5">
                       <h4 className="text-[9px] font-mono font-black text-slate-400 uppercase tracking-widest">{tp.category}</h4>
@@ -340,8 +340,8 @@ const App: React.FC = () => {
               </section>
 
               <section className="avoid-break">
-                <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-6">Languages</h2>
-                <div className="space-y-2.5">
+                <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4">Languages</h2>
+                <div className="space-y-2">
                   {data.languages.map((lang, idx) => (
                     <div key={idx} className="flex justify-between items-center text-[12px] border-b border-slate-50 pb-1">
                       <span className="font-bold text-slate-800 uppercase tracking-tighter">{lang.name}</span>
@@ -352,8 +352,8 @@ const App: React.FC = () => {
               </section>
 
               <section className="avoid-break">
-                <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-6">References</h2>
-                <div className="space-y-6">
+                <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4">References</h2>
+                <div className="space-y-4">
                   {data.references.map((ref, idx) => (
                     <div key={idx} className="space-y-0.5">
                       <p className="text-[13px] font-bold text-slate-900 leading-none">{ref.name}</p>
