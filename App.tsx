@@ -251,11 +251,11 @@ const App: React.FC = () => {
                   {data.experiences.map((exp, idx) => (
                     <div key={idx} className="avoid-break">
                       <div className="flex justify-between items-baseline mb-1">
-                        <h3 className="text-lg font-display text-slate-900 uppercase tracking-tight">{exp.company}</h3>
+                        <h3 className="text-lg font-display text-slate-900 uppercase tracking-tight">{exp.role}</h3>
                         <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">{exp.period}</span>
                       </div>
                       <div className="flex items-center gap-2 mb-3">
-                        <span className="text-sm font-bold text-slate-600">{exp.role}</span>
+                        <span className="text-sm font-bold text-slate-600 uppercase tracking-tight">{exp.company}</span>
                         <span className="text-slate-200">|</span>
                         <span className="text-[10px] uppercase font-mono text-slate-400 font-bold">{exp.location}</span>
                       </div>
