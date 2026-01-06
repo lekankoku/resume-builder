@@ -24,7 +24,8 @@ import {
   GripVertical,
   Plus,
   Trash2,
-  Edit
+  Edit,
+  FileText
 } from 'lucide-react';
 import {
   DndContext,
@@ -54,6 +55,7 @@ const STORAGE_KEY = 'resume-identity-attributes';
 const STORAGE_KEY_REFERENCES = 'resume-references';
 const STORAGE_KEY_LANGUAGES = 'resume-languages';
 const STORAGE_KEY_EDUCATION = 'resume-education';
+const STORAGE_KEY_COVER_LETTER = 'resume-cover-letter';
 
 // Sortable Item Component
 interface SortableItemProps {
@@ -128,6 +130,25 @@ const App: React.FC = () => {
   const [isEditing, setIsEditing] = useState(true);
   const [activeTab, setActiveTab] = useState('personal');
   const [printVariant, setPrintVariant] = useState<'strict-2-page' | 'continuous'>('continuous');
+  const [viewMode, setViewMode] = useState<'resume' | 'cover-letter'>('resume');
+  const [coverLetter, setCoverLetter] = useState<{
+    recipientName: string;
+    recipientTitle: string;
+    companyName: string;
+    companyAddress: string;
+    date: string;
+    body: string;
+  }>(() => {
+    const stored = localStorage.getItem(STORAGE_KEY_COVER_LETTER);
+    return stored ? JSON.parse(stored) : {
+      recipientName: '',
+      recipientTitle: '',
+      companyName: '',
+      companyAddress: '',
+      date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      body: ''
+    };
+  });
 
   // Save personal info to localStorage whenever it changes (except title)
   useEffect(() => {
@@ -150,14 +171,23 @@ const App: React.FC = () => {
     localStorage.setItem(STORAGE_KEY_EDUCATION, JSON.stringify(data.education));
   }, [data.education]);
 
+  // Save cover letter to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_COVER_LETTER, JSON.stringify(coverLetter));
+  }, [coverLetter]);
+
   useEffect(() => {
     setJsonInput(JSON.stringify(data, null, 2));
   }, [data]);
 
   // Update document title for print filename
   useEffect(() => {
-    document.title = `${data.personal.name} (${data.personal.title})`;
-  }, [data.personal.name, data.personal.title]);
+    if (viewMode === 'resume') {
+      document.title = `${data.personal.name} (${data.personal.title})`;
+    } else {
+      document.title = `${data.personal.name} - Cover Letter`;
+    }
+  }, [data.personal.name, data.personal.title, viewMode]);
 
   const handleApplyJson = () => {
     try {
@@ -200,6 +230,10 @@ const App: React.FC = () => {
       (newData as any)[section] = array;
     }
     setData(newData);
+  };
+
+  const updateCoverLetterField = (field: keyof typeof coverLetter, value: string) => {
+    setCoverLetter(prev => ({ ...prev, [field]: value }));
   };
 
   const updateArrayField = (section: keyof ResumeData, index: number, field: string, value: any) => {
@@ -298,15 +332,29 @@ const App: React.FC = () => {
             </div>
             <div>
               <h1 className="text-xl font-display text-slate-900 leading-tight">Resume Editor</h1>
-              <p className="text-slate-400 text-[10px] font-mono uppercase tracking-widest">A4 High-Fidelity Standard</p>
-            </div>
+            <p className="text-slate-400 text-[10px] font-mono uppercase tracking-widest">A4 High-Fidelity Standard</p>
           </div>
+        </div>
+        <div className="flex gap-3">
           <button 
-            onClick={() => setIsEditing(false)}
+            onClick={() => {
+              setViewMode('resume');
+              setIsEditing(false);
+            }}
             className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-black transition-all uppercase tracking-widest text-[10px]"
           >
-            Preview Document <Eye size={14} />
+            Preview Resume <Eye size={14} />
           </button>
+          <button 
+            onClick={() => {
+              setViewMode('cover-letter');
+              setIsEditing(false);
+            }}
+            className="flex items-center gap-2 px-6 py-3 bg-accent text-white font-bold rounded-xl shadow-lg hover:bg-accent/90 transition-all uppercase tracking-widest text-[10px]"
+          >
+            Preview Cover Letter <FileText size={14} />
+          </button>
+        </div>
         </header>
 
         <main className="max-w-6xl w-full grid grid-cols-1 md:grid-cols-[260px_1fr] gap-6">
@@ -322,6 +370,7 @@ const App: React.FC = () => {
               { id: 'education', label: 'Education', icon: GraduationCap },
               { id: 'languages', label: 'Languages', icon: Languages },
               { id: 'references', label: 'References', icon: Users },
+              { id: 'coverLetter', label: 'Cover Letter', icon: FileText },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -864,13 +913,200 @@ const App: React.FC = () => {
                 </DndContext>
               </div>
             )}
+
+            {activeTab === 'coverLetter' && (
+              <div className="space-y-6">
+                <div className="border-b pb-4">
+                  <h2 className="text-xl font-display text-slate-900">Cover Letter</h2>
+                  <p className="text-sm text-slate-500 mt-2">Create a professional cover letter to accompany your resume.</p>
+                </div>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-mono font-black uppercase text-slate-400">Date</label>
+                      <input
+                        type="text"
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                        value={coverLetter.date}
+                        onChange={(e) => updateCoverLetterField('date', e.target.value)}
+                        placeholder="January 6, 2026"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 p-4 bg-slate-50 rounded-xl">
+                    <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Recipient Information</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-mono font-black uppercase text-slate-400">Recipient Name</label>
+                        <input
+                          className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                          value={coverLetter.recipientName}
+                          onChange={(e) => updateCoverLetterField('recipientName', e.target.value)}
+                          placeholder="Hiring Manager or Name"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-mono font-black uppercase text-slate-400">Recipient Title</label>
+                        <input
+                          className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                          value={coverLetter.recipientTitle}
+                          onChange={(e) => updateCoverLetterField('recipientTitle', e.target.value)}
+                          placeholder="Senior Hiring Manager"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-mono font-black uppercase text-slate-400">Company Name</label>
+                        <input
+                          className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                          value={coverLetter.companyName}
+                          onChange={(e) => updateCoverLetterField('companyName', e.target.value)}
+                          placeholder="Company Inc."
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-mono font-black uppercase text-slate-400">Company Address</label>
+                        <input
+                          className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                          value={coverLetter.companyAddress}
+                          onChange={(e) => updateCoverLetterField('companyAddress', e.target.value)}
+                          placeholder="City, Country"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-mono font-black uppercase text-slate-400">Letter Body</label>
+                    <p className="text-xs text-slate-500 mb-2">Paste or write your cover letter content here.</p>
+                    <textarea
+                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none min-h-[400px] leading-relaxed"
+                      value={coverLetter.body}
+                      onChange={(e) => updateCoverLetterField('body', e.target.value)}
+                      placeholder="Dear [Recipient Name],&#10;&#10;I am writing to express my strong interest in the [Position] role at [Company]. With [X] years of experience in [field], I am confident that my skills and background make me an excellent fit for this position.&#10;&#10;Throughout my career, I have...&#10;&#10;I am excited about the opportunity to contribute to [Company]'s mission and would welcome the chance to discuss how my experience aligns with your team's needs.&#10;&#10;Thank you for your consideration.&#10;&#10;Sincerely,&#10;[Your Name]"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
         </main>
       </div>
     );
   }
 
-  // Preview Mode
+  // Preview Mode - Cover Letter
+  if (!isEditing && viewMode === 'cover-letter') {
+    return (
+      <div className="flex flex-col items-center min-h-screen pb-20 print:pb-0 bg-slate-100/30 font-sans">
+        <nav className="no-print sticky top-0 z-50 w-full flex justify-center py-4 bg-white/95 backdrop-blur-md border-b border-slate-200 mb-10">
+          <div className="max-w-6xl w-full flex justify-between items-center px-6">
+            <button 
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-900 font-bold rounded-xl hover:bg-slate-50 transition-colors uppercase tracking-widest text-[10px]"
+            >
+              <ChevronLeft size={14} /> Back to Editor
+            </button>
+            
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setViewMode('resume')}
+                className="px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all bg-white text-slate-500 hover:text-slate-900"
+              >
+                View Resume
+              </button>
+              <span className="text-[9px] font-mono font-black text-slate-400 uppercase tracking-widest">|</span>
+              <span className="px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest bg-accent text-white shadow-md">
+                Cover Letter
+              </span>
+            </div>
+
+            <button 
+              onClick={() => {
+                document.title = `${data.personal.name} - Cover Letter`;
+                window.print();
+              }}
+              className="flex items-center gap-2 px-8 py-2.5 bg-accent text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all uppercase tracking-widest text-[10px]"
+            >
+              Print to PDF <Printer size={14} />
+            </button>
+          </div>
+        </nav>
+
+        <div className="resume-viewport">
+          <article className="resume-container continuous flex flex-col text-slate-900">
+            {/* Header with Contact Info */}
+            <header className="mb-10">
+              <h1 className="text-4xl font-display text-slate-900 leading-tight mb-1 uppercase tracking-tighter">
+                {data.personal.name}
+              </h1>
+              <div className="flex flex-wrap gap-3 text-[11px] text-slate-600 mb-6">
+                <span className="flex items-center gap-1.5">
+                  <Mail size={11} className="text-accent" /> {displayUrl(data.personal.email)}
+                </span>
+                <span className="text-slate-200">|</span>
+                <span className="flex items-center gap-1.5">
+                  <Phone size={11} className="text-accent" /> {data.personal.phone}
+                </span>
+                <span className="text-slate-200">|</span>
+                <span className="flex items-center gap-1.5">
+                  <MapPin size={11} className="text-accent" /> {data.personal.residence}
+                </span>
+              </div>
+              <div className="h-[2px] bg-slate-900 w-full"></div>
+            </header>
+
+            {/* Date and Recipient Info */}
+            <div className="mb-10 space-y-6">
+              <p className="text-sm text-slate-700 font-medium">{coverLetter.date}</p>
+              
+              {(coverLetter.recipientName || coverLetter.recipientTitle || coverLetter.companyName || coverLetter.companyAddress) && (
+                <div className="text-sm text-slate-700 space-y-0.5">
+                  {coverLetter.recipientName && <p className="font-bold">{coverLetter.recipientName}</p>}
+                  {coverLetter.recipientTitle && <p>{coverLetter.recipientTitle}</p>}
+                  {coverLetter.companyName && <p className="font-bold text-accent">{coverLetter.companyName}</p>}
+                  {coverLetter.companyAddress && <p>{coverLetter.companyAddress}</p>}
+                </div>
+              )}
+            </div>
+
+            {/* Letter Body */}
+            <div className="flex-1 space-y-4 text-[14px] leading-relaxed text-slate-700">
+              {coverLetter.body ? (
+                coverLetter.body.split('\n').map((paragraph, idx) => (
+                  paragraph.trim() ? (
+                    <p key={idx} className="text-justify">{paragraph}</p>
+                  ) : (
+                    <div key={idx} className="h-4"></div>
+                  )
+                ))
+              ) : (
+                <div className="text-slate-400 italic text-center py-20">
+                  <FileText size={48} className="mx-auto mb-4 opacity-20" />
+                  <p>No cover letter content yet.</p>
+                  <p className="text-sm mt-2">Go back to the editor to add your cover letter.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer with Website */}
+            <div className="print-footer hidden mt-10 pt-6 border-t border-slate-100 flex justify-between items-end">
+              <a 
+                href={cleanUrl(data.personal.website)} 
+                target="_blank" 
+                rel="noopener" 
+                className="text-[8px] font-mono font-bold uppercase tracking-widest text-slate-400 underline decoration-slate-200"
+              >
+                {displayUrl(data.personal.website)}
+              </a>
+            </div>
+          </article>
+        </div>
+      </div>
+    );
+  }
+
+  // Preview Mode - Resume
   return (
     <div className="flex flex-col items-center min-h-screen pb-20 print:pb-0 bg-slate-100/30 font-sans">
       <nav className="no-print sticky top-0 z-50 w-full flex justify-center py-4 bg-white/95 backdrop-blur-md border-b border-slate-200 mb-10">
@@ -882,28 +1118,43 @@ const App: React.FC = () => {
             <ChevronLeft size={14} /> Back to Editor
           </button>
           
-          <div className="flex items-center gap-3 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
-            <span className="text-[9px] font-mono font-black text-slate-400 uppercase tracking-widest px-2">Print Mode:</span>
-            <button
-              onClick={() => setPrintVariant('continuous')}
-              className={`px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all ${
-                printVariant === 'continuous' 
-                  ? 'bg-accent text-white shadow-md' 
-                  : 'bg-white text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              Continuous Flow
-            </button>
-            <button
-              onClick={() => setPrintVariant('strict-2-page')}
-              className={`px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all ${
-                printVariant === 'strict-2-page' 
-                  ? 'bg-accent text-white shadow-md' 
-                  : 'bg-white text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              Strict 2 Pages
-            </button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <span className="px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest bg-accent text-white shadow-md">
+                Resume
+              </span>
+              <span className="text-[9px] font-mono font-black text-slate-400 uppercase tracking-widest">|</span>
+              <button
+                onClick={() => setViewMode('cover-letter')}
+                className="px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all bg-white text-slate-500 hover:text-slate-900"
+              >
+                View Cover Letter
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-3 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+              <span className="text-[9px] font-mono font-black text-slate-400 uppercase tracking-widest px-2">Print Mode:</span>
+              <button
+                onClick={() => setPrintVariant('continuous')}
+                className={`px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all ${
+                  printVariant === 'continuous' 
+                    ? 'bg-accent text-white shadow-md' 
+                    : 'bg-white text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                Continuous Flow
+              </button>
+              <button
+                onClick={() => setPrintVariant('strict-2-page')}
+                className={`px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all ${
+                  printVariant === 'strict-2-page' 
+                    ? 'bg-accent text-white shadow-md' 
+                    : 'bg-white text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                Strict 2 Pages
+              </button>
+            </div>
           </div>
 
           <button 
