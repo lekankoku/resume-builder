@@ -56,6 +56,7 @@ const STORAGE_KEY_REFERENCES = 'resume-references';
 const STORAGE_KEY_LANGUAGES = 'resume-languages';
 const STORAGE_KEY_EDUCATION = 'resume-education';
 const STORAGE_KEY_COVER_LETTER = 'resume-cover-letter';
+const STORAGE_KEY_TARGET_COMPANY = 'resume-target-company';
 
 // Sortable Item Component
 interface SortableItemProps {
@@ -131,10 +132,13 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('personal');
   const [printVariant, setPrintVariant] = useState<'strict-2-page' | 'continuous'>('continuous');
   const [viewMode, setViewMode] = useState<'resume' | 'cover-letter'>('resume');
+  const [targetCompany, setTargetCompany] = useState<string>(() => {
+    const stored = localStorage.getItem(STORAGE_KEY_TARGET_COMPANY);
+    return stored || '';
+  });
   const [coverLetter, setCoverLetter] = useState<{
     recipientName: string;
     recipientTitle: string;
-    companyName: string;
     companyAddress: string;
     date: string;
     body: string;
@@ -143,7 +147,6 @@ const App: React.FC = () => {
     return stored ? JSON.parse(stored) : {
       recipientName: '',
       recipientTitle: '',
-      companyName: '',
       companyAddress: '',
       date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
       body: ''
@@ -176,18 +179,24 @@ const App: React.FC = () => {
     localStorage.setItem(STORAGE_KEY_COVER_LETTER, JSON.stringify(coverLetter));
   }, [coverLetter]);
 
+  // Save target company to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_TARGET_COMPANY, targetCompany);
+  }, [targetCompany]);
+
   useEffect(() => {
     setJsonInput(JSON.stringify(data, null, 2));
   }, [data]);
 
   // Update document title for print filename
   useEffect(() => {
+    const companyPart = targetCompany ? ` (${targetCompany})` : '';
     if (viewMode === 'resume') {
-      document.title = `${data.personal.name} (${data.personal.title})`;
+      document.title = `${data.personal.name} (${data.personal.title})${companyPart}`;
     } else {
-      document.title = `${data.personal.name} - Cover Letter`;
+      document.title = `${data.personal.name} - Cover Letter${companyPart}`;
     }
-  }, [data.personal.name, data.personal.title, viewMode]);
+  }, [data.personal.name, data.personal.title, viewMode, targetCompany]);
 
   const handleApplyJson = () => {
     try {
@@ -404,6 +413,30 @@ const App: React.FC = () => {
             {activeTab === 'personal' && (
               <div className="space-y-6">
                 <h2 className="text-xl font-display text-slate-900 border-b pb-4">Identity Attributes</h2>
+                
+                {/* Target Company Field */}
+                <div className="p-6 bg-accent/5 border-2 border-accent/30 rounded-xl space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Briefcase size={16} className="text-accent" />
+                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">Target Company</h3>
+                  </div>
+                  <p className="text-xs text-slate-600">
+                    Enter the company you're applying to. This will be added to the filename when you print your resume or cover letter.
+                  </p>
+                  <input 
+                    className="w-full p-4 bg-white border-2 border-accent/30 rounded-lg text-base font-bold focus:ring-2 focus:ring-accent outline-none"
+                    value={targetCompany} 
+                    onChange={(e) => setTargetCompany(e.target.value)}
+                    placeholder="e.g., Google, Microsoft, Apple..."
+                  />
+                  {targetCompany && (
+                    <div className="text-xs text-slate-500 space-y-1 pt-2">
+                      <p className="font-mono">📄 Resume: <span className="font-bold text-accent">{data.personal.name} ({data.personal.title}) ({targetCompany})</span></p>
+                      <p className="font-mono">📝 Cover Letter: <span className="font-bold text-accent">{data.personal.name} - Cover Letter ({targetCompany})</span></p>
+                    </div>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-6">
                   {Object.keys(data.personal).map(key => (
                     <div key={key} className="space-y-1">
@@ -921,17 +954,15 @@ const App: React.FC = () => {
                   <p className="text-sm text-slate-500 mt-2">Create a professional cover letter to accompany your resume.</p>
                 </div>
                 <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-mono font-black uppercase text-slate-400">Date</label>
-                      <input
-                        type="text"
-                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
-                        value={coverLetter.date}
-                        onChange={(e) => updateCoverLetterField('date', e.target.value)}
-                        placeholder="January 6, 2026"
-                      />
-                    </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-mono font-black uppercase text-slate-400">Date</label>
+                    <input
+                      type="text"
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+                      value={coverLetter.date}
+                      onChange={(e) => updateCoverLetterField('date', e.target.value)}
+                      placeholder="January 6, 2026"
+                    />
                   </div>
 
                   <div className="space-y-4 p-4 bg-slate-50 rounded-xl">
@@ -955,16 +986,19 @@ const App: React.FC = () => {
                           placeholder="Senior Hiring Manager"
                         />
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1 col-span-2">
                         <label className="text-[10px] font-mono font-black uppercase text-slate-400">Company Name</label>
                         <input
                           className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
-                          value={coverLetter.companyName}
-                          onChange={(e) => updateCoverLetterField('companyName', e.target.value)}
+                          value={targetCompany}
+                          onChange={(e) => setTargetCompany(e.target.value)}
                           placeholder="Company Inc."
                         />
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          💡 This is shared with your resume. Set it once in the Identity tab.
+                        </p>
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1 col-span-2">
                         <label className="text-[10px] font-mono font-black uppercase text-slate-400">Company Address</label>
                         <input
                           className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
@@ -1023,7 +1057,8 @@ const App: React.FC = () => {
 
             <button 
               onClick={() => {
-                document.title = `${data.personal.name} - Cover Letter`;
+                const companyPart = targetCompany ? ` (${targetCompany})` : '';
+                document.title = `${data.personal.name} - Cover Letter${companyPart}`;
                 window.print();
               }}
               className="flex items-center gap-2 px-8 py-2.5 bg-accent text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all uppercase tracking-widest text-[10px]"
@@ -1060,11 +1095,11 @@ const App: React.FC = () => {
             <div className="mb-10 space-y-6">
               <p className="text-sm text-slate-700 font-medium">{coverLetter.date}</p>
               
-              {(coverLetter.recipientName || coverLetter.recipientTitle || coverLetter.companyName || coverLetter.companyAddress) && (
+              {(coverLetter.recipientName || coverLetter.recipientTitle || targetCompany || coverLetter.companyAddress) && (
                 <div className="text-sm text-slate-700 space-y-0.5">
                   {coverLetter.recipientName && <p className="font-bold">{coverLetter.recipientName}</p>}
                   {coverLetter.recipientTitle && <p>{coverLetter.recipientTitle}</p>}
-                  {coverLetter.companyName && <p className="font-bold text-accent">{coverLetter.companyName}</p>}
+                  {targetCompany && <p className="font-bold text-accent">{targetCompany}</p>}
                   {coverLetter.companyAddress && <p>{coverLetter.companyAddress}</p>}
                 </div>
               )}
@@ -1159,7 +1194,8 @@ const App: React.FC = () => {
 
           <button 
             onClick={() => {
-              document.title = `${data.personal.name} (${data.personal.title})`;
+              const companyPart = targetCompany ? ` (${targetCompany})` : '';
+              document.title = `${data.personal.name} (${data.personal.title})${companyPart}`;
               window.print();
             }}
             className="flex items-center gap-2 px-8 py-2.5 bg-accent text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all uppercase tracking-widest text-[10px]"
