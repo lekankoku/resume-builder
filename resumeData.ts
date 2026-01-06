@@ -5,14 +5,14 @@ export const resumeData: ResumeData = {
   personal: {
     name: "Lekan Koku",
     title: "Senior Fullstack Engineer",
-    phone: "+49 175 123 4567",
+    phone: "+4917687922820",
     email: "hello@lekankoku.com",
     residence: "Berlin, Germany",
     nationality: "German",
-    website: "www.lekankoku.com",
-    linkedin: "linkedin.com/in/lekankoku",
-    github: "github.com/lekankoku",
-    photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300&h=300&auto=format&fit=crop"
+    website: "https://lekankoku.com",
+    linkedin: "https://www.linkedin.com/in/lekankoku/",
+    github: "https://github.com/lekankoku",
+    photoUrl: "https://lekankoku.com/profile.jpg"
   },
   experiences: [
     {

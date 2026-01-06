@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { resumeData as initialData } from './resumeData';
-import { ResumeData } from './types';
+import { ResumeData, PersonalInfo } from './types';
 import { 
   User, 
   Briefcase, 
@@ -23,13 +23,40 @@ import {
   Phone
 } from 'lucide-react';
 
+// Default personal info (excluding title which comes from JSON)
+const getDefaultPersonalInfo = (): Omit<PersonalInfo, 'title'> => {
+  const { title, ...rest } = initialData.personal;
+  return rest;
+};
+
+const STORAGE_KEY = 'resume-identity-attributes';
+
 const App: React.FC = () => {
-  const [data, setData] = useState<ResumeData>(initialData);
+  const [data, setData] = useState<ResumeData>(() => {
+    // Load personal info from localStorage (except title)
+    // If no localStorage exists, use data from resumeData.ts as defaults
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const personalData = stored ? JSON.parse(stored) : getDefaultPersonalInfo();
+    
+    return {
+      ...initialData,
+      personal: {
+        ...personalData,
+        title: initialData.personal.title // Title always comes from JSON
+      }
+    };
+  });
   const [jsonInput, setJsonInput] = useState<string>(JSON.stringify(initialData, null, 2));
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(true);
   const [activeTab, setActiveTab] = useState('personal');
   const [printVariant, setPrintVariant] = useState<'strict-2-page' | 'continuous'>('continuous');
+
+  // Save personal info to localStorage whenever it changes (except title)
+  useEffect(() => {
+    const { title, ...personalWithoutTitle } = data.personal;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(personalWithoutTitle));
+  }, [data.personal]);
 
   useEffect(() => {
     setJsonInput(JSON.stringify(data, null, 2));
@@ -38,7 +65,14 @@ const App: React.FC = () => {
   const handleApplyJson = () => {
     try {
       const parsed = JSON.parse(jsonInput);
-      setData(parsed);
+      // Only update title from JSON, keep other personal fields from local storage
+      setData({
+        ...parsed,
+        personal: {
+          ...data.personal, // Keep existing personal data from local storage
+          title: parsed.personal?.title || data.personal.title // Only update title from JSON
+        }
+      });
       setJsonError(null);
     } catch (e: any) {
       setJsonError(e.message);
