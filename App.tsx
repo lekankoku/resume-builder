@@ -263,8 +263,8 @@ const App: React.FC = () => {
               </div>
               
               {data.personal.photoUrl && (
-                <div className="no-print">
-                  <div className="w-40 h-40 rounded-2xl overflow-hidden border-2 border-slate-50 shadow-sm">
+                <div>
+                  <div className="w-32 h-32 rounded-2xl overflow-hidden border-2 border-slate-50 shadow-sm">
                     <img src={cleanUrl(data.personal.photoUrl)} alt="" className="w-full h-full object-cover object-top" />
                   </div>
                 </div>
