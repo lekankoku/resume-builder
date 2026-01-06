@@ -268,7 +268,7 @@ const App: React.FC = () => {
               </section>
 
               {/* Projects Section */}
-              <section className="avoid-break">
+              <section>
                 <h2 className="text-[12px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4 flex items-center gap-4">
                   Key Projects <div className="flex-1 h-[2px] bg-slate-900" />
                 </h2>
@@ -289,7 +289,7 @@ const App: React.FC = () => {
               </section>
 
               {/* Education (Academic) - Main Column as requested */}
-              <section className="avoid-break">
+              <section>
                 <h2 className="text-[12px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4 flex items-center gap-4">
                   Academic <div className="flex-1 h-[2px] bg-slate-900" />
                 </h2>
@@ -327,7 +327,7 @@ const App: React.FC = () => {
                 </div>
               </section>
 
-              <section className="avoid-break">
+              <section>
                 <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4">Tech Stack</h2>
                 <div className="space-y-3">
                   {data.technicalProficiency.map((tp, idx) => (
@@ -339,7 +339,7 @@ const App: React.FC = () => {
                 </div>
               </section>
 
-              <section className="avoid-break">
+              <section>
                 <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4">Languages</h2>
                 <div className="space-y-2">
                   {data.languages.map((lang, idx) => (
@@ -351,7 +351,7 @@ const App: React.FC = () => {
                 </div>
               </section>
 
-              <section className="avoid-break">
+              <section>
                 <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4">References</h2>
                 <div className="space-y-4">
                   {data.references.map((ref, idx) => (
