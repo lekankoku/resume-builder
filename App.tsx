@@ -51,6 +51,9 @@ const getDefaultPersonalInfo = (): Omit<PersonalInfo, 'title'> => {
 };
 
 const STORAGE_KEY = 'resume-identity-attributes';
+const STORAGE_KEY_REFERENCES = 'resume-references';
+const STORAGE_KEY_LANGUAGES = 'resume-languages';
+const STORAGE_KEY_EDUCATION = 'resume-education';
 
 // Sortable Item Component
 interface SortableItemProps {
@@ -97,12 +100,27 @@ const App: React.FC = () => {
     const stored = localStorage.getItem(STORAGE_KEY);
     const personalData = stored ? JSON.parse(stored) : getDefaultPersonalInfo();
     
+    // Load references from localStorage
+    const storedReferences = localStorage.getItem(STORAGE_KEY_REFERENCES);
+    const referencesData = storedReferences ? JSON.parse(storedReferences) : initialData.references;
+    
+    // Load languages from localStorage
+    const storedLanguages = localStorage.getItem(STORAGE_KEY_LANGUAGES);
+    const languagesData = storedLanguages ? JSON.parse(storedLanguages) : initialData.languages;
+    
+    // Load education from localStorage
+    const storedEducation = localStorage.getItem(STORAGE_KEY_EDUCATION);
+    const educationData = storedEducation ? JSON.parse(storedEducation) : initialData.education;
+    
     return {
       ...initialData,
       personal: {
         ...personalData,
         title: initialData.personal.title // Title always comes from JSON
-      }
+      },
+      references: referencesData,
+      languages: languagesData,
+      education: educationData
     };
   });
   const [jsonInput, setJsonInput] = useState<string>(JSON.stringify(initialData, null, 2));
@@ -117,6 +135,21 @@ const App: React.FC = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(personalWithoutTitle));
   }, [data.personal]);
 
+  // Save references to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_REFERENCES, JSON.stringify(data.references));
+  }, [data.references]);
+
+  // Save languages to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_LANGUAGES, JSON.stringify(data.languages));
+  }, [data.languages]);
+
+  // Save education to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_EDUCATION, JSON.stringify(data.education));
+  }, [data.education]);
+
   useEffect(() => {
     setJsonInput(JSON.stringify(data, null, 2));
   }, [data]);
@@ -129,13 +162,16 @@ const App: React.FC = () => {
   const handleApplyJson = () => {
     try {
       const parsed = JSON.parse(jsonInput);
-      // Only update title from JSON, keep other personal fields from local storage
+      // Only update title from JSON, keep other personal fields, references, languages, and education from local storage
       setData({
         ...parsed,
         personal: {
           ...data.personal, // Keep existing personal data from local storage
           title: parsed.personal?.title || data.personal.title // Only update title from JSON
-        }
+        },
+        references: data.references, // Keep references from local storage
+        languages: data.languages, // Keep languages from local storage
+        education: data.education // Keep education from local storage
       });
       setJsonError(null);
     } catch (e: any) {
