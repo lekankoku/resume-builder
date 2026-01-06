@@ -51,6 +51,8 @@
             @page { 
                 size: A4; 
                 margin: 0; 
+                orphans: 3;
+                widows: 3;
             }
             .resume-container {
                 width: 100% !important;
@@ -59,7 +61,50 @@
                 box-shadow: none !important;
                 border: none !important;
                 min-height: auto !important;
+                max-height: 594mm !important; /* 2 pages max */
                 position: relative;
+                overflow: hidden;
+            }
+            /* Hide page boundary indicators when printing */
+            .resume-container::before,
+            .resume-container::after {
+                display: none !important;
+            }
+            /* Tighter spacing and smaller fonts for print to fit 2 pages */
+            .resume-container h1 {
+                font-size: 2.25rem !important; /* Reduced from ~3.75rem */
+                margin-bottom: 0.25rem !important;
+            }
+            .resume-container h2 {
+                font-size: 0.65rem !important; /* Slightly smaller section headers */
+                margin-bottom: 1rem !important;
+            }
+            .resume-container h3 {
+                font-size: 0.95rem !important; /* Slightly smaller */
+            }
+            .resume-container section {
+                margin-bottom: 1.5rem !important;
+            }
+            /* Reduce body text sizes */
+            .resume-container p,
+            .resume-container li,
+            .resume-container span {
+                font-size: 0.7rem !important; /* Slightly smaller for better fit */
+                line-height: 1.4 !important;
+            }
+            /* Adjust header padding */
+            .resume-container header {
+                margin-bottom: 1.5rem !important;
+                padding-bottom: 1.5rem !important;
+            }
+            .resume-container .space-y-8 > * + * {
+                margin-top: 1.25rem !important;
+            }
+            .resume-container .space-y-6 > * + * {
+                margin-top: 1rem !important;
+            }
+            .resume-container .space-y-10 > * + * {
+                margin-top: 1.5rem !important;
             }
             /* Fixed footer for every printed page */
             .print-footer {
@@ -70,7 +115,7 @@
                 right: 15mm;
                 justify-content: space-between;
                 align-items: flex-end;
-                border-top: 1px solid #f1f5f9; /* slate-100 */
+                border-top: 1px solid #f1f5f9;
                 padding-top: 2mm;
                 z-index: 9999;
                 pointer-events: none;
@@ -82,6 +127,16 @@
                 counter-increment: page;
                 content: "Page " counter(page);
             }
+            /* Prevent page breaks in critical areas */
+            .avoid-break {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+            /* Force page break after first page if needed */
+            .force-page-break {
+                page-break-after: always !important;
+                break-after: page !important;
+            }
         }
         .resume-viewport {
             width: 100%;
@@ -92,11 +147,50 @@
         .resume-container {
             width: var(--print-width);
             min-height: var(--print-height);
+            max-height: calc(var(--print-height) * 2); /* Max 2 pages */
             background: white;
             box-shadow: 0 40px 100px -20px rgba(0,0,0,0.1);
             padding: 20mm;
             flex-shrink: 0;
             position: relative;
+        }
+        /* Visual page boundary indicator */
+        .resume-container::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: var(--print-height);
+            height: 2px;
+            background: repeating-linear-gradient(
+                90deg,
+                #0052FF 0px,
+                #0052FF 10px,
+                transparent 10px,
+                transparent 20px
+            );
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+        .resume-container::after {
+            content: 'Page 1 ends here • Page 2 starts below';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: calc(var(--print-height) - 10px);
+            background: #0052FF;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0.8;
+            font-family: 'JetBrains Mono', monospace;
         }
         @media (max-width: 210mm) {
             .resume-viewport { padding: 1rem; overflow-x: auto; justify-content: flex-start; }
