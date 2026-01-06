@@ -932,7 +932,7 @@ const App: React.FC = () => {
               
               {data.personal.photoUrl && (
                 <div>
-                  <div className="w-32 h-32 rounded-2xl overflow-hidden border-2 border-slate-50 shadow-sm">
+                  <div className="w-24 h-24 rounded-xl overflow-hidden border-2 border-slate-50 shadow-sm">
                     <img src={cleanUrl(data.personal.photoUrl)} alt="" className="w-full h-full object-cover object-top" />
                   </div>
                 </div>
