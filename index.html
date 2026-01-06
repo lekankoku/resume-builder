@@ -161,30 +161,28 @@
             .print-footer {
                 display: none !important;
             }
-            /* Smart page break handling - allow content to flow naturally */
+            /* Simple page break handling - let content flow naturally */
+            section,
+            main,
+            aside,
+            div {
+                page-break-inside: auto;
+                break-inside: auto;
+            }
+            /* Only avoid breaks within small items */
             .avoid-break {
                 page-break-inside: avoid;
                 break-inside: avoid;
             }
-            /* Allow sections to break if needed */
-            section {
-                page-break-inside: auto !important;
-                break-inside: auto !important;
-            }
-            /* Only avoid breaks within individual items */
-            .avoid-break > div {
-                page-break-inside: avoid;
-                break-inside: avoid;
-            }
-            /* Ensure all sections and content are visible */
+            /* Ensure all content is visible */
+            .resume-container,
+            .resume-container *,
             .resume-container section,
             .resume-container main,
-            .resume-container aside,
-            .resume-container > * {
-                page-break-inside: auto !important;
-                break-inside: auto !important;
+            .resume-container aside {
                 opacity: 1 !important;
                 visibility: visible !important;
+                max-height: none !important;
             }
         }
         .resume-viewport {
