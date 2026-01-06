@@ -167,6 +167,15 @@
             .resume-container .grid-cols-12 {
                 display: grid !important;
             }
+            /* Ensure images print correctly */
+            img {
+                display: block !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
         }
         .resume-viewport {
             width: 100%;
