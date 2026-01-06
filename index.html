@@ -1,0 +1,124 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Resume Architect - High-Fidelity CV Builder">
+    <title>Resume Architect | Professional CV Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              background: '#FAFAFA',
+              foreground: '#0F172A',
+              accent: {
+                DEFAULT: '#0052FF',
+                secondary: '#4D7CFF',
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+              display: ['Calistoga', 'serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+        :root {
+            --print-width: 210mm;
+            --print-height: 297mm;
+        }
+        body {
+            background-color: #FAFAFA;
+            color: #0F172A;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        @media print {
+            body { 
+                background-color: white !important; 
+                margin: 0; 
+                padding: 0; 
+                counter-reset: page;
+            }
+            .no-print { display: none !important; }
+            @page { 
+                size: A4; 
+                margin: 0; 
+            }
+            .resume-container {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 15mm 15mm 25mm 15mm !important;
+                box-shadow: none !important;
+                border: none !important;
+                min-height: auto !important;
+                position: relative;
+            }
+            /* Fixed footer for every printed page */
+            .print-footer {
+                display: flex !important;
+                position: fixed;
+                bottom: 10mm;
+                left: 15mm;
+                right: 15mm;
+                justify-content: space-between;
+                align-items: flex-end;
+                border-top: 1px solid #f1f5f9; /* slate-100 */
+                padding-top: 2mm;
+                z-index: 9999;
+                pointer-events: none;
+            }
+            .print-footer a {
+                pointer-events: auto;
+            }
+            .page-counter::after {
+                counter-increment: page;
+                content: "Page " counter(page);
+            }
+        }
+        .resume-viewport {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 4rem 1rem;
+        }
+        .resume-container {
+            width: var(--print-width);
+            min-height: var(--print-height);
+            background: white;
+            box-shadow: 0 40px 100px -20px rgba(0,0,0,0.1);
+            padding: 20mm;
+            flex-shrink: 0;
+            position: relative;
+        }
+        @media (max-width: 210mm) {
+            .resume-viewport { padding: 1rem; overflow-x: auto; justify-content: flex-start; }
+        }
+        .avoid-break {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@19.2.3",
+    "react-dom": "https://esm.sh/react-dom@19.2.3",
+    "lucide-react": "https://esm.sh/lucide-react@0.562.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
+</head>
+<body class="antialiased font-sans">
+    <div id="root"></div>
+</body>
+</html>
