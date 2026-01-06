@@ -62,6 +62,11 @@ const App: React.FC = () => {
     setJsonInput(JSON.stringify(data, null, 2));
   }, [data]);
 
+  // Update document title for print filename
+  useEffect(() => {
+    document.title = `${data.personal.name} (${data.personal.title})`;
+  }, [data.personal.name, data.personal.title]);
+
   const handleApplyJson = () => {
     try {
       const parsed = JSON.parse(jsonInput);
@@ -242,7 +247,10 @@ const App: React.FC = () => {
           </div>
 
           <button 
-            onClick={() => window.print()}
+            onClick={() => {
+              document.title = `${data.personal.name} (${data.personal.title})`;
+              window.print();
+            }}
             className="flex items-center gap-2 px-8 py-2.5 bg-accent text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all uppercase tracking-widest text-[10px]"
           >
             Print to PDF <Printer size={14} />
