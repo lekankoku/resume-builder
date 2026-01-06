@@ -57,10 +57,12 @@
             .resume-container {
                 width: 100% !important;
                 margin: 0 !important;
-                padding: 13mm 16mm 16mm 16mm !important; /* Balanced padding for readability */
+                padding: 14mm 17mm 17mm 17mm !important; /* Better margins for professional look */
                 box-shadow: none !important;
                 border: none !important;
                 min-height: auto !important;
+                max-height: none !important; /* Ensure no height restriction */
+                overflow: visible !important; /* Make sure nothing is hidden */
                 position: relative;
             }
             /* Hide page boundary indicators when printing */
@@ -68,83 +70,83 @@
             .resume-container::after {
                 display: none !important;
             }
-            /* Balanced font sizes for print - fits in 2 pages with proper spacing */
+            /* Optimized font sizes for print - better space usage, fits in 2 pages */
             .resume-container h1 {
-                font-size: 1.75rem !important; /* Name */
-                margin-bottom: 0.35rem !important;
-                line-height: 1.1 !important;
+                font-size: 2rem !important; /* Name - larger, better use of space */
+                margin-bottom: 0.4rem !important;
+                line-height: 1.15 !important;
             }
             .resume-container h1 + p {
-                font-size: 1rem !important; /* Title under name */
-                margin-bottom: 0.5rem !important;
+                font-size: 1.1rem !important; /* Title under name */
+                margin-bottom: 0.6rem !important;
             }
             .resume-container h2 {
-                font-size: 0.58rem !important; /* Section headers */
-                margin-bottom: 0.85rem !important;
-                margin-top: 0.3rem !important;
+                font-size: 0.65rem !important; /* Section headers - slightly larger */
+                margin-bottom: 0.9rem !important;
+                margin-top: 0.35rem !important;
             }
             .resume-container h3 {
-                font-size: 0.78rem !important; /* Job titles, degrees */
-                line-height: 1.25 !important;
-                margin-bottom: 0.2rem !important;
+                font-size: 0.85rem !important; /* Job titles, degrees - more readable */
+                line-height: 1.3 !important;
+                margin-bottom: 0.25rem !important;
             }
             .resume-container h4 {
-                font-size: 0.52rem !important;
+                font-size: 0.55rem !important;
             }
             .resume-container section {
-                margin-bottom: 1.3rem !important;
+                margin-bottom: 1.5rem !important;
             }
-            /* Body text with better readability */
+            /* Body text - larger for better space usage */
             .resume-container p,
             .resume-container li,
             .resume-container span,
             .resume-container a {
-                font-size: 0.62rem !important; /* ~10pt - readable */
-                line-height: 1.4 !important;
+                font-size: 0.68rem !important; /* ~11pt - better readability */
+                line-height: 1.45 !important;
             }
-            /* Logical spacing throughout */
+            /* Better spacing for optimal space usage */
             .resume-container header {
-                margin-bottom: 1.4rem !important;
-                padding-bottom: 1.4rem !important;
+                margin-bottom: 1.6rem !important;
+                padding-bottom: 1.6rem !important;
             }
             .resume-container .space-y-7 > * + * {
-                margin-top: 1.2rem !important;
+                margin-top: 1.4rem !important;
             }
             .resume-container .space-y-6 > * + * {
-                margin-top: 1rem !important;
+                margin-top: 1.2rem !important;
             }
             .resume-container .space-y-5 > * + * {
-                margin-top: 0.85rem !important;
+                margin-top: 1rem !important;
             }
             .resume-container .space-y-4 > * + * {
-                margin-top: 0.65rem !important;
+                margin-top: 0.8rem !important;
             }
             .resume-container .space-y-3 > * + * {
-                margin-top: 0.5rem !important;
+                margin-top: 0.65rem !important;
             }
             .resume-container .gap-8 {
-                gap: 1.75rem !important;
+                gap: 2rem !important;
             }
-            /* Better list spacing */
+            /* Better list spacing - more readable */
             .resume-container ul {
-                margin-top: 0.35rem !important;
-                margin-bottom: 0.25rem !important;
+                margin-top: 0.4rem !important;
+                margin-bottom: 0.3rem !important;
             }
             .resume-container ul li {
-                margin-bottom: 0.25rem !important;
-                padding-bottom: 0.1rem !important;
+                margin-bottom: 0.3rem !important;
+                padding-bottom: 0.15rem !important;
             }
             /* Sidebar spacing */
             .resume-container aside {
-                padding-left: 1.25rem !important;
+                padding-left: 1.5rem !important;
             }
             .resume-container aside section {
-                margin-bottom: 1.1rem !important;
+                margin-bottom: 1.3rem !important;
             }
             /* Grid sections spacing */
             .resume-container .grid > main,
             .resume-container .grid > aside {
-                padding-top: 0.2rem !important;
+                padding-top: 0.25rem !important;
             }
             .resume-container .space-y-8 > * + * {
                 margin-top: 1.25rem !important;
@@ -164,8 +166,8 @@
                 page-break-inside: avoid;
                 break-inside: avoid;
             }
-            /* Allow sections to break if they're too large */
-            section.avoid-break {
+            /* Allow sections to break if needed */
+            section {
                 page-break-inside: auto !important;
                 break-inside: auto !important;
             }
@@ -174,9 +176,15 @@
                 page-break-inside: avoid;
                 break-inside: avoid;
             }
-            /* Ensure content flows naturally across pages */
-            .resume-container > div {
+            /* Ensure all sections and content are visible */
+            .resume-container section,
+            .resume-container main,
+            .resume-container aside,
+            .resume-container > * {
                 page-break-inside: auto !important;
+                break-inside: auto !important;
+                opacity: 1 !important;
+                visibility: visible !important;
             }
         }
         .resume-viewport {
