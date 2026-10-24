@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   Briefcase,
+  ClipboardList,
   Code,
   Eye,
   FileJson,
@@ -54,6 +55,8 @@ interface Props {
   onTabChange: (tab: string) => void;
   onPreviewResume: () => void;
   onPreviewCoverLetter: () => void;
+  contextLabel: string;
+  onOpenApplications: () => void;
 }
 
 const EditorView: React.FC<Props> = ({
@@ -71,6 +74,8 @@ const EditorView: React.FC<Props> = ({
   onTabChange,
   onPreviewResume,
   onPreviewCoverLetter,
+  contextLabel,
+  onOpenApplications,
 }) => (
   <div className="min-h-screen bg-slate-50 flex flex-col items-center py-10 px-6 font-sans">
     <header className="max-w-6xl w-full mb-8 flex justify-between items-center">
@@ -81,9 +86,16 @@ const EditorView: React.FC<Props> = ({
         <div>
           <h1 className="text-xl font-display text-slate-900 leading-tight">Resume Editor</h1>
           <p className="text-slate-400 text-[10px] font-mono uppercase tracking-widest">A4 High-Fidelity Standard</p>
+          <p className="text-accent text-[10px] font-mono font-bold uppercase tracking-widest">Editing: {contextLabel}</p>
         </div>
       </div>
       <div className="flex gap-3">
+        <button
+          onClick={onOpenApplications}
+          className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-900 font-bold rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest text-[10px]"
+        >
+          Applications <ClipboardList size={14} />
+        </button>
         <button
           onClick={onPreviewResume}
           className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-black transition-all uppercase tracking-widest text-[10px]"

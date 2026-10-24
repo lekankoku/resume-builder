@@ -1,83 +1,77 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Repositories } from '../application/ports/repositories';
-import { coverLetterDocumentTitle, resumeDocumentTitle } from '../domain/resume/documentTitle';
-import EditorView from './editor/EditorView';
-import { useCoverLetter } from './hooks/useCoverLetter';
-import { useJsonSource } from './hooks/useJsonSource';
-import { useResume } from './hooks/useResume';
-import { useTargetCompany } from './hooks/useTargetCompany';
-import CoverLetterPreview from './preview/CoverLetterPreview';
-import ResumePreview, { PrintVariant } from './preview/ResumePreview';
+import { CoverLetter } from '../domain/coverLetter/CoverLetter';
+import { Resume } from '../domain/resume/Resume';
+import ApplicationsView from './applications/ApplicationsView';
+import DocumentWorkspace from './DocumentWorkspace';
+import { useApplications } from './hooks/useApplications';
+import { useStages } from './hooks/useStages';
 
 interface AppProps {
   repositories: Repositories;
 }
 
+type View = { name: 'applications' } | { name: 'master' } | { name: 'application'; id: string };
+
 const App: React.FC<AppProps> = ({ repositories }) => {
-  const { resume, setResume, actions } = useResume(repositories.resume);
-  const { coverLetter, updateField: updateCoverLetterField } = useCoverLetter(repositories.coverLetter);
-  const { targetCompany, setTargetCompany } = useTargetCompany(repositories.targetCompany);
-  const { jsonInput, setJsonInput, jsonError, applyJson } = useJsonSource(resume, setResume);
+  const { applications, actions } = useApplications(repositories.applications);
+  const { stages, add: addStage, remove: removeStage } = useStages(repositories.stages);
+  const [view, setView] = useState<View>({ name: 'master' });
 
-  const [isEditing, setIsEditing] = useState(true);
-  const [activeTab, setActiveTab] = useState('personal');
-  const [printVariant, setPrintVariant] = useState<PrintVariant>('continuous');
-  const [viewMode, setViewMode] = useState<'resume' | 'cover-letter'>('resume');
+  const openApplications = () => setView({ name: 'applications' });
+  const activeApplication = view.name === 'application' ? applications.find((a) => a.id === view.id) : undefined;
 
-  useEffect(() => {
-    document.title =
-      viewMode === 'resume'
-        ? resumeDocumentTitle(resume.personal, targetCompany)
-        : coverLetterDocumentTitle(resume.personal, targetCompany);
-  }, [resume.personal.name, resume.personal.title, viewMode, targetCompany]);
+  const applicationRepositories = useMemo(() => {
+    if (!activeApplication) return null;
+    const { id } = activeApplication;
+    return {
+      resume: {
+        load: () => activeApplication.resume,
+        save: (resume: Resume) => actions.update(id, (a) => ({ ...a, resume })),
+      },
+      coverLetter: {
+        load: () => activeApplication.coverLetter,
+        save: (coverLetter: CoverLetter) => actions.update(id, (a) => ({ ...a, coverLetter })),
+      },
+      targetCompany: {
+        load: () => activeApplication.company,
+        save: (company: string) => actions.updateField(id, 'company', company),
+      },
+    };
+  }, [activeApplication?.id]);
 
-  if (isEditing) {
+  if (view.name === 'master') {
     return (
-      <EditorView
-        resume={resume}
-        actions={actions}
-        coverLetter={coverLetter}
-        onCoverLetterFieldChange={updateCoverLetterField}
-        targetCompany={targetCompany}
-        onTargetCompanyChange={setTargetCompany}
-        jsonInput={jsonInput}
-        jsonError={jsonError}
-        onJsonChange={setJsonInput}
-        onApplyJson={applyJson}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        onPreviewResume={() => {
-          setViewMode('resume');
-          setIsEditing(false);
-        }}
-        onPreviewCoverLetter={() => {
-          setViewMode('cover-letter');
-          setIsEditing(false);
-        }}
+      <DocumentWorkspace
+        key="master"
+        repositories={repositories}
+        contextLabel="Master CV"
+        onOpenApplications={openApplications}
       />
     );
   }
 
-  if (viewMode === 'cover-letter') {
+  if (activeApplication && applicationRepositories) {
     return (
-      <CoverLetterPreview
-        resume={resume}
-        coverLetter={coverLetter}
-        targetCompany={targetCompany}
-        onBackToEditor={() => setIsEditing(true)}
-        onShowResume={() => setViewMode('resume')}
+      <DocumentWorkspace
+        key={activeApplication.id}
+        repositories={applicationRepositories}
+        contextLabel={[activeApplication.company, activeApplication.role].filter(Boolean).join(' — ')}
+        onOpenApplications={openApplications}
       />
     );
   }
 
   return (
-    <ResumePreview
-      resume={resume}
-      targetCompany={targetCompany}
-      printVariant={printVariant}
-      onPrintVariantChange={setPrintVariant}
-      onBackToEditor={() => setIsEditing(true)}
-      onShowCoverLetter={() => setViewMode('cover-letter')}
+    <ApplicationsView
+      applications={applications}
+      actions={actions}
+      stages={stages}
+      onAddStage={addStage}
+      onRemoveStage={(stage) => removeStage(stage, applications)}
+      loadMasterCv={() => ({ resume: repositories.resume.load(), coverLetter: repositories.coverLetter.load() })}
+      onEditMaster={() => setView({ name: 'master' })}
+      onEditApplication={(id) => setView({ name: 'application', id })}
     />
   );
 };

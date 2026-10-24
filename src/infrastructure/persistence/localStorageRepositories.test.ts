@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Repositories } from '../../application/ports/repositories';
+import { createApplication } from '../../domain/application/JobApplication';
+import { DEFAULT_STAGES } from '../../domain/application/stages';
 import { createCoverLetter } from '../../domain/coverLetter/CoverLetter';
 import { aResume } from '../../testing/resumeFixture';
 import { createLocalStorageRepositories } from './localStorageRepositories';
@@ -91,6 +93,40 @@ describe('localStorage repositories', () => {
       repositories.targetCompany.save(company);
 
       expect(repositories.targetCompany.load()).toBe(company);
+    });
+  });
+
+  describe('applications', () => {
+    it('loads no applications when nothing is stored', () => {
+      expect(repositories.applications.load()).toEqual([]);
+    });
+
+    it('restores the saved applications', () => {
+      const application = createApplication(
+        { company: crypto.randomUUID(), role: crypto.randomUUID(), postingUrl: '', appliedOn: '', notes: crypto.randomUUID() },
+        { resume: aResume(), coverLetter: createCoverLetter(now) },
+        crypto.randomUUID(),
+        now,
+        crypto.randomUUID(),
+      );
+
+      repositories.applications.save([application]);
+
+      expect(repositories.applications.load()).toEqual([application]);
+    });
+  });
+
+  describe('stages', () => {
+    it('loads the default stages when nothing is stored', () => {
+      expect(repositories.stages.load()).toEqual(DEFAULT_STAGES);
+    });
+
+    it('restores the saved stages', () => {
+      const stages = [crypto.randomUUID(), crypto.randomUUID()];
+
+      repositories.stages.save(stages);
+
+      expect(repositories.stages.load()).toEqual(stages);
     });
   });
 });

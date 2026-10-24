@@ -1,4 +1,13 @@
-import { CoverLetterRepository, Repositories, ResumeRepository, TargetCompanyRepository } from '../../application/ports/repositories';
+import {
+  ApplicationRepository,
+  CoverLetterRepository,
+  Repositories,
+  ResumeRepository,
+  StageRepository,
+  TargetCompanyRepository,
+} from '../../application/ports/repositories';
+import { JobApplication } from '../../domain/application/JobApplication';
+import { DEFAULT_STAGES } from '../../domain/application/stages';
 import { CoverLetter, createCoverLetter } from '../../domain/coverLetter/CoverLetter';
 import { Resume } from '../../domain/resume/Resume';
 
@@ -8,6 +17,8 @@ const STORAGE_KEY_LANGUAGES = 'resume-languages';
 const STORAGE_KEY_EDUCATION = 'resume-education';
 const STORAGE_KEY_COVER_LETTER = 'resume-cover-letter';
 const STORAGE_KEY_TARGET_COMPANY = 'resume-target-company';
+const STORAGE_KEY_APPLICATIONS = 'resume-applications';
+const STORAGE_KEY_STAGES = 'resume-stages';
 
 const readJson = <T>(storage: Storage, key: string, fallback: T): T => {
   const stored = storage.getItem(key);
@@ -67,6 +78,30 @@ class LocalStorageTargetCompanyRepository implements TargetCompanyRepository {
   }
 }
 
+class LocalStorageApplicationRepository implements ApplicationRepository {
+  constructor(private readonly storage: Storage) {}
+
+  load(): JobApplication[] {
+    return readJson(this.storage, STORAGE_KEY_APPLICATIONS, []);
+  }
+
+  save(applications: JobApplication[]): void {
+    this.storage.setItem(STORAGE_KEY_APPLICATIONS, JSON.stringify(applications));
+  }
+}
+
+class LocalStorageStageRepository implements StageRepository {
+  constructor(private readonly storage: Storage) {}
+
+  load(): string[] {
+    return readJson(this.storage, STORAGE_KEY_STAGES, DEFAULT_STAGES);
+  }
+
+  save(stages: string[]): void {
+    this.storage.setItem(STORAGE_KEY_STAGES, JSON.stringify(stages));
+  }
+}
+
 export const createLocalStorageRepositories = (
   storage: Storage,
   defaultResume: Resume,
@@ -75,4 +110,6 @@ export const createLocalStorageRepositories = (
   resume: new LocalStorageResumeRepository(storage, defaultResume),
   coverLetter: new LocalStorageCoverLetterRepository(storage, now),
   targetCompany: new LocalStorageTargetCompanyRepository(storage),
+  applications: new LocalStorageApplicationRepository(storage),
+  stages: new LocalStorageStageRepository(storage),
 });
