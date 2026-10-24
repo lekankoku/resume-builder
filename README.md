@@ -38,25 +38,121 @@ Schema changes live in `migrations/` as numbered SQL files (`0001_init.sql`, `00
 
 ## Deploy to Cloudflare
 
-One-time setup:
+The whole app runs as one Cloudflare Worker. The Worker serves the built frontend and the `/api` endpoints, and stores your data in a D1 database. Cloudflare Access puts a login in front of the site so only you can open it.
 
-1. Log in to Cloudflare:
-   `pnpm wrangler login`
-2. Create the D1 database:
-   `pnpm wrangler d1 create resume-builder`
-   Copy the printed `database_id` into `d1_databases[0].database_id` in `wrangler.jsonc`.
-3. Protect the site with Cloudflare Access. In the Zero Trust dashboard go to Access → Applications → Add an application → Self-hosted, enter the site's domain, and add a policy that allows only your email. For a `workers.dev` URL you can instead enable Cloudflare Access from the Worker's Settings → Domains & Routes.
-4. Copy the Access values into `vars` in `wrangler.jsonc`:
-   - `ACCESS_TEAM_DOMAIN`: your team domain, e.g. `<team>.cloudflareaccess.com` (shown in the Zero Trust settings)
-   - `ACCESS_AUD`: the application's Audience (AUD) tag (Access → Applications → your app → Overview)
+### Before you start
 
-   Until both are set, the API rejects every request.
+- A Cloudflare account. The free plan is enough.
+- Zero Trust turned on for that account. Open **Zero Trust** in the Cloudflare dashboard once; it asks you to pick a team name and a plan (choose Free).
+- Dependencies installed:
 
-Every deploy:
+  ```sh
+  pnpm install
+  ```
 
-1. Apply any new migrations:
-   `pnpm db:migrate:remote`
-2. Build and deploy:
-   `pnpm deploy`
+> Always deploy with `pnpm run deploy`. Plain `pnpm deploy` is a different, built-in pnpm command and won't deploy anything.
 
-After deploying, open the site, sign in through Access and check your data loads. `curl https://<your-site>/api/state` without signing in must not return data.
+### First deploy (one time only)
+
+**1. Log in to Cloudflare**
+
+```sh
+pnpm wrangler login
+```
+
+A browser window opens; approve the request.
+
+**2. Create the database**
+
+```sh
+pnpm wrangler d1 create resume-builder
+```
+
+The output includes a `database_id`. Open `wrangler.jsonc` and paste it in place of `REPLACE_WITH_DATABASE_ID`:
+
+```jsonc
+"d1_databases": [
+  {
+    "binding": "DB",
+    "database_name": "resume-builder",
+    "database_id": "<paste the database_id here>",
+    "migrations_dir": "migrations"
+  }
+],
+```
+
+**3. Create the tables**
+
+```sh
+pnpm db:migrate:remote
+```
+
+Type `y` if Wrangler asks you to confirm.
+
+**4. Deploy**
+
+```sh
+pnpm run deploy
+```
+
+At the end Wrangler prints your site's URL, for example `https://resume-builder.<your-subdomain>.workers.dev`. The page loads, but no data will load until you've done steps 5 to 7. That's expected.
+
+**5. Put a login in front of the site**
+
+In the Cloudflare dashboard, go to **Workers & Pages** → **resume-builder** → **Settings** → **Domains & Routes**.
+
+- To use the `workers.dev` URL: turn on **Cloudflare Access** for the `workers.dev` route.
+- To use your own domain instead: add it here first, then in **Zero Trust** go to **Access** → **Applications** → **Add an application** → **Self-hosted** and enter that domain.
+
+Then open the Access application that was created and edit its policy so it only allows your email address.
+
+**6. Tell the Worker about the login**
+
+Fill in the two values under `vars` in `wrangler.jsonc`:
+
+```jsonc
+"vars": {
+  "ACCESS_TEAM_DOMAIN": "<team>.cloudflareaccess.com",
+  "ACCESS_AUD": "<audience tag>"
+}
+```
+
+- `ACCESS_TEAM_DOMAIN`: your team name followed by `.cloudflareaccess.com`. It's shown in the Zero Trust settings.
+- `ACCESS_AUD`: in **Zero Trust** go to **Access** → **Applications**, open your application, and copy the **Application Audience (AUD) Tag**.
+
+The API rejects every request until both values are set.
+
+**7. Deploy again**
+
+```sh
+pnpm run deploy
+```
+
+**8. Check it works**
+
+- Open the site. You should be asked to log in. After logging in, your data loads.
+- From a terminal, without logging in:
+
+  ```sh
+  curl -i https://<your-site>/api/state
+  ```
+
+  This must **not** return your data. You should see either a redirect to the Cloudflare login page or `401 Unauthorized`.
+
+Commit the updated `wrangler.jsonc`. The database ID and the Access values aren't secrets.
+
+### Deploying updates
+
+Run these from the project folder each time:
+
+```sh
+pnpm typecheck && pnpm test   # make sure everything passes
+pnpm db:migrate:remote        # apply new migrations, if there are any
+pnpm run deploy               # build and deploy
+```
+
+### Troubleshooting
+
+- **The site loads but your data doesn't:** run `pnpm wrangler tail` and reload the page to see the Worker's logs. If the API returns `401`, `ACCESS_TEAM_DOMAIN` or `ACCESS_AUD` in `wrangler.jsonc` is empty or doesn't match your Access application. Fix it and run `pnpm run deploy` again.
+- **Errors about a missing table:** the migrations haven't run against production yet. Run `pnpm db:migrate:remote`.
+- **`pnpm deploy` printed an error instead of deploying:** use `pnpm run deploy` instead.
