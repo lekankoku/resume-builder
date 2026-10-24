@@ -1,15 +1,18 @@
 import {
   ApplicationRepository,
   CoverLetterRepository,
+  DraftRepository,
+  ProfileRepository,
   Repositories,
   ResumeRepository,
   StageRepository,
   TargetCompanyRepository,
 } from '../../application/ports/repositories';
+import { ApplicationDraft } from '../../domain/application/ApplicationDraft';
 import { JobApplication } from '../../domain/application/JobApplication';
 import { DEFAULT_STAGES } from '../../domain/application/stages';
 import { CoverLetter, createCoverLetter } from '../../domain/coverLetter/CoverLetter';
-import { Resume } from '../../domain/resume/Resume';
+import { Profile, Resume } from '../../domain/resume/Resume';
 
 const STORAGE_KEY_PERSONAL = 'resume-identity-attributes';
 const STORAGE_KEY_REFERENCES = 'resume-references';
@@ -19,6 +22,7 @@ const STORAGE_KEY_COVER_LETTER = 'resume-cover-letter';
 const STORAGE_KEY_TARGET_COMPANY = 'resume-target-company';
 const STORAGE_KEY_APPLICATIONS = 'resume-applications';
 const STORAGE_KEY_STAGES = 'resume-stages';
+const STORAGE_KEY_DRAFTS = 'resume-application-drafts';
 
 const readJson = <T>(storage: Storage, key: string, fallback: T): T => {
   const stored = storage.getItem(key);
@@ -102,6 +106,35 @@ class LocalStorageStageRepository implements StageRepository {
   }
 }
 
+class LocalStorageDraftRepository implements DraftRepository {
+  constructor(private readonly storage: Storage) {}
+
+  load(): ApplicationDraft[] {
+    return readJson(this.storage, STORAGE_KEY_DRAFTS, []);
+  }
+
+  save(drafts: ApplicationDraft[]): void {
+    this.storage.setItem(STORAGE_KEY_DRAFTS, JSON.stringify(drafts));
+  }
+}
+
+class LocalStorageProfileRepository implements ProfileRepository {
+  constructor(
+    private readonly storage: Storage,
+    private readonly defaults: Profile,
+  ) {}
+
+  load(): Profile {
+    return readJson(this.storage, STORAGE_KEY_PERSONAL, this.defaults);
+  }
+
+  save(profile: Profile): void {
+    this.storage.setItem(STORAGE_KEY_PERSONAL, JSON.stringify(profile));
+  }
+}
+
+const profileOf = ({ title, ...profile }: Resume['personal']): Profile => profile;
+
 export const createLocalStorageRepositories = (
   storage: Storage,
   defaultResume: Resume,
@@ -112,4 +145,6 @@ export const createLocalStorageRepositories = (
   targetCompany: new LocalStorageTargetCompanyRepository(storage),
   applications: new LocalStorageApplicationRepository(storage),
   stages: new LocalStorageStageRepository(storage),
+  drafts: new LocalStorageDraftRepository(storage),
+  profile: new LocalStorageProfileRepository(storage, profileOf(defaultResume.personal)),
 });

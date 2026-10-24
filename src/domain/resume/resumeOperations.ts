@@ -1,4 +1,4 @@
-import { BulletSection, ListSection, ListSectionItem, PersonalInfo, Resume } from './Resume';
+import { BulletSection, ListSection, ListSectionItem, PersonalInfo, Profile, Resume } from './Resume';
 
 const itemTemplates: { [S in ListSection]: () => ListSectionItem<S> } = {
   experiences: () => ({ role: '', company: '', location: '', period: '', bullets: [''] }),
@@ -45,6 +45,11 @@ export const updateBullet = (resume: Resume, section: BulletSection, index: numb
 
 export const removeBullet = (resume: Resume, section: BulletSection, index: number, bulletIndex: number): Resume =>
   withBullets(resume, section, index, (bullets) => bullets.filter((_, i) => i !== bulletIndex));
+
+export const applyProfile = (resume: Resume, profile: Profile): Resume => ({
+  ...resume,
+  personal: { ...profile, title: resume.personal.title },
+});
 
 export const mergeImportedResume = (current: Resume, imported: Resume): Resume => ({
   ...imported,

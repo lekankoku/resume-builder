@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { Check, ChevronLeft, ChevronRight, Copy, Eye, FilePlus, FileText, Plus, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Check, ChevronLeft, ChevronRight, Copy, Eye, FileJson, FilePlus, FileText, Plus, X } from 'lucide-react';
+import { resumeFromJson } from '../../application/importResumeFromJson';
 import { ResumeRepository } from '../../application/ports/repositories';
+import { ApplicationDraft, CvStart } from '../../domain/application/ApplicationDraft';
 import {
   ApplicationDetails,
   CvSource,
@@ -9,6 +11,8 @@ import {
   validateDetails,
 } from '../../domain/application/JobApplication';
 import { CoverLetter, updateCoverLetterField } from '../../domain/coverLetter/CoverLetter';
+import { Profile } from '../../domain/resume/Resume';
+import { applyProfile } from '../../domain/resume/resumeOperations';
 import { EditorSection, TABS } from '../editor/EditorView';
 import { useResume } from '../hooks/useResume';
 import CoverLetterPreview from '../preview/CoverLetterPreview';
@@ -18,21 +22,20 @@ import { buttonClass, DetailFields, inputClass, labelClass, primaryButtonClass }
 interface Props {
   applications: JobApplication[];
   stages: string[];
-  onCreate: (details: ApplicationDetails, cv: CvSource, stage: string) => void;
+  profile: Profile;
+  draft?: ApplicationDraft;
+  onSaveDraft: (draft: ApplicationDraft) => void;
+  onCreate: (details: ApplicationDetails, cv: CvSource, stage: string, draftId: string | null) => void;
   onCancel: () => void;
 }
 
-type CvStart = 'new' | 'reuse';
-
 const CV_SECTIONS = TABS.filter((tab) => tab.id !== 'json');
-const STEPS = [
+export const STEPS = [
   { id: 'details', label: 'Details' },
   { id: 'cv-start', label: 'CV' },
   ...CV_SECTIONS,
   { id: 'review', label: 'Review' },
 ];
-
-const draftRepository: ResumeRepository = { load: () => createBlankCv(new Date()).resume, save: () => {} };
 
 const emptyDetails = (): ApplicationDetails => ({
   company: '',
@@ -45,53 +48,94 @@ const emptyDetails = (): ApplicationDetails => ({
 const applicationLabel = (application: JobApplication) =>
   [application.company, application.role].filter(Boolean).join(' — ');
 
-const NewApplicationWizard: React.FC<Props> = ({ applications, stages, onCreate, onCancel }) => {
-  const [step, setStep] = useState(0);
-  const [details, setDetails] = useState(emptyDetails);
-  const [stage, setStage] = useState(stages[0] ?? '');
-  const [cvStart, setCvStart] = useState<CvStart>('new');
-  const [sourceId, setSourceId] = useState(applications[0]?.id ?? '');
-  const [draftKey, setDraftKey] = useState<string | null>(null);
-  const { resume, setResume, actions } = useResume(draftRepository);
-  const [coverLetter, setCoverLetter] = useState<CoverLetter>(() => createBlankCv(new Date()).coverLetter);
-  const [verifiedSections, setVerifiedSections] = useState<string[]>([]);
+const jsonErrorOf = (json: string): string | null => {
+  try {
+    resumeFromJson(json);
+    return null;
+  } catch (e) {
+    return (e as Error).message;
+  }
+};
+
+const NewApplicationWizard: React.FC<Props> = ({ applications, stages, profile, draft, onSaveDraft, onCreate, onCancel }) => {
+  const [draftId, setDraftId] = useState(draft?.id ?? null);
+  const [step, setStep] = useState(() => Math.max(0, STEPS.findIndex((s) => s.id === draft?.stepId)));
+  const [details, setDetails] = useState(() => draft?.details ?? emptyDetails());
+  const [stage, setStage] = useState(draft?.stage ?? stages[0] ?? '');
+  const [cvStart, setCvStart] = useState<CvStart>(draft?.cvStart ?? 'new');
+  const [sourceId, setSourceId] = useState(draft?.sourceId ?? applications[0]?.id ?? '');
+  const [jsonInput, setJsonInput] = useState(draft?.jsonInput ?? '');
+  const [cvKey, setCvKey] = useState<string | null>(draft?.cvKey ?? null);
+  const [resumeRepository] = useState<ResumeRepository>(() => ({
+    load: () => draft?.resume ?? createBlankCv(new Date()).resume,
+    save: () => {},
+  }));
+  const { resume, setResume, actions } = useResume(resumeRepository);
+  const [coverLetter, setCoverLetter] = useState<CoverLetter>(() => draft?.coverLetter ?? createBlankCv(new Date()).coverLetter);
+  const [verifiedSections, setVerifiedSections] = useState<string[]>(draft?.verifiedSections ?? []);
   const [reviewChecks, setReviewChecks] = useState<string[]>([]);
   const [viewed, setViewed] = useState({ resume: false, coverLetter: false });
   const [previewing, setPreviewing] = useState<'resume' | 'cover-letter' | null>(null);
   const [printVariant, setPrintVariant] = useState<PrintVariant>('continuous');
 
+  const displayedResume = applyProfile(resume, profile);
   const current = STEPS[step];
   const sourceApplication = applications.find((a) => a.id === sourceId);
-  const cvLabel = cvStart === 'reuse' && sourceApplication ? `Copy of ${applicationLabel(sourceApplication)}` : 'New CV';
+  const cvLabel =
+    cvStart === 'reuse' && sourceApplication
+      ? `Copy of ${applicationLabel(sourceApplication)}`
+      : cvStart === 'json'
+        ? 'Imported from JSON'
+        : 'New CV';
+  const jsonError = cvStart === 'json' && jsonInput.trim() ? jsonErrorOf(jsonInput) : null;
+  const cvChosen =
+    cvStart === 'new' || (cvStart === 'reuse' && !!sourceApplication) || (cvStart === 'json' && !!jsonInput.trim() && !jsonError);
   const problems = validateDetails(details);
   const isCvSection = CV_SECTIONS.some((section) => section.id === current.id);
+  const chosenKey = cvStart === 'reuse' ? sourceId : cvStart === 'json' ? `json:${jsonInput}` : 'new';
 
-  const canAdvance =
-    (current.id === 'details' && problems.length === 0) ||
-    (current.id === 'cv-start' && stage !== '' && (cvStart === 'new' || !!sourceApplication)) ||
-    (isCvSection && verifiedSections.includes(current.id));
+  const isDone = (id: string) =>
+    (id === 'details' && problems.length === 0) ||
+    (id === 'cv-start' && stage !== '' && cvChosen) ||
+    (chosenKey === cvKey && verifiedSections.includes(id));
+  const canReach = (index: number) => STEPS.slice(0, index).every((s) => isDone(s.id));
+  const canAdvance = isDone(current.id);
 
   const startDraft = () => {
-    const key = cvStart === 'reuse' ? sourceId : 'new';
-    if (key === draftKey) return;
+    if (chosenKey === cvKey) return;
     const cv = cvStart === 'reuse' && sourceApplication ? sourceApplication : createBlankCv(new Date());
-    setResume(structuredClone(cv.resume));
+    setResume(cvStart === 'json' ? resumeFromJson(jsonInput) : structuredClone(cv.resume));
     setCoverLetter(structuredClone(cv.coverLetter));
     setVerifiedSections([]);
-    setDraftKey(key);
+    setCvKey(chosenKey);
   };
 
-  const next = () => {
-    if (current.id === 'cv-start') startDraft();
-    setStep((s) => s + 1);
-  };
+  useEffect(() => {
+    if (!draftId) return;
+    onSaveDraft({
+      id: draftId,
+      updatedAt: new Date().toISOString(),
+      stepId: STEPS[step].id,
+      details,
+      stage,
+      cvStart,
+      sourceId,
+      jsonInput,
+      cvKey,
+      resume,
+      coverLetter,
+      verifiedSections,
+    });
+  }, [draftId, step, details, stage, cvStart, sourceId, jsonInput, cvKey, resume, coverLetter, verifiedSections]);
 
-  const back = () => {
+  const goTo = (index: number) => {
+    if (index > 0 && !draftId) setDraftId(crypto.randomUUID());
+    if (index > STEPS.findIndex((s) => s.id === 'cv-start')) startDraft();
     if (current.id === 'review') {
       setReviewChecks([]);
       setViewed({ resume: false, coverLetter: false });
     }
-    setStep((s) => s - 1);
+    setStep(index);
   };
 
   const toggle = (list: string[], item: string, on: boolean) => (on ? [...list, item] : list.filter((i) => i !== item));
@@ -104,7 +148,7 @@ const NewApplicationWizard: React.FC<Props> = ({ applications, stages, onCreate,
   if (previewing === 'resume') {
     return (
       <ResumePreview
-        resume={resume}
+        resume={displayedResume}
         targetCompany={details.company}
         printVariant={printVariant}
         onPrintVariantChange={setPrintVariant}
@@ -117,7 +161,7 @@ const NewApplicationWizard: React.FC<Props> = ({ applications, stages, onCreate,
   if (previewing === 'cover-letter') {
     return (
       <CoverLetterPreview
-        resume={resume}
+        resume={displayedResume}
         coverLetter={coverLetter}
         targetCompany={details.company}
         onBackToEditor={() => setPreviewing(null)}
@@ -136,20 +180,29 @@ const NewApplicationWizard: React.FC<Props> = ({ applications, stages, onCreate,
           </p>
         </div>
         <button onClick={onCancel} className={buttonClass}>
-          Cancel <X size={14} />
+          {draftId ? 'Save & exit' : 'Cancel'} <X size={14} />
         </button>
       </header>
 
       <ol className="max-w-6xl w-full mb-6 flex flex-wrap gap-2">
         {STEPS.map((s, index) => (
-          <li
-            key={s.id}
-            aria-current={index === step ? 'step' : undefined}
-            className={`text-[10px] font-mono uppercase tracking-widest px-3 py-2 rounded-lg ${
-              index === step ? 'bg-accent text-white' : index < step ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 border border-slate-200'
-            }`}
-          >
-            {s.label}
+          <li key={s.id}>
+            <button
+              onClick={() => goTo(index)}
+              disabled={index === step || !canReach(index)}
+              aria-current={index === step ? 'step' : undefined}
+              className={`text-[10px] font-mono uppercase tracking-widest px-3 py-2 rounded-lg transition-all disabled:cursor-default ${
+                index === step
+                  ? 'bg-accent text-white'
+                  : isDone(s.id)
+                    ? 'bg-slate-900 text-white hover:bg-black'
+                    : canReach(index)
+                      ? 'bg-white text-slate-900 border border-slate-200 hover:bg-slate-50'
+                      : 'bg-white text-slate-300 border border-slate-200'
+              }`}
+            >
+              {s.label}
+            </button>
           </li>
         ))}
       </ol>
@@ -178,7 +231,7 @@ const NewApplicationWizard: React.FC<Props> = ({ applications, stages, onCreate,
                 ))}
               </select>
             </div>
-            <fieldset className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <fieldset className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <legend className={`${labelClass} mb-2`}>CV for this application</legend>
               <CvStartOption
                 checked={cvStart === 'new'}
@@ -212,8 +265,29 @@ const NewApplicationWizard: React.FC<Props> = ({ applications, stages, onCreate,
                   </select>
                 )}
               </CvStartOption>
+              <CvStartOption
+                checked={cvStart === 'json'}
+                onSelect={() => setCvStart('json')}
+                icon={<FileJson size={18} />}
+                title="Import CV from JSON"
+                description="Paste CV JSON to fill the sections, then check each one. The cover letter starts empty."
+              />
             </fieldset>
-            {draftKey !== null && (
+            {cvStart === 'json' && (
+              <div className="space-y-2">
+                <textarea
+                  aria-label="CV JSON"
+                  className="w-full p-4 bg-slate-50 text-slate-800 font-mono text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent outline-none min-h-[300px]"
+                  value={jsonInput}
+                  onChange={(e) => setJsonInput(e.target.value)}
+                  spellCheck={false}
+                />
+                {jsonError && (
+                  <div className="text-red-500 text-xs font-mono bg-red-50 p-3 rounded-lg border border-red-100">{jsonError}</div>
+                )}
+              </div>
+            )}
+            {cvKey !== null && (
               <p className="text-xs text-slate-500">Choosing a different CV discards the edits and checks you made in the CV steps.</p>
             )}
           </div>
@@ -223,7 +297,7 @@ const NewApplicationWizard: React.FC<Props> = ({ applications, stages, onCreate,
           <>
             <EditorSection
               section={current.id}
-              resume={resume}
+              resume={displayedResume}
               actions={actions}
               coverLetter={coverLetter}
               onCoverLetterFieldChange={(field, value) => setCoverLetter((letter) => updateCoverLetterField(letter, field, value))}
@@ -257,16 +331,16 @@ const NewApplicationWizard: React.FC<Props> = ({ applications, stages, onCreate,
             onCheck={(label, on) => setReviewChecks((c) => toggle(c, label, on))}
             viewed={viewed}
             onPreview={preview}
-            onCreate={() => onCreate(details, { resume, coverLetter }, stage)}
+            onCreate={() => onCreate(details, { resume, coverLetter }, stage, draftId)}
           />
         )}
 
         <div className="flex justify-between border-t pt-6">
-          <button onClick={back} disabled={step === 0} className={`${buttonClass} disabled:opacity-40`}>
+          <button onClick={() => goTo(step - 1)} disabled={step === 0} className={`${buttonClass} disabled:opacity-40`}>
             <ChevronLeft size={14} /> Back
           </button>
           {current.id !== 'review' && (
-            <button onClick={next} disabled={!canAdvance} className={`${primaryButtonClass} disabled:opacity-40`}>
+            <button onClick={() => goTo(step + 1)} disabled={!canAdvance} className={`${primaryButtonClass} disabled:opacity-40`}>
               Next <ChevronRight size={14} />
             </button>
           )}

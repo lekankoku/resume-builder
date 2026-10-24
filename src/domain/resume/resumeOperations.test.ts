@@ -3,6 +3,7 @@ import { aResume } from '../../testing/resumeFixture';
 import {
   addBullet,
   addItem,
+  applyProfile,
   mergeImportedResume,
   moveItem,
   removeBullet,
@@ -125,6 +126,18 @@ describe('resumeOperations', () => {
 
       expect(addBullet(resume, 'projects', 0).projects[0].bullets).toHaveLength(2);
       expect(addBullet(resume, 'abilities', 0).abilities[0].bullets).toHaveLength(2);
+    });
+  });
+
+  describe('applyProfile', () => {
+    it('replaces the personal details with the profile but keeps the application title and other sections', () => {
+      const resume = aResume();
+      const { title, ...profile } = aResume().personal;
+
+      const result = applyProfile(resume, profile);
+
+      expect(result.personal).toEqual({ ...profile, title: resume.personal.title });
+      expect(result.experiences).toEqual(resume.experiences);
     });
   });
 

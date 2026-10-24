@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Repositories } from '../../application/ports/repositories';
+import { ApplicationDraft } from '../../domain/application/ApplicationDraft';
 import { createApplication } from '../../domain/application/JobApplication';
 import { DEFAULT_STAGES } from '../../domain/application/stages';
 import { createCoverLetter } from '../../domain/coverLetter/CoverLetter';
@@ -127,6 +128,56 @@ describe('localStorage repositories', () => {
       repositories.stages.save(stages);
 
       expect(repositories.stages.load()).toEqual(stages);
+    });
+  });
+
+  describe('profile', () => {
+    it('loads the default personal details without the title when nothing is stored', () => {
+      const { title, ...defaultProfile } = defaults.personal;
+
+      expect(repositories.profile.load()).toEqual(defaultProfile);
+    });
+
+    it('restores the saved profile', () => {
+      const { title, ...profile } = aResume().personal;
+
+      repositories.profile.save(profile);
+
+      expect(repositories.profile.load()).toEqual(profile);
+    });
+
+    it('keeps identity attributes stored by earlier versions', () => {
+      const { title, ...stored } = aResume().personal;
+      storage.setItem('resume-identity-attributes', JSON.stringify(stored));
+
+      expect(repositories.profile.load()).toEqual(stored);
+    });
+  });
+
+  describe('drafts', () => {
+    it('loads no drafts when nothing is stored', () => {
+      expect(repositories.drafts.load()).toEqual([]);
+    });
+
+    it('restores the saved drafts', () => {
+      const draft: ApplicationDraft = {
+        id: crypto.randomUUID(),
+        updatedAt: now.toISOString(),
+        stepId: crypto.randomUUID(),
+        details: { company: crypto.randomUUID(), role: crypto.randomUUID(), postingUrl: '', appliedOn: '', notes: '' },
+        stage: crypto.randomUUID(),
+        cvStart: 'json',
+        sourceId: '',
+        jsonInput: crypto.randomUUID(),
+        cvKey: crypto.randomUUID(),
+        resume: aResume(),
+        coverLetter: createCoverLetter(now),
+        verifiedSections: [crypto.randomUUID()],
+      };
+
+      repositories.drafts.save([draft]);
+
+      expect(repositories.drafts.load()).toEqual([draft]);
     });
   });
 });

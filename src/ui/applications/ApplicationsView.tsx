@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ClipboardList, Eye, History, Pencil, Plus, RotateCcw, Save, Trash2 } from 'lucide-react';
 import { ApplicationDetails, CvVersion, isWebUrl, JobApplication } from '../../domain/application/JobApplication';
 import { isStageInUse } from '../../domain/application/stages';
+import { Profile } from '../../domain/resume/Resume';
+import { applyProfile } from '../../domain/resume/resumeOperations';
 import { ApplicationActions } from '../hooks/useApplications';
 import CoverLetterPreview from '../preview/CoverLetterPreview';
 import ResumePreview, { PrintVariant } from '../preview/ResumePreview';
@@ -10,6 +12,7 @@ interface Props {
   applications: JobApplication[];
   actions: ApplicationActions;
   stages: string[];
+  profile: Profile;
   initialSelectedId?: string;
   onAddStage: (name: string) => void;
   onRemoveStage: (name: string) => void;
@@ -31,6 +34,7 @@ const ApplicationsView: React.FC<Props> = ({
   applications,
   actions,
   stages,
+  profile,
   initialSelectedId,
   onAddStage,
   onRemoveStage,
@@ -45,7 +49,7 @@ const ApplicationsView: React.FC<Props> = ({
   const visible = stageFilter ? applications.filter((a) => a.stage === stageFilter) : applications;
 
   if (previewing) {
-    return <VersionPreview {...previewing} onBack={() => setPreviewing(null)} />;
+    return <VersionPreview {...previewing} profile={profile} onBack={() => setPreviewing(null)} />;
   }
 
   return (
@@ -310,17 +314,19 @@ const StageManager: React.FC<{
   );
 };
 
-const VersionPreview: React.FC<{ application: JobApplication; version: CvVersion; onBack: () => void }> = ({
+const VersionPreview: React.FC<{ application: JobApplication; version: CvVersion; profile: Profile; onBack: () => void }> = ({
   application,
   version,
+  profile,
   onBack,
 }) => {
+  const resume = applyProfile(version.resume, profile);
   const [mode, setMode] = useState<'resume' | 'cover-letter'>('resume');
   const [printVariant, setPrintVariant] = useState<PrintVariant>('continuous');
 
   return mode === 'resume' ? (
     <ResumePreview
-      resume={version.resume}
+      resume={resume}
       targetCompany={application.company}
       printVariant={printVariant}
       onPrintVariantChange={setPrintVariant}
@@ -329,7 +335,7 @@ const VersionPreview: React.FC<{ application: JobApplication; version: CvVersion
     />
   ) : (
     <CoverLetterPreview
-      resume={version.resume}
+      resume={resume}
       coverLetter={version.coverLetter}
       targetCompany={application.company}
       onBackToEditor={onBack}

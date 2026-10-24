@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { CoverLetterRepository, ResumeRepository, TargetCompanyRepository } from '../application/ports/repositories';
 import { coverLetterDocumentTitle, resumeDocumentTitle } from '../domain/resume/documentTitle';
+import { Profile } from '../domain/resume/Resume';
+import { applyProfile } from '../domain/resume/resumeOperations';
 import EditorView from './editor/EditorView';
 import { useCoverLetter } from './hooks/useCoverLetter';
 import { useJsonSource } from './hooks/useJsonSource';
@@ -15,15 +17,17 @@ interface Props {
     coverLetter: CoverLetterRepository;
     targetCompany: TargetCompanyRepository;
   };
+  profile: Profile;
   contextLabel: string;
   onOpenApplications: () => void;
 }
 
-const DocumentWorkspace: React.FC<Props> = ({ repositories, contextLabel, onOpenApplications }) => {
-  const { resume, setResume, actions } = useResume(repositories.resume);
+const DocumentWorkspace: React.FC<Props> = ({ repositories, profile, contextLabel, onOpenApplications }) => {
+  const { resume: draft, setResume, actions } = useResume(repositories.resume);
+  const resume = applyProfile(draft, profile);
   const { coverLetter, updateField: updateCoverLetterField } = useCoverLetter(repositories.coverLetter);
   const { targetCompany, setTargetCompany } = useTargetCompany(repositories.targetCompany);
-  const { jsonInput, setJsonInput, jsonError, applyJson } = useJsonSource(resume, setResume);
+  const { jsonInput, setJsonInput, jsonError, applyJson } = useJsonSource(draft, setResume);
 
   const [isEditing, setIsEditing] = useState(true);
   const [activeTab, setActiveTab] = useState('personal');

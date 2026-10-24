@@ -1,7 +1,7 @@
 import React from 'react';
 import { Briefcase } from 'lucide-react';
 import { coverLetterDocumentTitle, resumeDocumentTitle } from '../../../domain/resume/documentTitle';
-import { PersonalInfo, Resume } from '../../../domain/resume/Resume';
+import { Resume } from '../../../domain/resume/Resume';
 import { ResumeActions } from '../../hooks/useResume';
 
 interface Props {
@@ -38,18 +38,16 @@ const IdentityTab: React.FC<Props> = ({ resume, actions, targetCompany, onTarget
       )}
     </div>
 
-    <div className="grid grid-cols-2 gap-6">
-      {(Object.keys(resume.personal) as (keyof PersonalInfo)[]).map((key) => (
-        <div key={key} className="space-y-1">
-          <label htmlFor={`personal-${key}`} className="text-[10px] font-mono font-black uppercase text-slate-400">{key}</label>
-          <input
-            id={`personal-${key}`}
-            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
-            value={resume.personal[key]}
-            onChange={(e) => actions.updatePersonal(key, e.target.value)}
-          />
-        </div>
-      ))}
+    <div className="space-y-1">
+      <label htmlFor="personal-title" className="text-[10px] font-mono font-black uppercase text-slate-400">Title</label>
+      <input
+        id="personal-title"
+        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+        value={resume.personal.title}
+        onChange={(e) => actions.updatePersonal('title', e.target.value)}
+        placeholder="e.g., Senior Backend Engineer"
+      />
+      <p className="text-xs text-slate-500">Your name and contact details are set once in Settings.</p>
     </div>
   </div>
 );

@@ -1,12 +1,18 @@
 import React from 'react';
-import { Briefcase, ClipboardList, Pencil, Plus } from 'lucide-react';
+import { Briefcase, ClipboardList, Pencil, Play, Plus, Settings2, Trash2 } from 'lucide-react';
+import { ApplicationDraft } from '../../domain/application/ApplicationDraft';
 import { isWebUrl, JobApplication } from '../../domain/application/JobApplication';
 import { isActiveApplication } from '../../domain/application/stages';
 import { buttonClass, primaryButtonClass } from './ApplicationsView';
+import { STEPS } from './NewApplicationWizard';
 
 interface Props {
   applications: JobApplication[];
+  drafts: ApplicationDraft[];
+  onOpenDraft: (id: string) => void;
+  onDiscardDraft: (id: string) => void;
   onNewApplication: () => void;
+  onOpenSettings: () => void;
   onOpenApplication: (id: string) => void;
   onEditApplicationCv: (id: string) => void;
   onOpenAllApplications: () => void;
@@ -14,7 +20,11 @@ interface Props {
 
 const HomeView: React.FC<Props> = ({
   applications,
+  drafts,
+  onOpenDraft,
+  onDiscardDraft,
   onNewApplication,
+  onOpenSettings,
   onOpenApplication,
   onEditApplicationCv,
   onOpenAllApplications,
@@ -36,6 +46,9 @@ const HomeView: React.FC<Props> = ({
           </div>
         </div>
         <div className="flex gap-3">
+          <button onClick={onOpenSettings} className={buttonClass}>
+            Settings <Settings2 size={14} />
+          </button>
           <button onClick={onOpenAllApplications} className={buttonClass}>
             All Applications <ClipboardList size={14} />
           </button>
@@ -45,7 +58,40 @@ const HomeView: React.FC<Props> = ({
         </div>
       </header>
 
-      <main className="max-w-6xl w-full">
+      <main className="max-w-6xl w-full space-y-8">
+        {drafts.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Drafts</h2>
+            <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {drafts.map((draft) => (
+                <li key={draft.id} className="bg-white rounded-2xl shadow-sm border border-dashed border-slate-300 p-6 space-y-4">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">{draft.details.company || 'Untitled company'}</h3>
+                    <p className="text-sm text-slate-600">{draft.details.role}</p>
+                  </div>
+                  <p className="text-xs font-mono text-slate-500">
+                    At {STEPS.find((s) => s.id === draft.stepId)?.label ?? draft.stepId} · saved {new Date(draft.updatedAt).toLocaleString()}
+                  </p>
+                  <div className="flex gap-2">
+                    <button onClick={() => onOpenDraft(draft.id)} className={primaryButtonClass}>
+                      Continue <Play size={14} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Discard this draft? Its details and CV edits will be lost.')) {
+                          onDiscardDraft(draft.id);
+                        }
+                      }}
+                      className={buttonClass}
+                    >
+                      Discard <Trash2 size={14} />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         {active.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center space-y-4">
             <p className="text-sm text-slate-400">No active applications.</p>

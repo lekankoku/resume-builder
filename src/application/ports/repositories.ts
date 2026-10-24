@@ -1,6 +1,7 @@
+import { ApplicationDraft } from '../../domain/application/ApplicationDraft';
 import { JobApplication } from '../../domain/application/JobApplication';
 import { CoverLetter } from '../../domain/coverLetter/CoverLetter';
-import { Resume } from '../../domain/resume/Resume';
+import { Profile, Resume } from '../../domain/resume/Resume';
 
 export interface ResumeRepository {
   load(): Resume;
@@ -27,10 +28,22 @@ export interface StageRepository {
   save(stages: string[]): void;
 }
 
+export interface DraftRepository {
+  load(): ApplicationDraft[];
+  save(drafts: ApplicationDraft[]): void;
+}
+
+export interface ProfileRepository {
+  load(): Profile;
+  save(profile: Profile): void;
+}
+
 export interface Repositories {
   resume: ResumeRepository;
   coverLetter: CoverLetterRepository;
   targetCompany: TargetCompanyRepository;
   applications: ApplicationRepository;
   stages: StageRepository;
+  drafts: DraftRepository;
+  profile: ProfileRepository;
 }
