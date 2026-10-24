@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useSyncExternalStore } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router';
-import { Repositories } from '../application/ports/repositories';
+import { Repositories, SaveStatusSource } from '../application/ports/repositories';
 import { ApplicationDraft } from '../domain/application/ApplicationDraft';
 import { JobApplication } from '../domain/application/JobApplication';
 import { CoverLetter } from '../domain/coverLetter/CoverLetter';
@@ -17,9 +17,12 @@ import SettingsView from './settings/SettingsView';
 
 interface AppProps {
   repositories: Repositories;
+  saveStatus: SaveStatusSource;
+  onRetrySave: () => void;
 }
 
-const App: React.FC<AppProps> = ({ repositories }) => {
+const App: React.FC<AppProps> = ({ repositories, saveStatus, onRetrySave }) => {
+  const status = useSyncExternalStore(saveStatus.subscribe, saveStatus.get);
   const { applications, actions } = useApplications(repositories.applications);
   const { stages, add: addStage, remove: removeStage } = useStages(repositories.stages);
   const { drafts, save: saveDraft, remove: removeDraft } = useDrafts(repositories.drafts);
@@ -48,61 +51,71 @@ const App: React.FC<AppProps> = ({ repositories }) => {
   );
 
   return (
-    <Routes>
-      <Route
-        path="/"
-        element={
-          <HomeView
-            applications={applications}
-            drafts={drafts}
-            onOpenDraft={(id) => navigate(`/drafts/${id}`)}
-            onDiscardDraft={removeDraft}
-            onNewApplication={() => navigate('/applications/new')}
-            onOpenSettings={() => navigate('/settings')}
-            onOpenApplication={openApplication}
-            onEditApplicationCv={editApplicationCv}
-            onOpenAllApplications={openApplications}
-          />
-        }
-      />
-      <Route
-        path="/applications"
-        element={
-          <ApplicationsView
-            applications={applications}
-            actions={actions}
-            stages={stages}
-            profile={profile}
-            initialSelectedId={location.state?.selectedId}
-            onAddStage={addStage}
-            onRemoveStage={(stage) => removeStage(stage, applications)}
-            onNewApplication={() => navigate('/applications/new')}
-            onEditApplication={editApplicationCv}
-          />
-        }
-      />
-      <Route
-        path="/applications/new"
-        element={wizard()}
-      />
-      <Route
-        path="/settings"
-        element={<SettingsView profile={profile} onChange={updateProfileField} onBack={() => navigate('/')} />}
-      />
-      <Route path="/drafts/:id" element={<DraftRoute drafts={drafts} wizard={wizard} />} />
-      <Route
-        path="/applications/:id/cv"
-        element={
-          <ApplicationWorkspace
-            applications={applications}
-            actions={actions}
-            profile={profile}
-            onOpenApplications={openApplications}
-          />
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      {status === 'error' && (
+        <div role="alert" className="no-print fixed bottom-6 right-6 z-[100] flex items-center gap-4 px-5 py-3 bg-red-600 text-white rounded-xl shadow-lg text-sm">
+          Couldn't save to the server.
+          <button onClick={onRetrySave} className="px-3 py-1 bg-white text-red-600 font-bold rounded-lg text-[10px] uppercase tracking-widest">
+            Retry
+          </button>
+        </div>
+      )}
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <HomeView
+              applications={applications}
+              drafts={drafts}
+              onOpenDraft={(id) => navigate(`/drafts/${id}`)}
+              onDiscardDraft={removeDraft}
+              onNewApplication={() => navigate('/applications/new')}
+              onOpenSettings={() => navigate('/settings')}
+              onOpenApplication={openApplication}
+              onEditApplicationCv={editApplicationCv}
+              onOpenAllApplications={openApplications}
+            />
+          }
+        />
+        <Route
+          path="/applications"
+          element={
+            <ApplicationsView
+              applications={applications}
+              actions={actions}
+              stages={stages}
+              profile={profile}
+              initialSelectedId={location.state?.selectedId}
+              onAddStage={addStage}
+              onRemoveStage={(stage) => removeStage(stage, applications)}
+              onNewApplication={() => navigate('/applications/new')}
+              onEditApplication={editApplicationCv}
+            />
+          }
+        />
+        <Route
+          path="/applications/new"
+          element={wizard()}
+        />
+        <Route
+          path="/settings"
+          element={<SettingsView profile={profile} onChange={updateProfileField} onBack={() => navigate('/')} />}
+        />
+        <Route path="/drafts/:id" element={<DraftRoute drafts={drafts} wizard={wizard} />} />
+        <Route
+          path="/applications/:id/cv"
+          element={
+            <ApplicationWorkspace
+              applications={applications}
+              actions={actions}
+              profile={profile}
+              onOpenApplications={openApplications}
+            />
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 };
 

@@ -39,11 +39,29 @@ export interface ProfileRepository {
 }
 
 export interface Repositories {
-  resume: ResumeRepository;
-  coverLetter: CoverLetterRepository;
-  targetCompany: TargetCompanyRepository;
   applications: ApplicationRepository;
   stages: StageRepository;
   drafts: DraftRepository;
   profile: ProfileRepository;
+}
+
+export interface RemoteState {
+  applications?: JobApplication[];
+  drafts?: ApplicationDraft[];
+  stages?: string[];
+  profile?: Profile;
+}
+
+export type StateKey = keyof RemoteState;
+
+export interface StateClient {
+  load(): Promise<RemoteState>;
+  save<K extends StateKey>(key: K, value: RemoteState[K], options?: { keepalive?: boolean }): Promise<void>;
+}
+
+export type SaveStatus = 'saved' | 'saving' | 'error';
+
+export interface SaveStatusSource {
+  get(): SaveStatus;
+  subscribe(listener: () => void): () => void;
 }
