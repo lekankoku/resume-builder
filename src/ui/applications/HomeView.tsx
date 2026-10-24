@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pencil, Play, Plus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router';
-import { ApplicationDraft } from '../../domain/application/ApplicationDraft';
+import { ApplicationDraft, draftStep } from '../../domain/application/ApplicationDraft';
 import { isWebUrl, JobApplication } from '../../domain/application/JobApplication';
 import { isActiveApplication } from '../../domain/application/stages';
 import PageHeader from '../shell/PageHeader';
@@ -31,7 +31,7 @@ const HomeView: React.FC<Props> = ({ applications, drafts, onDiscardDraft }) => 
                   <h3 className="text-base font-semibold text-slate-900">{draft.details.company || 'Untitled company'}</h3>
                   <p className="text-sm text-slate-600">{draft.details.role}</p>
                   <p className="text-xs text-slate-500 mt-2">
-                    Draft at {STEPS.find((s) => s.id === draft.stepId)?.label ?? draft.stepId} · saved{' '}
+                    Draft at {STEPS.find((s) => s.id === draftStep(draft.stepId))?.label} · saved{' '}
                     {new Date(draft.updatedAt).toLocaleString()}
                   </p>
                 </div>

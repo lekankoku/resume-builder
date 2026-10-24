@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { aResume } from '../../testing/resumeFixture';
 import { createCoverLetter } from '../coverLetter/CoverLetter';
-import { ApplicationDraft, upsertDraft } from './ApplicationDraft';
+import { ApplicationDraft, draftStep, isWizardStep, upsertDraft, WIZARD_STEPS } from './ApplicationDraft';
 
 const uuid = () => crypto.randomUUID();
 
@@ -34,6 +34,27 @@ describe('ApplicationDraft', () => {
       const updated = aDraft(stored.id);
 
       expect(upsertDraft([first, stored, last], updated)).toEqual([first, updated, last]);
+    });
+  });
+
+  describe('draftStep', () => {
+    it.each(WIZARD_STEPS)('keeps the current step %s', (step) => {
+      expect(draftStep(step)).toBe(step);
+    });
+
+    it('maps the old CV choice step to the CV step', () => {
+      expect(draftStep('cv-start')).toBe('cv');
+    });
+
+    it.each(['personal', 'experiences', 'coverLetter', uuid()])('maps the old or unknown step %s to the review step', (step) => {
+      expect(draftStep(step)).toBe('review');
+    });
+  });
+
+  describe('isWizardStep', () => {
+    it('only accepts the wizard steps', () => {
+      expect(WIZARD_STEPS.every(isWizardStep)).toBe(true);
+      expect(isWizardStep(uuid())).toBe(false);
     });
   });
 });

@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { startTransition } from 'react';
 import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router';
 import { Repositories, SaveStatusSource } from '../application/ports/repositories';
-import { ApplicationDraft } from '../domain/application/ApplicationDraft';
+import { ApplicationDraft, draftStep, isWizardStep, WizardStep } from '../domain/application/ApplicationDraft';
 import ApplicationPage, { OverviewTab, VersionsTab } from './applications/ApplicationPage';
 import ApplicationsView from './applications/ApplicationsView';
 import HomeView from './applications/HomeView';
@@ -28,17 +28,22 @@ const App: React.FC<AppProps> = ({ repositories, saveStatus, onRetrySave }) => {
   const { profile, updateField: updateProfileField } = useProfile(repositories.profile);
   const navigate = useNavigate();
 
-  const wizard = (draft?: ApplicationDraft) => (
+  const wizard = (stepId: WizardStep, draft?: ApplicationDraft) => (
     <NewApplicationWizard
       key={draft?.id ?? 'new'}
       applications={applications}
       stages={stages}
       profile={profile}
       draft={draft}
+      stepId={stepId}
+      onStepChange={(draftId, step) => navigate(`/drafts/${draftId}/${step}`, { replace: !draft })}
       onSaveDraft={saveDraft}
       onCreate={(details, source, stage, draftId) => {
-        if (draftId) removeDraft(draftId);
-        navigate(`/applications/${actions.create(details, source, stage)}`);
+        const id = actions.create(details, source, stage);
+        startTransition(() => {
+          navigate(`/applications/${id}`);
+          if (draftId) removeDraft(draftId);
+        });
       }}
       onCancel={() => navigate('/')}
     />
@@ -49,8 +54,9 @@ const App: React.FC<AppProps> = ({ repositories, saveStatus, onRetrySave }) => {
       <Route element={<AppShell saveStatus={saveStatus} onRetrySave={onRetrySave} />}>
         <Route index element={<HomeView applications={applications} drafts={drafts} onDiscardDraft={removeDraft} />} />
         <Route path="applications" element={<ApplicationsView applications={applications} stages={stages} />} />
-        <Route path="applications/new" element={wizard()} />
+        <Route path="applications/new" element={wizard('details')} />
         <Route path="drafts/:id" element={<DraftRoute drafts={drafts} wizard={wizard} />} />
+        <Route path="drafts/:id/:step" element={<DraftRoute drafts={drafts} wizard={wizard} />} />
         <Route
           path="applications/:id"
           element={<ApplicationPage applications={applications} actions={actions} profile={profile} stages={stages} />}
@@ -90,11 +96,13 @@ const App: React.FC<AppProps> = ({ repositories, saveStatus, onRetrySave }) => {
 
 const DraftRoute: React.FC<{
   drafts: ApplicationDraft[];
-  wizard: (draft: ApplicationDraft) => React.ReactNode;
+  wizard: (stepId: WizardStep, draft: ApplicationDraft) => React.ReactNode;
 }> = ({ drafts, wizard }) => {
-  const { id } = useParams();
+  const { id, step } = useParams();
   const draft = drafts.find((d) => d.id === id);
-  return draft ? wizard(draft) : <Navigate to="/" replace />;
+  if (!draft) return <Navigate to="/" replace />;
+  if (!step || !isWizardStep(step)) return <Navigate to={`/drafts/${draft.id}/${draftStep(draft.stepId)}`} replace />;
+  return wizard(step, draft);
 };
 
 export default App;
