@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { aResume } from '../../testing/resumeFixture';
 import { createCoverLetter } from '../coverLetter/CoverLetter';
 import { createApplication } from './JobApplication';
-import { addStage, initialStage, isActiveApplication, isStageInUse, removeStage } from './stages';
+import { addStage, initialStage, isActiveApplication, isStageInUse, removeStage, stageOptions } from './stages';
 
 const uuid = () => crypto.randomUUID();
 
@@ -16,6 +16,21 @@ const anApplicationIn = (stage: string) =>
   );
 
 describe('stages', () => {
+  describe('stageOptions', () => {
+    it('keeps the stages as they are when the current stage is listed', () => {
+      const stages = [uuid(), uuid()];
+
+      expect(stageOptions(stages, stages[1])).toBe(stages);
+    });
+
+    it('puts an unlisted current stage first', () => {
+      const stages = [uuid()];
+      const current = uuid();
+
+      expect(stageOptions(stages, current)).toEqual([current, ...stages]);
+    });
+  });
+
   describe('addStage', () => {
     it('appends a trimmed new stage', () => {
       const stages = [uuid()];

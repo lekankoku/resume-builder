@@ -5,7 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Link, useSearchParams } from 'react-router';
 import { ApplicationDetails, JobApplication } from '../../domain/application/JobApplication';
 import { StageColumn, stageColumns } from '../../domain/application/pipeline';
-import { CLOSED_STAGES } from '../../domain/application/stages';
+import { CLOSED_STAGES, stageOptions } from '../../domain/application/stages';
 import PageHeader from '../shell/PageHeader';
 
 interface Props {
@@ -103,7 +103,7 @@ const ApplicationsView: React.FC<Props> = ({ applications, stages, onChangeStage
                     </td>
                     <td className="px-5 py-3">{application.role}</td>
                     <td className="px-5 py-3">
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{application.stage}</span>
+                      <StageSelect application={application} stages={stages} onChangeStage={onChangeStage} />
                     </td>
                     <td className="px-5 py-3">{application.appliedOn || '—'}</td>
                   </tr>
@@ -234,6 +234,23 @@ const BoardCard: React.FC<{
     </li>
   );
 };
+
+export const StageSelect: React.FC<{
+  application: JobApplication;
+  stages: string[];
+  onChangeStage: (id: string, stage: string) => void;
+}> = ({ application, stages, onChangeStage }) => (
+  <select
+    aria-label={`Stage of ${application.company || 'application'}`}
+    value={application.stage}
+    onChange={(e) => onChangeStage(application.id, e.target.value)}
+    className="text-xs pl-2 pr-1 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-transparent hover:border-slate-300 cursor-pointer"
+  >
+    {stageOptions(stages, application.stage).map((stage) => (
+      <option key={stage} value={stage}>{stage}</option>
+    ))}
+  </select>
+);
 
 export const DetailFields: React.FC<{
   details: ApplicationDetails;

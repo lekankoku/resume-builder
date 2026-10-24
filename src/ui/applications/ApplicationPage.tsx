@@ -8,7 +8,7 @@ import { Profile } from '../../domain/resume/Resume';
 import { applyProfile } from '../../domain/resume/resumeOperations';
 import { ApplicationActions } from '../hooks/useApplications';
 import PageHeader from '../shell/PageHeader';
-import { buttonClass, DetailFields, inputClass, labelClass, primaryButtonClass } from './ApplicationsView';
+import { buttonClass, DetailFields, inputClass, labelClass, primaryButtonClass, StageSelect } from './ApplicationsView';
 
 export interface ApplicationContext {
   application: JobApplication;
@@ -51,7 +51,7 @@ const ApplicationPage: React.FC<Omit<ApplicationContext, 'application'> & { appl
         subtitle={
           <span className="flex items-center gap-3">
             {application.role}
-            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{application.stage}</span>
+            <StageSelect application={application} stages={stages} onChangeStage={actions.changeStage} />
             {isWebUrl(application.postingUrl) && (
               <a href={application.postingUrl.trim()} target="_blank" rel="noopener noreferrer" className="text-accent underline">
                 Job posting

@@ -8,6 +8,9 @@ const APPLIED_STAGE = 'Applied';
 
 export const initialStage = (stages: string[]): string => (stages.includes(APPLIED_STAGE) ? APPLIED_STAGE : stages[0] ?? APPLIED_STAGE);
 
+export const stageOptions = (stages: string[], current: string): string[] =>
+  stages.includes(current) ? stages : [current, ...stages];
+
 export const isActiveApplication = (application: JobApplication): boolean => !CLOSED_STAGES.includes(application.stage);
 
 export const addStage =(stages: string[], name: string): string[] => {
