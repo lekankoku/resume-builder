@@ -141,6 +141,7 @@ const ResumePdf: React.FC<{ resume: Resume; targetCompany: string }> = ({ resume
                   <Text style={styles.company}>
                     {exp.company}
                     {exp.location ? <Text style={styles.location}>{`  |  ${exp.location}`}</Text> : null}
+                    {exp.employmentType ? <Text style={styles.location}>{`  |  ${exp.employmentType}`}</Text> : null}
                   </Text>
                   <Bullets items={exp.bullets} />
                 </View>

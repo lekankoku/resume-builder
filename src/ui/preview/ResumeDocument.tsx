@@ -71,6 +71,12 @@ const ResumeDocument: React.FC<{ resume: Resume }> = ({ resume }) => (
                   <span className="text-sm font-bold text-slate-600 uppercase tracking-tight">{exp.company}</span>
                   <span className="text-slate-200">|</span>
                   <span className="text-[10px] uppercase font-mono text-slate-400 font-bold">{exp.location}</span>
+                  {exp.employmentType && (
+                    <>
+                      <span className="text-slate-200">|</span>
+                      <span className="text-[10px] uppercase font-mono text-slate-400 font-bold">{exp.employmentType}</span>
+                    </>
+                  )}
                 </div>
                 <ul className="list-disc ml-4 space-y-1 text-[13px] leading-snug text-slate-600 marker:text-accent">
                   {exp.bullets.map((b, bi) => <li key={bi} className="pl-1">{b}</li>)}
