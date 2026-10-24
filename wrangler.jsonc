@@ -17,6 +17,7 @@
   ],
   "vars": {
     "ACCESS_TEAM_DOMAIN": "",
-    "ACCESS_AUD": ""
+    "ACCESS_AUD": "",
+    "ACCESS_DISABLED": "true"
   }
 }
