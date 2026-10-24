@@ -1,43 +1,98 @@
-import React from 'react';
-import { ChevronLeft, Settings2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
+import { NavLink, Outlet } from 'react-router';
+import { JobApplication } from '../../domain/application/JobApplication';
+import { isStageInUse } from '../../domain/application/stages';
 import { Profile } from '../../domain/resume/Resume';
-import { buttonClass, inputClass, labelClass } from '../applications/ApplicationsView';
+import { inputClass, labelClass, primaryButtonClass } from '../applications/ApplicationsView';
+import PageHeader from '../shell/PageHeader';
 
-interface Props {
-  profile: Profile;
-  onChange: (field: keyof Profile, value: string) => void;
-  onBack: () => void;
-}
+const SECTIONS = [
+  { to: 'profile', label: 'Profile' },
+  { to: 'stages', label: 'Stages' },
+];
 
-const SettingsView: React.FC<Props> = ({ profile, onChange, onBack }) => (
-  <div className="min-h-screen bg-slate-50 flex flex-col items-center py-10 px-6 font-sans">
-    <header className="max-w-3xl w-full mb-8 flex justify-between items-center">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white">
-          <Settings2 size={20} />
-        </div>
-        <div>
-          <h1 className="text-xl font-display text-slate-900 leading-tight">Settings</h1>
-          <p className="text-slate-400 text-[10px] font-mono uppercase tracking-widest">Used on every CV and cover letter</p>
-        </div>
-      </div>
-      <button onClick={onBack} className={buttonClass}>
-        <ChevronLeft size={14} /> Back
-      </button>
-    </header>
-
-    <main className="max-w-3xl w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-6">
-      <h2 className="text-xl font-display text-slate-900 border-b pb-4">Identity Attributes</h2>
-      <div className="grid grid-cols-2 gap-6">
-        {(Object.keys(profile) as (keyof Profile)[]).map((key) => (
-          <div key={key} className="space-y-1">
-            <label htmlFor={`profile-${key}`} className={labelClass}>{key}</label>
-            <input id={`profile-${key}`} className={inputClass} value={profile[key]} onChange={(e) => onChange(key, e.target.value)} />
-          </div>
-        ))}
-      </div>
-    </main>
+const SettingsView: React.FC = () => (
+  <div className="max-w-3xl">
+    <PageHeader title="Settings" />
+    <nav aria-label="Settings" className="flex gap-1 border-b border-slate-200 mb-6">
+      {SECTIONS.map((section) => (
+        <NavLink
+          key={section.to}
+          to={section.to}
+          className={({ isActive }) =>
+            `px-4 py-2 -mb-px text-sm border-b-2 transition-all ${
+              isActive ? 'border-accent text-accent font-semibold' : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`
+          }
+        >
+          {section.label}
+        </NavLink>
+      ))}
+    </nav>
+    <Outlet />
   </div>
 );
+
+export const ProfileSettings: React.FC<{
+  profile: Profile;
+  onChange: (field: keyof Profile, value: string) => void;
+}> = ({ profile, onChange }) => (
+  <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
+    <p className="text-sm text-slate-500">Used on every CV and cover letter. Each application only sets its own title.</p>
+    <div className="grid grid-cols-2 gap-6">
+      {(Object.keys(profile) as (keyof Profile)[]).map((key) => (
+        <div key={key} className="space-y-1">
+          <label htmlFor={`profile-${key}`} className={labelClass}>{key}</label>
+          <input id={`profile-${key}`} className={inputClass} value={profile[key]} onChange={(e) => onChange(key, e.target.value)} />
+        </div>
+      ))}
+    </div>
+  </section>
+);
+
+export const StageSettings: React.FC<{
+  stages: string[];
+  applications: JobApplication[];
+  onAdd: (name: string) => void;
+  onRemove: (name: string) => void;
+}> = ({ stages, applications, onAdd, onRemove }) => {
+  const [name, setName] = useState('');
+
+  return (
+    <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+      <p className="text-sm text-slate-500">Stages in use by an application can't be removed.</p>
+      <ul className="divide-y divide-slate-100">
+        {stages.map((stage) => (
+          <li key={stage} className="flex justify-between items-center text-sm py-2">
+            {stage}
+            <button
+              aria-label={`Remove stage ${stage}`}
+              disabled={isStageInUse(stage, applications)}
+              title={isStageInUse(stage, applications) ? 'In use by an application' : undefined}
+              onClick={() => onRemove(stage)}
+              className="text-slate-400 hover:text-red-500 disabled:opacity-30 disabled:hover:text-slate-400"
+            >
+              <Trash2 size={14} />
+            </button>
+          </li>
+        ))}
+      </ul>
+      <form
+        className="flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onAdd(name);
+          setName('');
+        }}
+      >
+        <input aria-label="New stage name" className={inputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder="New stage" />
+        <button type="submit" aria-label="Add stage" className={primaryButtonClass}>
+          <Plus size={14} />
+        </button>
+      </form>
+    </section>
+  );
+};
 
 export default SettingsView;

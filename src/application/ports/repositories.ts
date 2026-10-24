@@ -1,21 +1,10 @@
 import { ApplicationDraft } from '../../domain/application/ApplicationDraft';
 import { JobApplication } from '../../domain/application/JobApplication';
-import { CoverLetter } from '../../domain/coverLetter/CoverLetter';
 import { Profile, Resume } from '../../domain/resume/Resume';
 
 export interface ResumeRepository {
   load(): Resume;
   save(resume: Resume): void;
-}
-
-export interface CoverLetterRepository {
-  load(): CoverLetter;
-  save(letter: CoverLetter): void;
-}
-
-export interface TargetCompanyRepository {
-  load(): string;
-  save(targetCompany: string): void;
 }
 
 export interface ApplicationRepository {

@@ -171,7 +171,7 @@ const NewApplicationWizard: React.FC<Props> = ({ applications, stages, profile, 
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center py-10 px-6 font-sans">
+    <div className="max-w-6xl flex flex-col">
       <header className="max-w-6xl w-full mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-xl font-display text-slate-900 leading-tight">New Application</h1>

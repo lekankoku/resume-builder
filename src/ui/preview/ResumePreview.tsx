@@ -23,7 +23,7 @@ const ResumePreview: React.FC<Props> = ({ resume, targetCompany, printVariant, o
           onClick={() => onBackToEditor()}
           className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-900 font-bold rounded-xl hover:bg-slate-50 transition-colors uppercase tracking-widest text-[10px]"
         >
-          <ChevronLeft size={14} /> Back to Editor
+          <ChevronLeft size={14} /> Back
         </button>
         
         <div className="flex items-center gap-4">

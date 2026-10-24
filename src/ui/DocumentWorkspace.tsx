@@ -1,97 +1,72 @@
-import React, { useEffect, useState } from 'react';
-import { CoverLetterRepository, ResumeRepository, TargetCompanyRepository } from '../application/ports/repositories';
-import { coverLetterDocumentTitle, resumeDocumentTitle } from '../domain/resume/documentTitle';
-import { Profile } from '../domain/resume/Resume';
+import React, { useMemo } from 'react';
+import { Navigate, useParams } from 'react-router';
+import { CoverLetter, updateCoverLetterField } from '../domain/coverLetter/CoverLetter';
+import { Resume } from '../domain/resume/Resume';
 import { applyProfile } from '../domain/resume/resumeOperations';
-import EditorView from './editor/EditorView';
-import { useCoverLetter } from './hooks/useCoverLetter';
+import { useApplicationContext } from './applications/ApplicationPage';
+import EditorView, { CV_EDITOR_SECTIONS, EditorSection } from './editor/EditorView';
+import { createResumeActions } from './hooks/useResume';
 import { useJsonSource } from './hooks/useJsonSource';
-import { useResume } from './hooks/useResume';
-import { useTargetCompany } from './hooks/useTargetCompany';
-import CoverLetterPreview from './preview/CoverLetterPreview';
-import ResumePreview, { PrintVariant } from './preview/ResumePreview';
 
-interface Props {
-  repositories: {
-    resume: ResumeRepository;
-    coverLetter: CoverLetterRepository;
-    targetCompany: TargetCompanyRepository;
+const useApplicationDocuments = () => {
+  const { application, actions, profile } = useApplicationContext();
+  const { id } = application;
+
+  const resumeActions = useMemo(
+    () => createResumeActions((change) => actions.update(id, (a) => ({ ...a, resume: change(a.resume) }))),
+    [id],
+  );
+
+  return {
+    application,
+    resume: applyProfile(application.resume, profile),
+    resumeActions,
+    setResume: (resume: Resume) => actions.update(id, (a) => ({ ...a, resume })),
+    onCoverLetterFieldChange: (field: keyof CoverLetter, value: string) =>
+      actions.update(id, (a) => ({ ...a, coverLetter: updateCoverLetterField(a.coverLetter, field, value) })),
+    onTargetCompanyChange: (company: string) => actions.updateField(id, 'company', company),
   };
-  profile: Profile;
-  contextLabel: string;
-  onOpenApplications: () => void;
-}
+};
 
-const DocumentWorkspace: React.FC<Props> = ({ repositories, profile, contextLabel, onOpenApplications }) => {
-  const { resume: draft, setResume, actions } = useResume(repositories.resume);
-  const resume = applyProfile(draft, profile);
-  const { coverLetter, updateField: updateCoverLetterField } = useCoverLetter(repositories.coverLetter);
-  const { targetCompany, setTargetCompany } = useTargetCompany(repositories.targetCompany);
-  const { jsonInput, setJsonInput, jsonError, applyJson } = useJsonSource(draft, setResume);
+export const CvTab: React.FC = () => {
+  const { section } = useParams();
+  const { application, resume, resumeActions, setResume, onCoverLetterFieldChange, onTargetCompanyChange } =
+    useApplicationDocuments();
+  const { jsonInput, setJsonInput, jsonError, applyJson } = useJsonSource(application.resume, setResume);
 
-  const [isEditing, setIsEditing] = useState(true);
-  const [activeTab, setActiveTab] = useState('personal');
-  const [printVariant, setPrintVariant] = useState<PrintVariant>('continuous');
-  const [viewMode, setViewMode] = useState<'resume' | 'cover-letter'>('resume');
-
-  useEffect(() => {
-    document.title =
-      viewMode === 'resume'
-        ? resumeDocumentTitle(resume.personal, targetCompany)
-        : coverLetterDocumentTitle(resume.personal, targetCompany);
-  }, [resume.personal.name, resume.personal.title, viewMode, targetCompany]);
-
-  if (isEditing) {
-    return (
-      <EditorView
-        resume={resume}
-        actions={actions}
-        coverLetter={coverLetter}
-        onCoverLetterFieldChange={updateCoverLetterField}
-        targetCompany={targetCompany}
-        onTargetCompanyChange={setTargetCompany}
-        jsonInput={jsonInput}
-        jsonError={jsonError}
-        onJsonChange={setJsonInput}
-        onApplyJson={applyJson}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        contextLabel={contextLabel}
-        onOpenApplications={onOpenApplications}
-        onPreviewResume={() => {
-          setViewMode('resume');
-          setIsEditing(false);
-        }}
-        onPreviewCoverLetter={() => {
-          setViewMode('cover-letter');
-          setIsEditing(false);
-        }}
-      />
-    );
-  }
-
-  if (viewMode === 'cover-letter') {
-    return (
-      <CoverLetterPreview
-        resume={resume}
-        coverLetter={coverLetter}
-        targetCompany={targetCompany}
-        onBackToEditor={() => setIsEditing(true)}
-        onShowResume={() => setViewMode('resume')}
-      />
-    );
-  }
+  if (!CV_EDITOR_SECTIONS.some((s) => s.id === section)) return <Navigate to="../personal" relative="path" replace />;
 
   return (
-    <ResumePreview
+    <EditorView
       resume={resume}
-      targetCompany={targetCompany}
-      printVariant={printVariant}
-      onPrintVariantChange={setPrintVariant}
-      onBackToEditor={() => setIsEditing(true)}
-      onShowCoverLetter={() => setViewMode('cover-letter')}
+      actions={resumeActions}
+      coverLetter={application.coverLetter}
+      onCoverLetterFieldChange={onCoverLetterFieldChange}
+      targetCompany={application.company}
+      onTargetCompanyChange={onTargetCompanyChange}
+      jsonInput={jsonInput}
+      jsonError={jsonError}
+      onJsonChange={setJsonInput}
+      onApplyJson={applyJson}
+      activeSection={section!}
     />
   );
 };
 
-export default DocumentWorkspace;
+export const CoverLetterTab: React.FC = () => {
+  const { application, resume, resumeActions, onCoverLetterFieldChange, onTargetCompanyChange } = useApplicationDocuments();
+
+  return (
+    <section className="bg-white rounded-2xl border border-slate-200 p-8">
+      <EditorSection
+        section="coverLetter"
+        resume={resume}
+        actions={resumeActions}
+        coverLetter={application.coverLetter}
+        onCoverLetterFieldChange={onCoverLetterFieldChange}
+        targetCompany={application.company}
+        onTargetCompanyChange={onTargetCompanyChange}
+      />
+    </section>
+  );
+};
