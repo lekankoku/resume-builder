@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Eye, FileText, History, RotateCcw, Save } from 'lucide-react';
+import { Eye, History, Printer, RotateCcw, Save } from 'lucide-react';
 import { Link, Navigate, NavLink, Outlet, useOutletContext, useParams } from 'react-router';
 import { isWebUrl, JobApplication } from '../../domain/application/JobApplication';
 import { resumeDocumentTitle } from '../../domain/resume/documentTitle';
@@ -43,7 +43,7 @@ const ApplicationPage: React.FC<Omit<ApplicationContext, 'application'> & { appl
   if (!application) return <Navigate to="/applications" replace />;
 
   return (
-    <div className="max-w-6xl">
+    <div className="max-w-[1600px]">
       <PageHeader
         breadcrumbs={[{ label: 'Applications', to: '/applications' }]}
         title={application.company || 'Untitled company'}
@@ -61,10 +61,10 @@ const ApplicationPage: React.FC<Omit<ApplicationContext, 'application'> & { appl
         actions={
           <>
             <Link to={`/applications/${application.id}/preview/resume`} className={buttonClass}>
-              Preview CV <Eye size={14} />
+              Print CV <Printer size={14} />
             </Link>
             <Link to={`/applications/${application.id}/preview/cover-letter`} className={buttonClass}>
-              Preview cover letter <FileText size={14} />
+              Print cover letter <Printer size={14} />
             </Link>
           </>
         }

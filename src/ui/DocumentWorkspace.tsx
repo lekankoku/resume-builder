@@ -7,6 +7,9 @@ import { useApplicationContext } from './applications/ApplicationPage';
 import EditorView, { CV_EDITOR_SECTIONS, EditorSection } from './editor/EditorView';
 import { createResumeActions } from './hooks/useResume';
 import { useJsonSource } from './hooks/useJsonSource';
+import { CoverLetterDocument } from './preview/CoverLetterPreview';
+import LivePreview from './preview/LivePreview';
+import { ResumeDocument } from './preview/ResumePreview';
 
 const useApplicationDocuments = () => {
   const { application, actions, profile } = useApplicationContext();
@@ -49,6 +52,11 @@ export const CvTab: React.FC = () => {
       onJsonChange={setJsonInput}
       onApplyJson={applyJson}
       activeSection={section!}
+      preview={
+        <LivePreview title="CV preview" printViewHref={`/applications/${application.id}/preview/resume`}>
+          <ResumeDocument resume={resume} printVariant="continuous" />
+        </LivePreview>
+      }
     />
   );
 };
@@ -57,16 +65,23 @@ export const CoverLetterTab: React.FC = () => {
   const { application, resume, resumeActions, onCoverLetterFieldChange, onTargetCompanyChange } = useApplicationDocuments();
 
   return (
-    <section className="bg-white rounded-2xl border border-slate-200 p-8">
-      <EditorSection
-        section="coverLetter"
-        resume={resume}
-        actions={resumeActions}
-        coverLetter={application.coverLetter}
-        onCoverLetterFieldChange={onCoverLetterFieldChange}
-        targetCompany={application.company}
-        onTargetCompanyChange={onTargetCompanyChange}
-      />
-    </section>
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+      <section className="bg-white rounded-2xl border border-slate-200 p-6 min-w-0">
+        <EditorSection
+          section="coverLetter"
+          resume={resume}
+          actions={resumeActions}
+          coverLetter={application.coverLetter}
+          onCoverLetterFieldChange={onCoverLetterFieldChange}
+          targetCompany={application.company}
+          onTargetCompanyChange={onTargetCompanyChange}
+        />
+      </section>
+      <div className="hidden xl:block min-w-0">
+        <LivePreview title="Cover letter preview" printViewHref={`/applications/${application.id}/preview/cover-letter`}>
+          <CoverLetterDocument resume={resume} coverLetter={application.coverLetter} targetCompany={application.company} />
+        </LivePreview>
+      </div>
+    </div>
   );
 };
