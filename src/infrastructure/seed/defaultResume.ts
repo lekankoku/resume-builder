@@ -1,7 +1,7 @@
 
-import { ResumeData } from './types';
+import { Resume } from '../../domain/resume/Resume';
 
-export const resumeData: ResumeData = {
+export const resumeData: Resume = {
   personal: {
     name: "Lekan Koku",
     title: "Senior Fullstack Engineer",

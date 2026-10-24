@@ -51,7 +51,7 @@ export interface Reference {
   linkedin: string;
 }
 
-export interface ResumeData {
+export interface Resume {
   personal: PersonalInfo;
   experiences: Experience[];
   abilities: Ability[];
@@ -62,3 +62,16 @@ export interface ResumeData {
   references: Reference[];
   crossFunctional: { title: string; bullets: string[] };
 }
+
+export type ListSection =
+  | 'experiences'
+  | 'abilities'
+  | 'education'
+  | 'projects'
+  | 'languages'
+  | 'technicalProficiency'
+  | 'references';
+
+export type BulletSection = 'experiences' | 'abilities' | 'projects';
+
+export type ListSectionItem<S extends ListSection> = Resume[S][number];
