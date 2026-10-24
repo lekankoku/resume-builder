@@ -17,11 +17,11 @@ const CoverLetterTab: React.FC<Props> = ({ coverLetter, onFieldChange, targetCom
     </div>
     <div className="space-y-6">
       <div className="space-y-1">
-        <label htmlFor="cover-letter-date" className="text-[10px] font-mono font-black uppercase text-slate-400">Date</label>
+        <label htmlFor="cover-letter-date" className="text-sm font-medium text-slate-700">Date</label>
         <input
           id="cover-letter-date"
           type="text"
-          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+          className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-accent/30 focus:border-accent outline-none"
           value={coverLetter.date}
           onChange={(e) => onFieldChange('date', e.target.value)}
           placeholder="January 6, 2026"
@@ -29,10 +29,10 @@ const CoverLetterTab: React.FC<Props> = ({ coverLetter, onFieldChange, targetCom
       </div>
 
       <div className="space-y-4 p-4 bg-slate-50 rounded-xl">
-        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Recipient Information</h3>
+        <h3 className="text-sm font-semibold text-slate-900">Recipient</h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label htmlFor="cover-letter-recipient-name" className="text-[10px] font-mono font-black uppercase text-slate-400">Recipient Name</label>
+            <label htmlFor="cover-letter-recipient-name" className="text-sm font-medium text-slate-700">Recipient Name</label>
             <input
               id="cover-letter-recipient-name"
               className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
@@ -42,7 +42,7 @@ const CoverLetterTab: React.FC<Props> = ({ coverLetter, onFieldChange, targetCom
             />
           </div>
           <div className="space-y-1">
-            <label htmlFor="cover-letter-recipient-title" className="text-[10px] font-mono font-black uppercase text-slate-400">Recipient Title</label>
+            <label htmlFor="cover-letter-recipient-title" className="text-sm font-medium text-slate-700">Recipient Title</label>
             <input
               id="cover-letter-recipient-title"
               className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
@@ -52,7 +52,7 @@ const CoverLetterTab: React.FC<Props> = ({ coverLetter, onFieldChange, targetCom
             />
           </div>
           <div className="space-y-1 col-span-2">
-            <label htmlFor="cover-letter-company" className="text-[10px] font-mono font-black uppercase text-slate-400">Company Name</label>
+            <label htmlFor="cover-letter-company" className="text-sm font-medium text-slate-700">Company Name</label>
             <input
               id="cover-letter-company"
               className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
@@ -60,12 +60,12 @@ const CoverLetterTab: React.FC<Props> = ({ coverLetter, onFieldChange, targetCom
               onChange={(e) => onTargetCompanyChange(e.target.value)}
               placeholder="Company Inc."
             />
-            <p className="text-[10px] text-slate-400 mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               💡 This is shared with your resume. Set it once in the Identity tab.
             </p>
           </div>
           <div className="space-y-1 col-span-2">
-            <label htmlFor="cover-letter-address" className="text-[10px] font-mono font-black uppercase text-slate-400">Company Address</label>
+            <label htmlFor="cover-letter-address" className="text-sm font-medium text-slate-700">Company Address</label>
             <input
               id="cover-letter-address"
               className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
@@ -78,7 +78,7 @@ const CoverLetterTab: React.FC<Props> = ({ coverLetter, onFieldChange, targetCom
       </div>
 
       <div className="space-y-1">
-        <label htmlFor="cover-letter-body" className="text-[10px] font-mono font-black uppercase text-slate-400">Letter Body</label>
+        <label htmlFor="cover-letter-body" className="text-sm font-medium text-slate-700">Letter Body</label>
         <p className="text-xs text-slate-500 mb-2">Paste or write your cover letter content here.</p>
         <textarea
           id="cover-letter-body"

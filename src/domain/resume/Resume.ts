@@ -12,6 +12,8 @@ export interface PersonalInfo {
   photoUrl: string;
 }
 
+export type Profile = Omit<PersonalInfo, 'title'>;
+
 export interface Experience {
   company: string;
   location: string;

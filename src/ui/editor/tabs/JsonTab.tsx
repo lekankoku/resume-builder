@@ -11,7 +11,7 @@ const JsonTab: React.FC<Props> = ({ jsonInput, jsonError, onChange, onApply }) =
   <div className="h-full flex flex-col">
     <div className="flex justify-between items-center mb-6">
       <h2 className="text-xl font-display text-slate-900">Source Interface</h2>
-      <button onClick={onApply} className="px-4 py-2 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg">Update Data</button>
+      <button onClick={onApply} className="px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-xl hover:bg-black">Apply JSON</button>
     </div>
     {jsonError && <div className="mb-4 text-red-500 text-xs font-mono bg-red-50 p-3 rounded-lg border border-red-100">{jsonError}</div>}
     <textarea
