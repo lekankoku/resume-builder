@@ -18,6 +18,9 @@ export const appliedWithin = (applications: JobApplication[], days: number, now:
     return !Number.isNaN(appliedOn) && appliedOn <= now.getTime() && now.getTime() - appliedOn <= days * DAY_MS;
   }).length;
 
+export const newestAppliedFirst = (applications: JobApplication[]): JobApplication[] =>
+  [...applications].sort((a, b) => b.appliedOn.localeCompare(a.appliedOn));
+
 export interface StageActivity {
   application: JobApplication;
   stage: string;

@@ -1,5 +1,5 @@
 import React, { useSyncExternalStore } from 'react';
-import { ClipboardList, FileText, LayoutDashboard, Plus, Settings2 } from 'lucide-react';
+import { ClipboardList, FileText, Files, LayoutDashboard, Plus, Settings2 } from 'lucide-react';
 import { Link, NavLink, Outlet } from 'react-router';
 import { SaveStatusSource } from '../../application/ports/repositories';
 
@@ -11,6 +11,7 @@ interface Props {
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/applications', label: 'Applications', icon: ClipboardList, end: false },
+  { to: '/cvs', label: 'CVs', icon: Files, end: false },
   { to: '/settings', label: 'Settings', icon: Settings2, end: false },
 ];
 

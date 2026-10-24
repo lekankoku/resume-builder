@@ -5,6 +5,7 @@ import { ApplicationDraft, draftStep, isWizardStep, WizardStep } from '../domain
 import { initialStage } from '../domain/application/stages';
 import ApplicationPage, { CompareTab, OverviewTab, VersionsTab } from './applications/ApplicationPage';
 import ApplicationsView from './applications/ApplicationsView';
+import CvsView from './applications/CvsView';
 import HomeView from './applications/HomeView';
 import NewApplicationWizard from './applications/NewApplicationWizard';
 import { CoverLetterTab, CvTab } from './DocumentWorkspace';
@@ -57,6 +58,7 @@ const App: React.FC<AppProps> = ({ repositories, saveStatus, onRetrySave }) => {
         <Route index element={<HomeView applications={applications} stages={stages} drafts={drafts} onDiscardDraft={removeDraft} />} />
         <Route path="applications" element={<ApplicationsView applications={applications} stages={stages} onChangeStage={actions.changeStage} />} />
         <Route path="applications/new" element={wizard('details')} />
+        <Route path="cvs" element={<CvsView applications={applications} />} />
         <Route path="drafts/:id" element={<DraftRoute drafts={drafts} wizard={wizard} />} />
         <Route path="drafts/:id/:step" element={<DraftRoute drafts={drafts} wizard={wizard} />} />
         <Route

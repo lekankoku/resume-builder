@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { aResume } from '../../testing/resumeFixture';
 import { createCoverLetter } from '../coverLetter/CoverLetter';
 import { changeStage, createApplication, JobApplication } from './JobApplication';
-import { appliedWithin, recentActivity, stageColumns } from './pipeline';
+import { appliedWithin, newestAppliedFirst, recentActivity, stageColumns } from './pipeline';
 
 const uuid = () => crypto.randomUUID();
 
@@ -51,6 +51,16 @@ describe('pipeline', () => {
       ];
 
       expect(appliedWithin(applications, 30, now)).toBe(2);
+    });
+  });
+
+  describe('newestAppliedFirst', () => {
+    it('orders applications by applied date, newest first, with undated ones last', () => {
+      const older = anApplication(uuid(), '2026-09-01');
+      const undated = anApplication(uuid());
+      const newer = anApplication(uuid(), '2026-10-01');
+
+      expect(newestAppliedFirst([older, undated, newer])).toEqual([newer, older, undated]);
     });
   });
 
