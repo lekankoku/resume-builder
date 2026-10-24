@@ -4,6 +4,10 @@ export const DEFAULT_STAGES = ['Wishlist', 'Applied', 'Screening', 'Interviewing
 
 export const CLOSED_STAGES = ['Rejected', 'Withdrawn'];
 
+const APPLIED_STAGE = 'Applied';
+
+export const initialStage = (stages: string[]): string => (stages.includes(APPLIED_STAGE) ? APPLIED_STAGE : stages[0] ?? APPLIED_STAGE);
+
 export const isActiveApplication = (application: JobApplication): boolean => !CLOSED_STAGES.includes(application.stage);
 
 export const addStage =(stages: string[], name: string): string[] => {

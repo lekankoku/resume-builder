@@ -89,7 +89,7 @@ const SortableSection = <T,>({
         <h2 className="text-xl font-display text-slate-900">{title}</h2>
         <button
           onClick={onAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-accent text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-accent/90"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white text-sm font-medium rounded-xl hover:bg-accent/90"
         >
           <Plus size={14} /> {addLabel}
         </button>
@@ -99,9 +99,9 @@ const SortableSection = <T,>({
           <div className="space-y-6">
             {items.map((item, idx) => (
               <SortableItem key={ids[idx]} id={ids[idx]}>
-                <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
+                <div className="p-5 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
                   <div className="flex justify-between items-start">
-                    <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">{itemLabel} #{idx + 1}</h3>
+                    <h3 className="text-sm font-semibold text-slate-700">{itemLabel} {idx + 1}</h3>
                     <button
                       aria-label={`Remove ${itemLabel} ${idx + 1}`}
                       onClick={() => onRemove(idx)}

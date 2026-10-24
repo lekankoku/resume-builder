@@ -11,13 +11,14 @@ interface BulletListProps {
   onRemove: (bulletIndex: number) => void;
 }
 
-const fieldClass = 'flex-1 p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none';
+const fieldClass =
+  'flex-1 px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-accent/30 focus:border-accent outline-none';
 
 const BulletList: React.FC<BulletListProps> = ({ label, addLabel, bullets, multiline, onAdd, onChange, onRemove }) => (
   <div className="space-y-2">
     <div className="flex justify-between items-center">
-      <span className="text-[10px] font-mono font-black uppercase text-slate-400">{label}</span>
-      <button onClick={onAdd} className="text-[10px] font-bold text-accent hover:text-accent/80 uppercase tracking-wider">
+      <span className="text-sm font-medium text-slate-700">{label}</span>
+      <button onClick={onAdd} className="text-sm font-medium text-accent hover:underline">
         + {addLabel}
       </button>
     </div>

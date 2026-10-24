@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { aResume } from '../../testing/resumeFixture';
 import { createCoverLetter } from '../coverLetter/CoverLetter';
 import { createApplication } from './JobApplication';
-import { addStage, isActiveApplication, isStageInUse, removeStage } from './stages';
+import { addStage, initialStage, isActiveApplication, isStageInUse, removeStage } from './stages';
 
 const uuid = () => crypto.randomUUID();
 
@@ -53,6 +53,22 @@ describe('stages', () => {
 
       expect(isStageInUse(stage, applications)).toBe(true);
       expect(isStageInUse(uuid(), applications)).toBe(false);
+    });
+  });
+
+  describe('initialStage', () => {
+    it('puts new applications in Applied when that stage exists', () => {
+      expect(initialStage([uuid(), 'Applied', uuid()])).toBe('Applied');
+    });
+
+    it('falls back to the first stage when Applied was removed', () => {
+      const first = uuid();
+
+      expect(initialStage([first, uuid()])).toBe(first);
+    });
+
+    it('uses Applied when there are no stages at all', () => {
+      expect(initialStage([])).toBe('Applied');
     });
   });
 

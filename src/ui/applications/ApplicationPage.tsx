@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Eye, History, Printer, RotateCcw, Save } from 'lucide-react';
+import { ChevronLeft, Eye, GitCompare, History, Printer, RotateCcw, Save } from 'lucide-react';
 import { Link, Navigate, NavLink, Outlet, useOutletContext, useParams } from 'react-router';
 import { isWebUrl, JobApplication } from '../../domain/application/JobApplication';
+import { compareCv } from '../../domain/resume/cvDiff';
 import { resumeDocumentTitle } from '../../domain/resume/documentTitle';
 import { Profile } from '../../domain/resume/Resume';
 import { applyProfile } from '../../domain/resume/resumeOperations';
@@ -160,6 +161,9 @@ export const VersionsTab: React.FC = () => {
               <p className="text-sm text-slate-900">{version.note || 'No note'}</p>
             </div>
             <div className="flex gap-2">
+              <Link to={`/applications/${application.id}/versions/${version.id}/compare`} className={buttonClass}>
+                Compare <GitCompare size={14} />
+              </Link>
               <Link to={`/applications/${application.id}/versions/${version.id}/preview/resume`} className={buttonClass}>
                 Preview <Eye size={14} />
               </Link>
@@ -178,6 +182,68 @@ export const VersionsTab: React.FC = () => {
         ))}
         {application.versions.length === 0 && <li className="text-sm text-slate-500">No versions saved yet.</li>}
       </ol>
+    </section>
+  );
+};
+
+export const CompareTab: React.FC = () => {
+  const { application } = useApplicationContext();
+  const { versionId } = useParams();
+  const version = application.versions.find((v) => v.id === versionId);
+  if (!version) return <Navigate to="../versions" relative="path" replace />;
+
+  const sections = compareCv(version, application);
+  const changed = sections.filter((section) => section.changed);
+  const unchanged = sections.filter((section) => !section.changed);
+
+  return (
+    <section className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <Link to={`/applications/${application.id}/versions`} className="flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900">
+            <ChevronLeft size={16} /> Versions
+          </Link>
+          <h2 className="text-base font-semibold text-slate-900 mt-2">
+            Changes since “{version.note || 'No note'}” · {formatTimestamp(version.savedAt)}
+          </h2>
+          <p className="text-sm text-slate-500">
+            <span className="text-red-700">Red</span> lines are only in the saved version, <span className="text-emerald-700">green</span>{' '}
+            lines are only in the current CV.
+          </p>
+        </div>
+      </div>
+
+      {changed.length === 0 && (
+        <p className="bg-white rounded-2xl border border-slate-200 p-6 text-sm text-slate-600">The current CV matches this version.</p>
+      )}
+
+      {changed.map((section) => (
+        <article key={section.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+          <h3 className="px-5 py-3 text-sm font-semibold text-slate-900 border-b border-slate-100">{section.label}</h3>
+          <ul className="text-sm font-mono">
+            {section.lines.map((line, index) => (
+              <li
+                key={index}
+                className={`px-5 py-1 whitespace-pre-wrap ${
+                  line.type === 'added'
+                    ? 'bg-emerald-50 text-emerald-800'
+                    : line.type === 'removed'
+                      ? 'bg-red-50 text-red-800 line-through decoration-red-300'
+                      : 'text-slate-500'
+                }`}
+              >
+                <span aria-hidden="true" className="inline-block w-4">{line.type === 'added' ? '+' : line.type === 'removed' ? '−' : ''}</span>
+                <span className="sr-only">{line.type === 'added' ? 'Added: ' : line.type === 'removed' ? 'Removed: ' : ''}</span>
+                {line.text || ' '}
+              </li>
+            ))}
+          </ul>
+        </article>
+      ))}
+
+      {unchanged.length > 0 && changed.length > 0 && (
+        <p className="text-sm text-slate-500">No changes in {unchanged.map((section) => section.label).join(', ')}.</p>
+      )}
     </section>
   );
 };

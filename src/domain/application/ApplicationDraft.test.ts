@@ -10,7 +10,6 @@ const aDraft = (id: string = uuid()): ApplicationDraft => ({
   updatedAt: new Date().toISOString(),
   stepId: uuid(),
   details: { company: uuid(), role: uuid(), postingUrl: '', appliedOn: '', notes: '' },
-  stage: uuid(),
   cvStart: 'new',
   sourceId: '',
   jsonInput: '',

@@ -9,7 +9,6 @@ export interface ApplicationDraft {
   updatedAt: string;
   stepId: string;
   details: ApplicationDetails;
-  stage: string;
   cvStart: CvStart;
   sourceId: string;
   jsonInput: string;

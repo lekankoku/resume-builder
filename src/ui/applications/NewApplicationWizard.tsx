@@ -4,6 +4,7 @@ import { Navigate } from 'react-router';
 import { resumeFromJson } from '../../application/importResumeFromJson';
 import { ResumeRepository } from '../../application/ports/repositories';
 import { ApplicationDraft, CvStart, WizardStep } from '../../domain/application/ApplicationDraft';
+import { initialStage } from '../../domain/application/stages';
 import {
   ApplicationDetails,
   CvSource,
@@ -30,7 +31,7 @@ interface Props {
   stepId: WizardStep;
   onStepChange: (draftId: string, stepId: WizardStep) => void;
   onSaveDraft: (draft: ApplicationDraft) => void;
-  onCreate: (details: ApplicationDetails, cv: CvSource, stage: string, draftId: string | null) => void;
+  onCreate: (details: ApplicationDetails, cv: CvSource, draftId: string | null) => void;
   onCancel: () => void;
 }
 
@@ -75,7 +76,6 @@ const NewApplicationWizard: React.FC<Props> = ({
   onCancel,
 }) => {
   const [details, setDetails] = useState(() => draft?.details ?? emptyDetails());
-  const [stage, setStage] = useState(draft?.stage ?? stages[0] ?? '');
   const [cvStart, setCvStart] = useState<CvStart>(draft?.cvStart ?? 'new');
   const [sourceId, setSourceId] = useState(draft?.sourceId ?? applications[0]?.id ?? '');
   const [jsonInput, setJsonInput] = useState(draft?.jsonInput ?? '');
@@ -104,7 +104,7 @@ const NewApplicationWizard: React.FC<Props> = ({
 
   const isDone = (id: WizardStep) =>
     (id === 'details' && problems.length === 0) ||
-    (id === 'cv' && stage !== '' && cvChosen) ||
+    (id === 'cv' && cvChosen) ||
     (id === 'review' && chosenKey === cvKey && CV_SECTIONS.every((section) => verifiedSections.includes(section.id)));
   const canReach = (index: number) => (draft || index <= CV_STEP) && STEPS.slice(0, index).every((s) => isDone(s.id));
   const firstOpenStep = STEPS.findIndex((s) => !isDone(s.id));
@@ -121,7 +121,6 @@ const NewApplicationWizard: React.FC<Props> = ({
       updatedAt: new Date().toISOString(),
       stepId,
       details,
-      stage,
       cvStart,
       sourceId,
       jsonInput,
@@ -130,7 +129,7 @@ const NewApplicationWizard: React.FC<Props> = ({
       coverLetter,
       verifiedSections,
     });
-  }, [stepId, details, stage, cvStart, sourceId, jsonInput, cvKey, resume, coverLetter, verifiedSections]);
+  }, [stepId, details, cvStart, sourceId, jsonInput, cvKey, resume, coverLetter, verifiedSections]);
 
   if (draft && step > firstOpenStep) return <Navigate to={`/drafts/${draft.id}/${STEPS[firstOpenStep].id}`} replace />;
 
@@ -152,7 +151,6 @@ const NewApplicationWizard: React.FC<Props> = ({
         updatedAt: new Date().toISOString(),
         stepId: target,
         details,
-        stage,
         cvStart,
         sourceId,
         jsonInput,
@@ -227,14 +225,6 @@ const NewApplicationWizard: React.FC<Props> = ({
 
       {stepId === 'cv' && (
         <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6 max-w-4xl">
-          <div className="space-y-1 max-w-sm">
-            <label htmlFor="new-stage" className={labelClass}>Stage</label>
-            <select id="new-stage" className={inputClass} value={stage} onChange={(e) => setStage(e.target.value)}>
-              {stages.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
           <fieldset className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <legend className={`${labelClass} mb-2`}>CV for this application</legend>
             <CvStartOption
@@ -318,11 +308,11 @@ const NewApplicationWizard: React.FC<Props> = ({
             ['Job posting URL', details.postingUrl.trim() || 'None'],
             ['Date applied', details.appliedOn],
             ['Notes', details.notes.trim() || 'None'],
-            ['Stage', stage],
             ['CV', `${cvLabel} · all ${CV_SECTIONS.length} sections checked`],
           ]}
           problems={problems}
-          onCreate={() => onCreate(details, { resume, coverLetter }, stage, draft?.id ?? null)}
+          stage={initialStage(stages)}
+          onCreate={() => onCreate(details, { resume, coverLetter }, draft?.id ?? null)}
         />
       )}
 
@@ -466,8 +456,9 @@ const ReviewStep: React.FC<{
 const ConfirmStep: React.FC<{
   items: [string, string][];
   problems: string[];
+  stage: string;
   onCreate: () => void;
-}> = ({ items, problems, onCreate }) => {
+}> = ({ items, problems, stage, onCreate }) => {
   const [checked, setChecked] = useState<string[]>([]);
   const canCreate = problems.length === 0 && items.every(([label]) => checked.includes(label));
 
@@ -499,6 +490,9 @@ const ConfirmStep: React.FC<{
           ))}
         </ul>
       )}
+      <p className="text-sm text-slate-600">
+        The application will be added to <span className="font-semibold">{stage}</span>.
+      </p>
       <button onClick={onCreate} disabled={!canCreate} className={`${primaryButtonClass} disabled:opacity-40`}>
         Create application <Plus size={14} />
       </button>

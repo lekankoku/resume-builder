@@ -7,6 +7,18 @@ import { Profile } from '../../domain/resume/Resume';
 import { inputClass, labelClass, primaryButtonClass } from '../applications/ApplicationsView';
 import PageHeader from '../shell/PageHeader';
 
+const PROFILE_LABELS: Record<keyof Profile, string> = {
+  name: 'Name',
+  phone: 'Phone',
+  email: 'Email',
+  residence: 'Residence',
+  nationality: 'Nationality',
+  website: 'Website',
+  linkedin: 'LinkedIn',
+  github: 'GitHub',
+  photoUrl: 'Photo URL',
+};
+
 const SECTIONS = [
   { to: 'profile', label: 'Profile' },
   { to: 'stages', label: 'Stages' },
@@ -41,10 +53,10 @@ export const ProfileSettings: React.FC<{
   <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
     <p className="text-sm text-slate-500">Used on every CV and cover letter. Each application only sets its own title.</p>
     <div className="grid grid-cols-2 gap-6">
-      {(Object.keys(profile) as (keyof Profile)[]).map((key) => (
+      {(Object.keys(PROFILE_LABELS) as (keyof Profile)[]).map((key) => (
         <div key={key} className="space-y-1">
-          <label htmlFor={`profile-${key}`} className={labelClass}>{key}</label>
-          <input id={`profile-${key}`} className={inputClass} value={profile[key]} onChange={(e) => onChange(key, e.target.value)} />
+          <label htmlFor={`profile-${key}`} className={labelClass}>{PROFILE_LABELS[key]}</label>
+          <input id={`profile-${key}`} className={inputClass} value={profile[key] ?? ''} onChange={(e) => onChange(key, e.target.value)} />
         </div>
       ))}
     </div>

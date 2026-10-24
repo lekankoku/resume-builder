@@ -2,7 +2,8 @@ import React, { startTransition } from 'react';
 import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router';
 import { Repositories, SaveStatusSource } from '../application/ports/repositories';
 import { ApplicationDraft, draftStep, isWizardStep, WizardStep } from '../domain/application/ApplicationDraft';
-import ApplicationPage, { OverviewTab, VersionsTab } from './applications/ApplicationPage';
+import { initialStage } from '../domain/application/stages';
+import ApplicationPage, { CompareTab, OverviewTab, VersionsTab } from './applications/ApplicationPage';
 import ApplicationsView from './applications/ApplicationsView';
 import HomeView from './applications/HomeView';
 import NewApplicationWizard from './applications/NewApplicationWizard';
@@ -38,8 +39,8 @@ const App: React.FC<AppProps> = ({ repositories, saveStatus, onRetrySave }) => {
       stepId={stepId}
       onStepChange={(draftId, step) => navigate(`/drafts/${draftId}/${step}`, { replace: !draft })}
       onSaveDraft={saveDraft}
-      onCreate={(details, source, stage, draftId) => {
-        const id = actions.create(details, source, stage);
+      onCreate={(details, source, draftId) => {
+        const id = actions.create(details, source, initialStage(stages));
         startTransition(() => {
           navigate(`/applications/${id}`);
           if (draftId) removeDraft(draftId);
@@ -52,8 +53,8 @@ const App: React.FC<AppProps> = ({ repositories, saveStatus, onRetrySave }) => {
   return (
     <Routes>
       <Route element={<AppShell saveStatus={saveStatus} onRetrySave={onRetrySave} />}>
-        <Route index element={<HomeView applications={applications} drafts={drafts} onDiscardDraft={removeDraft} />} />
-        <Route path="applications" element={<ApplicationsView applications={applications} stages={stages} />} />
+        <Route index element={<HomeView applications={applications} stages={stages} drafts={drafts} onDiscardDraft={removeDraft} />} />
+        <Route path="applications" element={<ApplicationsView applications={applications} stages={stages} onChangeStage={actions.changeStage} />} />
         <Route path="applications/new" element={wizard('details')} />
         <Route path="drafts/:id" element={<DraftRoute drafts={drafts} wizard={wizard} />} />
         <Route path="drafts/:id/:step" element={<DraftRoute drafts={drafts} wizard={wizard} />} />
@@ -67,6 +68,7 @@ const App: React.FC<AppProps> = ({ repositories, saveStatus, onRetrySave }) => {
           <Route path="cv/:section" element={<CvTab />} />
           <Route path="cover-letter" element={<CoverLetterTab />} />
           <Route path="versions" element={<VersionsTab />} />
+          <Route path="versions/:versionId/compare" element={<CompareTab />} />
         </Route>
         <Route path="settings" element={<SettingsView />}>
           <Route index element={<Navigate to="profile" replace />} />
