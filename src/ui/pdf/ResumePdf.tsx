@@ -7,7 +7,7 @@ import PageFooter from './PageFooter';
 import { colors, documentDate, page } from './theme';
 
 const styles = StyleSheet.create({
-  page,
+  page: { ...page, fontSize: 9 },
   header: { borderBottomWidth: 1.5, borderBottomColor: colors.ink, paddingBottom: 12, marginBottom: 12 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
   name: { fontFamily: 'Calistoga', fontSize: 28, color: colors.ink, textTransform: 'uppercase', lineHeight: 1.1 },
@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
   photo: { width: 64, height: 64, borderRadius: 8, objectFit: 'cover', objectPosition: 'top' },
   contacts: { flexDirection: 'row' },
   contactColumn: { flex: 1 },
-  contact: { fontSize: 8, marginBottom: 3, color: colors.body },
+  contact: { fontSize: 8.5, marginBottom: 3, color: colors.body },
   contactLabel: { fontWeight: 700, color: colors.accent },
   link: { color: colors.body },
   columns: { flexDirection: 'row' },
@@ -37,20 +37,20 @@ const styles = StyleSheet.create({
   sideHeading: { fontWeight: 700, fontSize: 8, letterSpacing: 1.5, color: colors.ink, textTransform: 'uppercase', marginBottom: 8 },
   item: { marginBottom: 8 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  itemTitle: { fontFamily: 'Calistoga', fontSize: 11, color: colors.ink, textTransform: 'uppercase', flex: 1, paddingRight: 8 },
-  period: { fontSize: 7, fontWeight: 700, color: colors.muted, textTransform: 'uppercase' },
-  degree: { fontFamily: 'Calistoga', fontSize: 11, color: colors.ink, textTransform: 'uppercase', marginBottom: 2 },
-  company: { fontWeight: 700, fontSize: 8.2, color: colors.body, textTransform: 'uppercase', marginBottom: 4 },
-  location: { fontWeight: 400, fontSize: 7, color: colors.muted },
+  itemTitle: { fontFamily: 'Calistoga', fontSize: 11.5, color: colors.ink, textTransform: 'uppercase', flex: 1, paddingRight: 8, marginBottom: 3 },
+  period: { fontSize: 7.5, fontWeight: 700, color: colors.muted, textTransform: 'uppercase' },
+  degree: { fontFamily: 'Calistoga', fontSize: 11.5, color: colors.ink, textTransform: 'uppercase', marginBottom: 3 },
+  company: { fontWeight: 700, fontSize: 8.6, color: colors.body, textTransform: 'uppercase', marginBottom: 5 },
+  location: { fontWeight: 400, fontSize: 7.5, color: colors.muted },
   bullet: { flexDirection: 'row', marginBottom: 2 },
   bulletMark: { width: 10, color: colors.accent, fontWeight: 700 },
   bulletText: { flex: 1 },
-  scope: { fontWeight: 700, fontSize: 8, color: colors.body, marginBottom: 3 },
-  abilityTitle: { fontWeight: 700, fontSize: 8, color: colors.ink, textTransform: 'uppercase', marginBottom: 3 },
-  abilityBullet: { fontSize: 8.2 },
+  scope: { fontWeight: 700, fontSize: 8.6, color: colors.body, marginBottom: 3 },
+  abilityTitle: { fontWeight: 700, fontSize: 8.6, color: colors.ink, textTransform: 'uppercase', marginBottom: 3 },
+  abilityBullet: { fontSize: 8.8 },
   techCategory: { fontWeight: 700, fontSize: 7, letterSpacing: 1, color: colors.muted, textTransform: 'uppercase' },
-  techSkills: { fontWeight: 700, fontSize: 8.2, color: colors.ink, marginBottom: 6 },
-  language: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3, fontSize: 8.2 },
+  techSkills: { fontWeight: 700, fontSize: 8.8, color: colors.ink, marginBottom: 6 },
+  language: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3, fontSize: 8.8 },
   languageName: { fontWeight: 700, color: colors.ink },
   languageLevel: { fontSize: 7, fontWeight: 700, color: colors.accent, textTransform: 'uppercase' },
   referenceName: { fontWeight: 700, fontSize: 9, color: colors.ink },
@@ -73,7 +73,7 @@ const Bullets: React.FC<{ items: string[]; mark?: string; style?: object }> = ({
 const Section: React.FC<{ heading: string; keepTogether?: boolean; children: React.ReactNode }> = ({ heading, keepTogether, children }) => {
   const content = (
     <>
-      <Text style={styles.sectionHeading}>{heading}</Text>
+      <Text style={styles.sectionHeading} minPresenceAhead={120}>{heading}</Text>
       {children}
     </>
   );
@@ -81,8 +81,8 @@ const Section: React.FC<{ heading: string; keepTogether?: boolean; children: Rea
 };
 
 const SideSection: React.FC<{ heading: string; children: React.ReactNode }> = ({ heading, children }) => (
-  <View style={styles.section} wrap={false}>
-    <Text style={styles.sideHeading}>
+  <View style={styles.section}>
+    <Text style={styles.sideHeading} minPresenceAhead={40}>
       {heading}
     </Text>
     {children}

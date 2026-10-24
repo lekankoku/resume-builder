@@ -12,7 +12,7 @@ export const resumeData: Resume = {
     website: "https://lekankoku.com",
     linkedin: "https://www.linkedin.com/in/lekankoku/",
     github: "https://github.com/lekankoku",
-    photoUrl: "https://lekankoku.com/profile.jpg"
+    photoUrl: "/profile.jpg"
   },
   experiences: [
     {
