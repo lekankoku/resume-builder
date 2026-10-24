@@ -1,15 +1,13 @@
 import React from 'react';
-import { ChevronLeft, Printer } from 'lucide-react';
-import { PrintVariant } from './ResumePreview';
+import { ChevronLeft, Download } from 'lucide-react';
 
 interface Props {
   active: 'resume' | 'cover-letter';
   onBack: () => void;
   onShowResume: () => void;
   onShowCoverLetter: () => void;
-  onPrint: () => void;
-  printVariant?: PrintVariant;
-  onPrintVariantChange?: (variant: PrintVariant) => void;
+  downloadUrl: string | null;
+  fileName: string;
 }
 
 const segment = (isActive: boolean) =>
@@ -20,11 +18,10 @@ const PrintToolbar: React.FC<Props> = ({
   onBack,
   onShowResume,
   onShowCoverLetter,
-  onPrint,
-  printVariant,
-  onPrintVariantChange,
+  downloadUrl,
+  fileName,
 }) => (
-  <nav className="no-print sticky top-0 z-50 w-full flex justify-center py-3 bg-white/95 backdrop-blur-md border-b border-slate-200 mb-10">
+  <nav className="no-print sticky top-0 z-50 w-full flex justify-center py-3 bg-white/95 backdrop-blur-md border-b border-slate-200">
     <div className="max-w-6xl w-full flex justify-between items-center gap-6 px-6">
       <button onClick={onBack} className="flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900">
         <ChevronLeft size={16} /> Back
@@ -40,27 +37,16 @@ const PrintToolbar: React.FC<Props> = ({
           </button>
         </div>
 
-        {printVariant && onPrintVariantChange && (
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            Layout
-            <select
-              value={printVariant}
-              onChange={(e) => onPrintVariantChange(e.target.value as PrintVariant)}
-              className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm"
-            >
-              <option value="continuous">Continuous flow</option>
-              <option value="strict-2-page">Strict 2 pages</option>
-            </select>
-          </label>
-        )}
       </div>
 
-      <button
-        onClick={onPrint}
-        className="flex items-center gap-2 px-5 py-2 bg-accent text-white text-sm font-semibold rounded-xl shadow-sm hover:bg-accent/90 transition-all"
+      <a
+        href={downloadUrl ?? undefined}
+        download={`${fileName}.pdf`}
+        aria-disabled={!downloadUrl}
+        className="flex items-center gap-2 px-5 py-2 bg-accent text-white text-sm font-semibold rounded-xl shadow-sm hover:bg-accent/90 transition-all aria-disabled:opacity-50"
       >
-        <Printer size={16} /> Print / Save as PDF
-      </button>
+        <Download size={16} /> Download PDF
+      </a>
     </div>
   </nav>
 );

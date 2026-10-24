@@ -1,4 +1,4 @@
-import React, { startTransition } from 'react';
+import React, { lazy, startTransition, Suspense } from 'react';
 import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router';
 import { Repositories, SaveStatusSource } from '../application/ports/repositories';
 import { ApplicationDraft, draftStep, isWizardStep, WizardStep } from '../domain/application/ApplicationDraft';
@@ -12,9 +12,10 @@ import { useApplications } from './hooks/useApplications';
 import { useDrafts } from './hooks/useDrafts';
 import { useProfile } from './hooks/useProfile';
 import { useStages } from './hooks/useStages';
-import PreviewPage from './preview/PreviewPage';
 import SettingsView, { ProfileSettings, StageSettings } from './settings/SettingsView';
 import AppShell from './shell/AppShell';
+
+const PreviewPage = lazy(() => import('./preview/PreviewPage'));
 
 interface AppProps {
   repositories: Repositories;
@@ -86,10 +87,18 @@ const App: React.FC<AppProps> = ({ repositories, saveStatus, onRetrySave }) => {
           />
         </Route>
       </Route>
-      <Route path="applications/:id/preview/:doc" element={<PreviewPage applications={applications} profile={profile} />} />
+      <Route path="applications/:id/preview/:doc" element={
+          <Suspense fallback={null}>
+            <PreviewPage applications={applications} profile={profile} />
+          </Suspense>
+        } />
       <Route
         path="applications/:id/versions/:versionId/preview/:doc"
-        element={<PreviewPage applications={applications} profile={profile} />}
+        element={
+          <Suspense fallback={null}>
+            <PreviewPage applications={applications} profile={profile} />
+          </Suspense>
+        }
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

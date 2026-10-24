@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router';
 import { JobApplication } from '../../domain/application/JobApplication';
 import { Profile } from '../../domain/resume/Resume';
 import { applyProfile } from '../../domain/resume/resumeOperations';
 import CoverLetterPreview from './CoverLetterPreview';
-import ResumePreview, { PrintVariant } from './ResumePreview';
+import ResumePreview from './ResumePreview';
 
 interface Props {
   applications: JobApplication[];
@@ -15,7 +15,6 @@ const PreviewPage: React.FC<Props> = ({ applications, profile }) => {
   const { id, versionId, doc } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const [printVariant, setPrintVariant] = useState<PrintVariant>('continuous');
 
   const application = applications.find((a) => a.id === id);
   const version = versionId ? application?.versions.find((v) => v.id === versionId) : undefined;
@@ -35,8 +34,6 @@ const PreviewPage: React.FC<Props> = ({ applications, profile }) => {
     <ResumePreview
       resume={resume}
       targetCompany={application.company}
-      printVariant={printVariant}
-      onPrintVariantChange={setPrintVariant}
       onBackToEditor={back}
       onShowCoverLetter={() => show('cover-letter')}
     />

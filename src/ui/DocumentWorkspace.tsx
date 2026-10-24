@@ -7,9 +7,9 @@ import { useApplicationContext } from './applications/ApplicationPage';
 import EditorView, { CV_EDITOR_SECTIONS, EditorSection } from './editor/EditorView';
 import { createResumeActions } from './hooks/useResume';
 import { useJsonSource } from './hooks/useJsonSource';
-import { CoverLetterDocument } from './preview/CoverLetterPreview';
+import CoverLetterDocument from './preview/CoverLetterDocument';
 import LivePreview from './preview/LivePreview';
-import { ResumeDocument } from './preview/ResumePreview';
+import ResumeDocument from './preview/ResumeDocument';
 
 const useApplicationDocuments = () => {
   const { application, actions, profile } = useApplicationContext();
@@ -54,7 +54,7 @@ export const CvTab: React.FC = () => {
       activeSection={section!}
       preview={
         <LivePreview title="CV preview" printViewHref={`/applications/${application.id}/preview/resume`}>
-          <ResumeDocument resume={resume} printVariant="continuous" />
+          <ResumeDocument resume={resume} />
         </LivePreview>
       }
     />

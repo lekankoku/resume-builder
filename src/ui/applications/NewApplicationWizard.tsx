@@ -17,9 +17,9 @@ import { Profile, Resume } from '../../domain/resume/Resume';
 import { applyProfile } from '../../domain/resume/resumeOperations';
 import { EditorSection, TABS } from '../editor/EditorView';
 import { ResumeActions, useResume } from '../hooks/useResume';
-import { CoverLetterDocument } from '../preview/CoverLetterPreview';
+import CoverLetterDocument from '../preview/CoverLetterDocument';
 import LivePreview from '../preview/LivePreview';
-import { ResumeDocument } from '../preview/ResumePreview';
+import ResumeDocument from '../preview/ResumeDocument';
 import PageHeader from '../shell/PageHeader';
 import { buttonClass, DetailFields, inputClass, labelClass, primaryButtonClass } from './ApplicationsView';
 
@@ -445,7 +445,7 @@ const ReviewStep: React.FC<{
           </LivePreview>
         ) : (
           <LivePreview title="CV preview">
-            <ResumeDocument resume={resume} printVariant="continuous" />
+            <ResumeDocument resume={resume} />
           </LivePreview>
         )}
       </div>
