@@ -5,11 +5,13 @@ import {
   ApplicationDetails,
   changeStage,
   createApplication,
+  createBlankCv,
   isWebUrl,
   JobApplication,
   restoreVersion,
   saveVersion,
   updateApplicationField,
+  validateDetails,
 } from './JobApplication';
 
 const uuid = () => crypto.randomUUID();
@@ -28,6 +30,27 @@ const anApplication = (): JobApplication =>
   createApplication(someDetails(), { resume: aResume(), coverLetter: aCoverLetter() }, uuid(), new Date(2026, 0, 1), uuid());
 
 describe('JobApplication', () => {
+  describe('createBlankCv', () => {
+    it('has no CV content and an empty cover letter dated now', () => {
+      const now = new Date(2026, 4, 7);
+
+      const { resume, coverLetter } = createBlankCv(now);
+
+      expect(Object.values(resume.personal).every((value) => value === '')).toBe(true);
+      expect([
+        resume.experiences,
+        resume.abilities,
+        resume.education,
+        resume.projects,
+        resume.languages,
+        resume.technicalProficiency,
+        resume.references,
+        resume.crossFunctional.bullets,
+      ]).toEqual(Array(8).fill([]));
+      expect(coverLetter).toEqual(createCoverLetter(now));
+    });
+  });
+
   describe('createApplication', () => {
     it('starts in the given stage with one history entry and no versions', () => {
       const details = someDetails();
@@ -72,6 +95,32 @@ describe('JobApplication', () => {
 
     it.each(['javascript:alert(1)', 'data:text/html,x', 'example.com', ''])('rejects %s', (url) => {
       expect(isWebUrl(url)).toBe(false);
+    });
+  });
+
+  describe('validateDetails', () => {
+    const validDetails = (): ApplicationDetails => ({ ...someDetails(), postingUrl: 'https://jobs.example.com/1' });
+
+    it('accepts details with company, role, date and a web posting URL', () => {
+      expect(validateDetails(validDetails())).toEqual([]);
+    });
+
+    it('accepts a blank posting URL and blank notes', () => {
+      expect(validateDetails({ ...validDetails(), postingUrl: ' ', notes: '' })).toEqual([]);
+    });
+
+    it.each([
+      ['company', 'Company is required'],
+      ['role', 'Role is required'],
+      ['appliedOn', 'Date applied is required'],
+    ] as const)('reports a blank %s', (field, problem) => {
+      expect(validateDetails({ ...validDetails(), [field]: field === 'appliedOn' ? '' : '  ' })).toEqual([problem]);
+    });
+
+    it('reports a posting URL that is not a web URL', () => {
+      expect(validateDetails({ ...validDetails(), postingUrl: 'javascript:alert(1)' })).toEqual([
+        'Job posting URL must start with http:// or https://',
+      ]);
     });
   });
 

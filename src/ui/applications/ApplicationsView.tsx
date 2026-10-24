@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ClipboardList, Eye, History, Pencil, Plus, RotateCcw, Save, Trash2 } from 'lucide-react';
-import { ApplicationDetails, CvSource, CvVersion, isWebUrl, JobApplication } from '../../domain/application/JobApplication';
+import { ApplicationDetails, CvVersion, isWebUrl, JobApplication } from '../../domain/application/JobApplication';
 import { isStageInUse } from '../../domain/application/stages';
 import { ApplicationActions } from '../hooks/useApplications';
 import CoverLetterPreview from '../preview/CoverLetterPreview';
@@ -10,46 +10,35 @@ interface Props {
   applications: JobApplication[];
   actions: ApplicationActions;
   stages: string[];
+  initialSelectedId?: string;
   onAddStage: (name: string) => void;
   onRemoveStage: (name: string) => void;
-  loadMasterCv: () => CvSource;
-  onEditMaster: () => void;
+  onNewApplication: () => void;
   onEditApplication: (id: string) => void;
 }
 
-const MASTER_SOURCE = 'master';
-
-const inputClass =
+export const inputClass =
   'w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none';
-const labelClass = 'text-[10px] font-mono font-black uppercase text-slate-400';
-const buttonClass =
+export const labelClass = 'text-[10px] font-mono font-black uppercase text-slate-400';
+export const buttonClass =
   'flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-900 font-bold rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest text-[10px]';
-const primaryButtonClass =
+export const primaryButtonClass =
   'flex items-center gap-2 px-4 py-2 bg-slate-900 text-white font-bold rounded-xl hover:bg-black transition-all uppercase tracking-widest text-[10px]';
 
 const formatTimestamp = (iso: string) => new Date(iso).toLocaleString();
-
-const emptyDetails = (): ApplicationDetails => ({
-  company: '',
-  role: '',
-  postingUrl: '',
-  appliedOn: new Date().toISOString().slice(0, 10),
-  notes: '',
-});
 
 const ApplicationsView: React.FC<Props> = ({
   applications,
   actions,
   stages,
+  initialSelectedId,
   onAddStage,
   onRemoveStage,
-  loadMasterCv,
-  onEditMaster,
+  onNewApplication,
   onEditApplication,
 }) => {
-  const [selectedId, setSelectedId] = useState<string | null>(applications[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId ?? applications[0]?.id ?? null);
   const [stageFilter, setStageFilter] = useState('');
-  const [isCreating, setIsCreating] = useState(applications.length === 0);
   const [previewing, setPreviewing] = useState<{ application: JobApplication; version: CvVersion } | null>(null);
 
   const selected = applications.find((a) => a.id === selectedId);
@@ -72,16 +61,7 @@ const ApplicationsView: React.FC<Props> = ({
           </div>
         </div>
         <div className="flex gap-3">
-          <button onClick={onEditMaster} className={buttonClass}>
-            Edit Master CV <Pencil size={14} />
-          </button>
-          <button
-            onClick={() => {
-              setIsCreating(true);
-              setSelectedId(null);
-            }}
-            className={primaryButtonClass}
-          >
+          <button onClick={onNewApplication} className={primaryButtonClass}>
             New Application <Plus size={14} />
           </button>
         </div>
@@ -101,10 +81,7 @@ const ApplicationsView: React.FC<Props> = ({
               {visible.map((application) => (
                 <li key={application.id}>
                   <button
-                    onClick={() => {
-                      setSelectedId(application.id);
-                      setIsCreating(false);
-                    }}
+                    onClick={() => setSelectedId(application.id)}
                     className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
                       application.id === selectedId ? 'bg-accent text-white' : 'hover:bg-slate-50'
                     }`}
@@ -125,19 +102,7 @@ const ApplicationsView: React.FC<Props> = ({
         </aside>
 
         <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 min-h-[600px]">
-          {isCreating && (
-            <NewApplicationForm
-              applications={applications}
-              stages={stages}
-              onCreate={(details, sourceId, stage) => {
-                const source = applications.find((a) => a.id === sourceId) ?? loadMasterCv();
-                const id = actions.create(details, { resume: source.resume, coverLetter: source.coverLetter }, stage);
-                setSelectedId(id);
-                setIsCreating(false);
-              }}
-            />
-          )}
-          {!isCreating && selected && (
+          {selected && (
             <ApplicationDetail
               application={selected}
               actions={actions}
@@ -146,59 +111,14 @@ const ApplicationsView: React.FC<Props> = ({
               onPreviewVersion={(version) => setPreviewing({ application: selected, version })}
             />
           )}
-          {!isCreating && !selected && <p className="text-sm text-slate-400">Select an application.</p>}
+          {!selected && <p className="text-sm text-slate-400">Select an application.</p>}
         </section>
       </main>
     </div>
   );
 };
 
-const NewApplicationForm: React.FC<{
-  applications: JobApplication[];
-  stages: string[];
-  onCreate: (details: ApplicationDetails, sourceId: string, stage: string) => void;
-}> = ({ applications, stages, onCreate }) => {
-  const [details, setDetails] = useState(emptyDetails);
-  const [sourceId, setSourceId] = useState(MASTER_SOURCE);
-  const [stage, setStage] = useState(stages[0] ?? '');
-
-  return (
-    <form
-      className="space-y-6"
-      onSubmit={(e) => {
-        e.preventDefault();
-        onCreate(details, sourceId, stage);
-      }}
-    >
-      <h2 className="text-xl font-display text-slate-900 border-b pb-4">New Application</h2>
-      <DetailFields details={details} onChange={(field, value) => setDetails((d) => ({ ...d, [field]: value }))} />
-      <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-1">
-          <label htmlFor="new-stage" className={labelClass}>Stage</label>
-          <select id="new-stage" className={inputClass} value={stage} onChange={(e) => setStage(e.target.value)}>
-            {stages.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1">
-          <label htmlFor="new-source" className={labelClass}>Copy CV from</label>
-          <select id="new-source" className={inputClass} value={sourceId} onChange={(e) => setSourceId(e.target.value)}>
-            <option value={MASTER_SOURCE}>Master CV</option>
-            {applications.map((a) => (
-              <option key={a.id} value={a.id}>{[a.company, a.role].filter(Boolean).join(' — ')}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-      <button type="submit" disabled={!details.company.trim()} className={`${primaryButtonClass} disabled:opacity-40`}>
-        Create Application <Plus size={14} />
-      </button>
-    </form>
-  );
-};
-
-const DetailFields: React.FC<{
+export const DetailFields: React.FC<{
   details: ApplicationDetails;
   onChange: (field: keyof ApplicationDetails, value: string) => void;
 }> = ({ details, onChange }) => (

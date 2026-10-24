@@ -27,7 +27,7 @@ import ProjectsTab from './tabs/ProjectsTab';
 import ReferencesTab from './tabs/ReferencesTab';
 import TechStackTab from './tabs/TechStackTab';
 
-const TABS = [
+export const TABS = [
   { id: 'json', label: 'Raw JSON', icon: FileJson },
   { id: 'personal', label: 'Identity', icon: User },
   { id: 'experiences', label: 'Experience', icon: Briefcase },
@@ -131,20 +131,13 @@ const EditorView: React.FC<Props> = ({
         {activeTab === 'json' && (
           <JsonTab jsonInput={jsonInput} jsonError={jsonError} onChange={onJsonChange} onApply={onApplyJson} />
         )}
-        {activeTab === 'personal' && (
-          <IdentityTab resume={resume} actions={actions} targetCompany={targetCompany} onTargetCompanyChange={onTargetCompanyChange} />
-        )}
-        {activeTab === 'experiences' && <ExperienceTab resume={resume} actions={actions} />}
-        {activeTab === 'projects' && <ProjectsTab resume={resume} actions={actions} />}
-        {activeTab === 'education' && <EducationTab resume={resume} actions={actions} />}
-        {activeTab === 'abilities' && <AbilitiesTab resume={resume} actions={actions} />}
-        {activeTab === 'languages' && <LanguagesTab resume={resume} actions={actions} />}
-        {activeTab === 'technicalProficiency' && <TechStackTab resume={resume} actions={actions} />}
-        {activeTab === 'references' && <ReferencesTab resume={resume} actions={actions} />}
-        {activeTab === 'coverLetter' && (
-          <CoverLetterTab
+        {activeTab !== 'json' && (
+          <EditorSection
+            section={activeTab}
+            resume={resume}
+            actions={actions}
             coverLetter={coverLetter}
-            onFieldChange={onCoverLetterFieldChange}
+            onCoverLetterFieldChange={onCoverLetterFieldChange}
             targetCompany={targetCompany}
             onTargetCompanyChange={onTargetCompanyChange}
           />
@@ -152,6 +145,37 @@ const EditorView: React.FC<Props> = ({
       </section>
     </main>
   </div>
+);
+
+export const EditorSection: React.FC<{
+  section: string;
+  resume: Resume;
+  actions: ResumeActions;
+  coverLetter: CoverLetter;
+  onCoverLetterFieldChange: (field: keyof CoverLetter, value: string) => void;
+  targetCompany: string;
+  onTargetCompanyChange: (value: string) => void;
+}> = ({ section, resume, actions, coverLetter, onCoverLetterFieldChange, targetCompany, onTargetCompanyChange }) => (
+  <>
+    {section === 'personal' && (
+      <IdentityTab resume={resume} actions={actions} targetCompany={targetCompany} onTargetCompanyChange={onTargetCompanyChange} />
+    )}
+    {section === 'experiences' && <ExperienceTab resume={resume} actions={actions} />}
+    {section === 'projects' && <ProjectsTab resume={resume} actions={actions} />}
+    {section === 'education' && <EducationTab resume={resume} actions={actions} />}
+    {section === 'abilities' && <AbilitiesTab resume={resume} actions={actions} />}
+    {section === 'languages' && <LanguagesTab resume={resume} actions={actions} />}
+    {section === 'technicalProficiency' && <TechStackTab resume={resume} actions={actions} />}
+    {section === 'references' && <ReferencesTab resume={resume} actions={actions} />}
+    {section === 'coverLetter' && (
+      <CoverLetterTab
+        coverLetter={coverLetter}
+        onFieldChange={onCoverLetterFieldChange}
+        targetCompany={targetCompany}
+        onTargetCompanyChange={onTargetCompanyChange}
+      />
+    )}
+  </>
 );
 
 export default EditorView;

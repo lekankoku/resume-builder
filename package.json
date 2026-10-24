@@ -16,7 +16,8 @@
     "@dnd-kit/utilities": "^3.2.2",
     "lucide-react": "0.562.0",
     "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "react-dom": "^19.2.3",
+    "react-router": "^8.5.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

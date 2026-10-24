@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { aResume } from '../../testing/resumeFixture';
 import { createCoverLetter } from '../coverLetter/CoverLetter';
 import { createApplication } from './JobApplication';
-import { addStage, isStageInUse, removeStage } from './stages';
+import { addStage, isActiveApplication, isStageInUse, removeStage } from './stages';
 
 const uuid = () => crypto.randomUUID();
 
@@ -53,6 +53,16 @@ describe('stages', () => {
 
       expect(isStageInUse(stage, applications)).toBe(true);
       expect(isStageInUse(uuid(), applications)).toBe(false);
+    });
+  });
+
+  describe('isActiveApplication', () => {
+    it.each(['Rejected', 'Withdrawn'])('treats an application in %s as closed', (stage) => {
+      expect(isActiveApplication(anApplicationIn(stage))).toBe(false);
+    });
+
+    it('treats an application in any other stage as active', () => {
+      expect(isActiveApplication(anApplicationIn(uuid()))).toBe(true);
     });
   });
 });

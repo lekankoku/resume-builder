@@ -1,4 +1,4 @@
-import { CoverLetter } from '../coverLetter/CoverLetter';
+import { CoverLetter, createCoverLetter } from '../coverLetter/CoverLetter';
 import { Resume } from '../resume/Resume';
 
 export interface StageChange {
@@ -36,6 +36,32 @@ export interface CvSource {
   coverLetter: CoverLetter;
 }
 
+export const createBlankCv = (now: Date): CvSource => ({
+  resume: {
+    personal: {
+      name: '',
+      title: '',
+      phone: '',
+      email: '',
+      residence: '',
+      nationality: '',
+      website: '',
+      linkedin: '',
+      github: '',
+      photoUrl: '',
+    },
+    experiences: [],
+    abilities: [],
+    education: [],
+    projects: [],
+    languages: [],
+    technicalProficiency: [],
+    references: [],
+    crossFunctional: { title: '', bullets: [] },
+  },
+  coverLetter: createCoverLetter(now),
+});
+
 export const createApplication = (
   details: ApplicationDetails,
   source: CvSource,
@@ -59,6 +85,13 @@ export const updateApplicationField = (
 ): JobApplication => ({ ...application, [field]: value });
 
 export const isWebUrl = (url: string): boolean => /^https?:\/\//i.test(url.trim());
+
+export const validateDetails = (details: ApplicationDetails): string[] => [
+  ...(details.company.trim() ? [] : ['Company is required']),
+  ...(details.role.trim() ? [] : ['Role is required']),
+  ...(details.appliedOn ? [] : ['Date applied is required']),
+  ...(!details.postingUrl.trim() || isWebUrl(details.postingUrl) ? [] : ['Job posting URL must start with http:// or https://']),
+];
 
 export const changeStage = (application: JobApplication, stage: string, now: Date): JobApplication =>
   application.stage === stage
