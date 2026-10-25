@@ -29,8 +29,7 @@
 		}
 	],
 	"vars": {
-		"ACCESS_TEAM_DOMAIN": "",
-		"ACCESS_AUD": "",
-		"ACCESS_DISABLED": "true"
+		"ACCESS_TEAM_DOMAIN": "dot24labs.cloudflareaccess.com",
+		"ACCESS_AUD": "7f74802e55c22b6500076decfa3c07a7186c05c8a5751c1741c42727e0f96001"
 	}
 }
