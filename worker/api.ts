@@ -7,7 +7,7 @@ export interface Env {
   ACCESS_DISABLED?: string;
 }
 
-const STATE_KEYS = ['applications', 'drafts', 'stages', 'profile'];
+const STATE_KEYS = ['applications', 'drafts', 'leads', 'stages', 'profile'];
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });

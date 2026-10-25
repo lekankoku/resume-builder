@@ -1,6 +1,6 @@
 import { RemoteState, StateKey } from '../../application/ports/repositories';
 
-const STORAGE_KEYS: Record<StateKey, string> = {
+const STORAGE_KEYS: Partial<Record<StateKey, string>> = {
   applications: 'resume-applications',
   drafts: 'resume-application-drafts',
   stages: 'resume-stages',

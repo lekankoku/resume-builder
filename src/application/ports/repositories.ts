@@ -1,5 +1,6 @@
 import { ApplicationDraft } from '../../domain/application/ApplicationDraft';
 import { JobApplication } from '../../domain/application/JobApplication';
+import { JobLead } from '../../domain/application/JobLead';
 import { Profile, Resume } from '../../domain/resume/Resume';
 
 export interface ResumeRepository {
@@ -22,6 +23,11 @@ export interface DraftRepository {
   save(drafts: ApplicationDraft[]): void;
 }
 
+export interface LeadRepository {
+  load(): JobLead[];
+  save(leads: JobLead[]): void;
+}
+
 export interface ProfileRepository {
   load(): Profile;
   save(profile: Profile): void;
@@ -31,12 +37,14 @@ export interface Repositories {
   applications: ApplicationRepository;
   stages: StageRepository;
   drafts: DraftRepository;
+  leads: LeadRepository;
   profile: ProfileRepository;
 }
 
 export interface RemoteState {
   applications?: JobApplication[];
   drafts?: ApplicationDraft[];
+  leads?: JobLead[];
   stages?: string[];
   profile?: Profile;
 }

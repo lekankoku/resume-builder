@@ -58,6 +58,7 @@ export const createRemoteRepositories = (
   const repositories: Repositories = {
     applications: repository('applications', () => []),
     drafts: repository('drafts', () => []),
+    leads: repository('leads', () => []),
     stages: repository('stages', () => DEFAULT_STAGES),
     profile: repository('profile', () => defaultProfile),
   };
