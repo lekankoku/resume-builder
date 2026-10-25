@@ -9,11 +9,11 @@ import { colors, documentDate, page } from './theme';
 const styles = StyleSheet.create({
   page: { ...page, fontSize: 9 },
   header: { borderBottomWidth: 1.5, borderBottomColor: colors.ink, paddingBottom: 12, marginBottom: 12 },
-  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
+  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   name: { fontFamily: 'Calistoga', fontSize: 28, color: colors.ink, textTransform: 'uppercase', lineHeight: 1.1 },
   title: { fontWeight: 700, fontSize: 11, letterSpacing: 2, color: colors.accent, textTransform: 'uppercase', marginTop: 4 },
-  photo: { width: 64, height: 64, borderRadius: 8, objectFit: 'cover', objectPosition: 'top' },
-  contacts: { flexDirection: 'row' },
+  photo: { width: 84, height: 84, borderRadius: 8, objectFit: 'cover', objectPosition: 'top', marginLeft: 16 },
+  contacts: { flexDirection: 'row', marginTop: 12 },
   contactColumn: { flex: 1 },
   contact: { fontSize: 8.5, marginBottom: 3, color: colors.body },
   contactLabel: { fontWeight: 700, color: colors.accent },
@@ -112,20 +112,20 @@ const ResumePdf: React.FC<{ resume: Resume; targetCompany: string }> = ({ resume
             <View style={{ flex: 1 }}>
               <Text style={styles.name}>{personal.name}</Text>
               <Text style={styles.title}>{personal.title}</Text>
+              <View style={styles.contacts}>
+                <View style={styles.contactColumn}>
+                  <Contact label="Email" href={`mailto:${cleanUrl(personal.email)}`}>{displayUrl(personal.email)}</Contact>
+                  <Contact label="Phone" href={`tel:${cleanPhone(personal.phone)}`}>{personal.phone}</Contact>
+                  <Contact label="Location">{personal.residence}</Contact>
+                </View>
+                <View style={styles.contactColumn}>
+                  <Contact label="Web" href={cleanUrl(personal.website)}>{displayUrl(personal.website)}</Contact>
+                  <Contact label="LinkedIn" href={cleanUrl(personal.linkedin)}>{displayUrl(personal.linkedin)}</Contact>
+                  <Contact label="GitHub" href={cleanUrl(personal.github)}>{displayUrl(personal.github)}</Contact>
+                </View>
+              </View>
             </View>
             {personal.photoUrl && <Image src={cleanUrl(personal.photoUrl)} style={styles.photo} />}
-          </View>
-          <View style={styles.contacts}>
-            <View style={styles.contactColumn}>
-              <Contact label="Email" href={`mailto:${cleanUrl(personal.email)}`}>{displayUrl(personal.email)}</Contact>
-              <Contact label="Phone" href={`tel:${cleanPhone(personal.phone)}`}>{personal.phone}</Contact>
-              <Contact label="Location">{personal.residence}</Contact>
-            </View>
-            <View style={styles.contactColumn}>
-              <Contact label="Web" href={cleanUrl(personal.website)}>{displayUrl(personal.website)}</Contact>
-              <Contact label="LinkedIn" href={cleanUrl(personal.linkedin)}>{displayUrl(personal.linkedin)}</Contact>
-              <Contact label="GitHub" href={cleanUrl(personal.github)}>{displayUrl(personal.github)}</Contact>
-            </View>
           </View>
         </View>
 
