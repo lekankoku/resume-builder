@@ -1,13 +1,40 @@
-import { BulletSection, ListSection, ListSectionItem, PersonalInfo, Profile, Resume } from './Resume';
+import {
+  BulletSection,
+  Education,
+  Experience,
+  Layout,
+  ListSection,
+  ListSectionItem,
+  PersonalInfo,
+  Position,
+  Profile,
+  Project,
+  Reference,
+  Resume,
+  Volunteering,
+} from './Resume';
+
+type WithOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+
+export type StoredResume = Omit<Resume, 'personal' | 'layout' | 'experiences' | 'education' | 'projects' | 'volunteering' | 'references'> & {
+  personal: WithOptional<PersonalInfo, 'currentRole' | 'currentCompany'>;
+  layout?: Layout;
+  experiences: WithOptional<Experience, 'earlierPositions'>[];
+  education: WithOptional<Education, 'bullets'>[];
+  projects: WithOptional<Project, 'period'>[];
+  volunteering?: Volunteering[];
+  references: WithOptional<Reference, 'contact'>[];
+};
 
 const itemTemplates: { [S in ListSection]: () => ListSectionItem<S> } = {
-  experiences: () => ({ role: '', company: '', location: '', period: '', bullets: [''] }),
-  projects: () => ({ title: '', company: '', scope: '', bullets: [''] }),
-  education: () => ({ degree: '', institution: '', location: '', period: '' }),
+  experiences: () => ({ role: '', company: '', location: '', period: '', earlierPositions: [], bullets: [''] }),
+  projects: () => ({ title: '', company: '', scope: '', period: '', bullets: [''] }),
+  education: () => ({ degree: '', institution: '', location: '', period: '', bullets: [] }),
+  volunteering: () => ({ organization: '', role: '', location: '', period: '', bullets: [''] }),
   abilities: () => ({ title: '', bullets: [''] }),
   languages: () => ({ name: '', level: '' }),
   technicalProficiency: () => ({ category: '', skills: '' }),
-  references: () => ({ name: '', role: '', company: '', linkedin: '' }),
+  references: () => ({ name: '', role: '', company: '', contact: '', linkedin: '' }),
 };
 
 export const updatePersonalField = (resume: Resume, field: keyof PersonalInfo, value: string): Resume => ({
@@ -46,9 +73,52 @@ export const updateBullet = (resume: Resume, section: BulletSection, index: numb
 export const removeBullet = (resume: Resume, section: BulletSection, index: number, bulletIndex: number): Resume =>
   withBullets(resume, section, index, (bullets) => bullets.filter((_, i) => i !== bulletIndex));
 
+export const updateLayout = (resume: Resume, layout: Layout): Resume => ({ ...resume, layout });
+
+export const addEarlierPosition = (resume: Resume, index: number): Resume =>
+  withEarlierPositions(resume, index, (positions) => [...positions, { role: '', period: '' }]);
+
+export const updateEarlierPosition = (
+  resume: Resume,
+  index: number,
+  positionIndex: number,
+  field: keyof Position,
+  value: string,
+): Resume =>
+  withEarlierPositions(resume, index, (positions) =>
+    positions.map((position, i) => (i === positionIndex ? { ...position, [field]: value } : position)),
+  );
+
+export const removeEarlierPosition = (resume: Resume, index: number, positionIndex: number): Resume =>
+  withEarlierPositions(resume, index, (positions) => positions.filter((_, i) => i !== positionIndex));
+
+export const updateCrossFunctionalTitle = (resume: Resume, title: string): Resume => ({
+  ...resume,
+  crossFunctional: { ...resume.crossFunctional, title },
+});
+
+export const addCrossFunctionalBullet = (resume: Resume): Resume => withCrossFunctionalBullets(resume, (bullets) => [...bullets, '']);
+
+export const updateCrossFunctionalBullet = (resume: Resume, bulletIndex: number, value: string): Resume =>
+  withCrossFunctionalBullets(resume, (bullets) => bullets.map((bullet, i) => (i === bulletIndex ? value : bullet)));
+
+export const removeCrossFunctionalBullet = (resume: Resume, bulletIndex: number): Resume =>
+  withCrossFunctionalBullets(resume, (bullets) => bullets.filter((_, i) => i !== bulletIndex));
+
 export const applyProfile = (resume: Resume, profile: Profile): Resume => ({
   ...resume,
-  personal: { ...profile, title: resume.personal.title },
+  personal: { ...profile, title: resume.personal.title, currentRole: resume.personal.currentRole, currentCompany: resume.personal.currentCompany },
+});
+
+export const withResumeDefaults = (resume: StoredResume): Resume => ({
+  ...resume,
+  personal: { currentRole: '', currentCompany: '', ...resume.personal },
+  layout: resume.layout ?? 'experience-first',
+  experiences: resume.experiences.map((experience) => ({ earlierPositions: [], ...experience })),
+  education: resume.education.map((education) => ({ bullets: [], ...education })),
+  projects: resume.projects.map((project) => ({ period: '', ...project })),
+  volunteering: resume.volunteering ?? [],
+  references: resume.references.map((reference) => ({ contact: '', ...reference })),
 });
 
 export const mergeImportedResume = (current: Resume, imported: Resume): Resume => ({
@@ -67,6 +137,16 @@ const withItems = <S extends ListSection>(
   section: S,
   transform: (items: ListSectionItem<S>[]) => ListSectionItem<S>[],
 ): Resume => ({ ...resume, [section]: transform(resume[section] as ListSectionItem<S>[]) });
+
+const withEarlierPositions = (resume: Resume, index: number, transform: (positions: Position[]) => Position[]): Resume =>
+  withItems(resume, 'experiences', (items) =>
+    items.map((item, i) => (i === index ? { ...item, earlierPositions: transform(item.earlierPositions) } : item)),
+  );
+
+const withCrossFunctionalBullets = (resume: Resume, transform: (bullets: string[]) => string[]): Resume => ({
+  ...resume,
+  crossFunctional: { ...resume.crossFunctional, bullets: transform(resume.crossFunctional.bullets) },
+});
 
 const withBullets = (
   resume: Resume,

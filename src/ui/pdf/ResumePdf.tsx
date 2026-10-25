@@ -12,6 +12,7 @@ const styles = StyleSheet.create({
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   name: { fontFamily: 'Calistoga', fontSize: 28, color: colors.ink, textTransform: 'uppercase', lineHeight: 1.1 },
   title: { fontWeight: 700, fontSize: 11, letterSpacing: 2, color: colors.accent, textTransform: 'uppercase', marginTop: 4 },
+  currentRole: { fontWeight: 700, fontSize: 8.6, color: colors.body, textTransform: 'uppercase', marginTop: 3 },
   photo: { width: 84, height: 84, borderRadius: 8, objectFit: 'cover', objectPosition: 'top', marginLeft: 16 },
   contacts: { flexDirection: 'row', marginTop: 12 },
   contactColumn: { flex: 1 },
@@ -42,6 +43,7 @@ const styles = StyleSheet.create({
   degree: { fontFamily: 'Calistoga', fontSize: 11.5, color: colors.ink, textTransform: 'uppercase', marginBottom: 3 },
   company: { fontWeight: 700, fontSize: 8.6, color: colors.body, textTransform: 'uppercase', marginBottom: 5 },
   location: { fontWeight: 400, fontSize: 7.5, color: colors.muted },
+  earlierRole: { fontWeight: 700, fontSize: 8, color: colors.muted, textTransform: 'uppercase', marginBottom: 3 },
   bullet: { flexDirection: 'row', marginBottom: 2 },
   bulletMark: { width: 10, color: colors.accent, fontWeight: 700 },
   bulletText: { flex: 1 },
@@ -104,6 +106,84 @@ const Contact: React.FC<{ label: string; href?: string; children: string }> = ({
 
 const ResumePdf: React.FC<{ resume: Resume; targetCompany: string }> = ({ resume, targetCompany }) => {
   const { personal } = resume;
+  const experience = resume.experiences.length > 0 && (
+    <Section key="experience" heading="Experience">
+      {resume.experiences.map((exp, i) => (
+        <View key={i} style={styles.item} wrap={false}>
+          <View style={styles.row}>
+            <Text style={styles.itemTitle}>{exp.role}</Text>
+            <Text style={styles.period}>{exp.period}</Text>
+          </View>
+          <Text style={styles.company}>
+            {exp.company}
+            {exp.location ? <Text style={styles.location}>{`  |  ${exp.location}`}</Text> : null}
+            {exp.employmentType ? <Text style={styles.location}>{`  |  ${exp.employmentType}`}</Text> : null}
+          </Text>
+          {exp.earlierPositions.map((position, pi) => (
+            <View key={pi} style={styles.row}>
+              <Text style={styles.earlierRole}>{position.role}</Text>
+              <Text style={styles.period}>{position.period}</Text>
+            </View>
+          ))}
+          <Bullets items={exp.bullets} />
+        </View>
+      ))}
+    </Section>
+  );
+
+  const projects = resume.projects.length > 0 && (
+    <Section key="projects" heading="Key Projects">
+      {resume.projects.map((proj, i) => (
+        <View key={i} style={styles.item} wrap={false}>
+          <View style={styles.row}>
+            <Text style={styles.itemTitle}>{proj.title}</Text>
+            <Text style={styles.period}>{[proj.company, proj.period].filter(Boolean).join('  ·  ')}</Text>
+          </View>
+          <Text style={styles.scope}>{proj.scope}</Text>
+          <Bullets items={proj.bullets} mark="›" />
+        </View>
+      ))}
+    </Section>
+  );
+
+  const volunteering = resume.volunteering.length > 0 && (
+    <Section key="volunteering" heading="Volunteering">
+      {resume.volunteering.map((item, i) => (
+        <View key={i} style={styles.item} wrap={false}>
+          <View style={styles.row}>
+            <Text style={styles.itemTitle}>{item.role}</Text>
+            <Text style={styles.period}>{item.period}</Text>
+          </View>
+          <Text style={styles.company}>
+            {item.organization}
+            {item.location ? <Text style={styles.location}>{`  |  ${item.location}`}</Text> : null}
+          </Text>
+          <Bullets items={item.bullets} />
+        </View>
+      ))}
+    </Section>
+  );
+
+  const education = resume.education.length > 0 && (
+    <Section key="education" heading="Academic" keepTogether>
+      {resume.education.map((edu, i) => (
+        <View key={i} style={styles.item} wrap={false}>
+          <View style={styles.row}>
+            <View style={{ flex: 1, paddingRight: 8 }}>
+              <Text style={styles.degree}>{edu.degree}</Text>
+              <Text style={[styles.company, { color: colors.accent, marginBottom: 0 }]}>{edu.institution}</Text>
+            </View>
+            <View>
+              <Text style={[styles.period, { textAlign: 'right' }]}>{edu.period}</Text>
+              <Text style={[styles.location, { textAlign: 'right' }]}>{edu.location}</Text>
+            </View>
+          </View>
+          <Bullets items={edu.bullets} />
+        </View>
+      ))}
+    </Section>
+  );
+
   return (
     <Document title={resumeDocumentTitle(personal, targetCompany)} author={personal.name} creationDate={documentDate}>
       <Page size="A4" style={styles.page}>
@@ -112,6 +192,9 @@ const ResumePdf: React.FC<{ resume: Resume; targetCompany: string }> = ({ resume
             <View style={{ flex: 1 }}>
               <Text style={styles.name}>{personal.name}</Text>
               <Text style={styles.title}>{personal.title}</Text>
+              {personal.currentRole ? (
+                <Text style={styles.currentRole}>{[personal.currentRole, personal.currentCompany].filter(Boolean).join('  ·  ')}</Text>
+              ) : null}
               <View style={styles.contacts}>
                 <View style={styles.contactColumn}>
                   <Contact label="Email" href={`mailto:${cleanUrl(personal.email)}`}>{displayUrl(personal.email)}</Contact>
@@ -131,50 +214,9 @@ const ResumePdf: React.FC<{ resume: Resume; targetCompany: string }> = ({ resume
 
         <View style={styles.columns}>
           <View style={styles.main}>
-            <Section heading="Experience">
-              {resume.experiences.map((exp, i) => (
-                <View key={i} style={styles.item} wrap={false}>
-                  <View style={styles.row}>
-                    <Text style={styles.itemTitle}>{exp.role}</Text>
-                    <Text style={styles.period}>{exp.period}</Text>
-                  </View>
-                  <Text style={styles.company}>
-                    {exp.company}
-                    {exp.location ? <Text style={styles.location}>{`  |  ${exp.location}`}</Text> : null}
-                    {exp.employmentType ? <Text style={styles.location}>{`  |  ${exp.employmentType}`}</Text> : null}
-                  </Text>
-                  <Bullets items={exp.bullets} />
-                </View>
-              ))}
-            </Section>
-
-            <Section heading="Key Projects">
-              {resume.projects.map((proj, i) => (
-                <View key={i} style={styles.item} wrap={false}>
-                  <View style={styles.row}>
-                    <Text style={styles.itemTitle}>{proj.title}</Text>
-                    <Text style={styles.period}>{proj.company}</Text>
-                  </View>
-                  <Text style={styles.scope}>{proj.scope}</Text>
-                  <Bullets items={proj.bullets} mark="›" />
-                </View>
-              ))}
-            </Section>
-
-            <Section heading="Academic" keepTogether>
-              {resume.education.map((edu, i) => (
-                <View key={i} style={[styles.row, styles.item]} wrap={false}>
-                  <View style={{ flex: 1, paddingRight: 8 }}>
-                    <Text style={styles.degree}>{edu.degree}</Text>
-                    <Text style={[styles.company, { color: colors.accent, marginBottom: 0 }]}>{edu.institution}</Text>
-                  </View>
-                  <View>
-                    <Text style={[styles.period, { textAlign: 'right' }]}>{edu.period}</Text>
-                    <Text style={[styles.location, { textAlign: 'right' }]}>{edu.location}</Text>
-                  </View>
-                </View>
-              ))}
-            </Section>
+            {resume.layout === 'education-first'
+              ? [education, experience, projects, volunteering]
+              : [experience, projects, volunteering, education]}
           </View>
 
           <View style={styles.side}>
@@ -186,6 +228,12 @@ const ResumePdf: React.FC<{ resume: Resume; targetCompany: string }> = ({ resume
                 </View>
               ))}
             </SideSection>
+
+            {(resume.crossFunctional.title || resume.crossFunctional.bullets.length > 0) && (
+              <SideSection heading={resume.crossFunctional.title || 'Leadership'}>
+                <Bullets items={resume.crossFunctional.bullets} style={styles.abilityBullet} />
+              </SideSection>
+            )}
 
             <SideSection heading="Tech Stack">
               {resume.technicalProficiency.map((tp, i) => (
@@ -211,9 +259,12 @@ const ResumePdf: React.FC<{ resume: Resume; targetCompany: string }> = ({ resume
                   <Text style={styles.referenceName}>{ref.name}</Text>
                   <Text style={styles.referenceRole}>{ref.role}</Text>
                   <Text style={styles.referenceCompany}>{ref.company}</Text>
-                  <Link src={cleanUrl(ref.linkedin)} style={styles.referenceLink}>
-                    LinkedIn Profile
-                  </Link>
+                  {ref.contact ? <Text style={styles.referenceLink}>{ref.contact}</Text> : null}
+                  {ref.linkedin ? (
+                    <Link src={cleanUrl(ref.linkedin)} style={styles.referenceLink}>
+                      LinkedIn Profile
+                    </Link>
+                  ) : null}
                 </View>
               ))}
             </SideSection>

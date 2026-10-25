@@ -4,6 +4,7 @@ import { createCoverLetter, updateCoverLetterField } from './CoverLetter';
 describe('CoverLetter', () => {
   it('starts empty and dated with the long US format', () => {
     expect(createCoverLetter(new Date(2026, 0, 6))).toEqual({
+      subject: '',
       recipientName: '',
       recipientTitle: '',
       companyAddress: '',

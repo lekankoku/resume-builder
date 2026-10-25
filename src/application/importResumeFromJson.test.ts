@@ -37,6 +37,14 @@ describe('resumeFromJson', () => {
     expect(result.crossFunctional).toEqual({ title: '', bullets: [] });
   });
 
+  it('fills fields that items from an older CV JSON do not have', () => {
+    const company = crypto.randomUUID();
+
+    const result = resumeFromJson(JSON.stringify({ experiences: [{ company, role: '', location: '', period: '', bullets: [] }] }));
+
+    expect(result.experiences).toEqual([{ company, role: '', location: '', period: '', bullets: [], earlierPositions: [] }]);
+  });
+
   it.each(['[]', 'null', '42'])('rejects %s because it is not an object', (json) => {
     expect(() => resumeFromJson(json)).toThrow('CV JSON must be an object');
   });

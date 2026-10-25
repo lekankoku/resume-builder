@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { StateClient } from '../../application/ports/repositories';
+import { ApplicationDraft } from '../../domain/application/ApplicationDraft';
+import { createBlankCv, JobApplication } from '../../domain/application/JobApplication';
 import { DEFAULT_STAGES } from '../../domain/application/stages';
 import { Profile } from '../../domain/resume/Resume';
 import { aResume } from '../../testing/resumeFixture';
@@ -42,6 +44,61 @@ describe('remoteRepositories', () => {
       expect(repositories.leads.load()).toEqual([]);
       expect(repositories.stages.load()).toEqual(DEFAULT_STAGES);
       expect(repositories.profile.load()).toBe(defaultProfile);
+    });
+  });
+
+  describe('load of data saved before the CV fields were extended', () => {
+    const anOldResume = () => {
+      const { volunteering, layout, ...resume } = aResume();
+      return { ...resume, education: resume.education.map(({ bullets, ...education }) => education) };
+    };
+    const anOldCoverLetter = () => {
+      const { subject, ...letter } = createBlankCv(new Date()).coverLetter;
+      return letter;
+    };
+
+    it('fills the new fields of applications and their versions', () => {
+      const application = {
+        id: crypto.randomUUID(),
+        resume: anOldResume(),
+        coverLetter: anOldCoverLetter(),
+        versions: [{ id: crypto.randomUUID(), savedAt: '', note: '', resume: anOldResume(), coverLetter: anOldCoverLetter() }],
+      } as unknown as JobApplication;
+
+      const { repositories } = createRemoteRepositories({ applications: [application] }, aClient(), aProfile());
+
+      const [loaded] = repositories.applications.load();
+      expect(loaded.resume.volunteering).toEqual([]);
+      expect(loaded.resume.layout).toBe('experience-first');
+      expect(loaded.resume.education.every((e) => Array.isArray(e.bullets))).toBe(true);
+      expect(loaded.coverLetter.subject).toBe('');
+      expect(loaded.versions[0].resume.volunteering).toEqual([]);
+      expect(loaded.versions[0].coverLetter.subject).toBe('');
+    });
+
+    it('fills the new fields of drafts and drops a generation made with the old single-step prompt', () => {
+      const draft = {
+        id: crypto.randomUUID(),
+        resume: anOldResume(),
+        coverLetter: anOldCoverLetter(),
+        generated: { resume: aResume(), generatedAt: new Date().toISOString() },
+      } as unknown as ApplicationDraft;
+
+      const { repositories } = createRemoteRepositories({ drafts: [draft] }, aClient(), aProfile());
+
+      const [loaded] = repositories.drafts.load();
+      expect(loaded.resume.volunteering).toEqual([]);
+      expect(loaded.coverLetter.subject).toBe('');
+      expect(loaded.generated).toBeNull();
+    });
+
+    it('keeps a draft generation made with the analysis step', () => {
+      const generated = { analysis: { tagline: crypto.randomUUID() } };
+      const draft = { id: crypto.randomUUID(), ...createBlankCv(new Date()), generated } as unknown as ApplicationDraft;
+
+      const { repositories } = createRemoteRepositories({ drafts: [draft] }, aClient(), aProfile());
+
+      expect(repositories.drafts.load()[0].generated).toBe(generated);
     });
   });
 

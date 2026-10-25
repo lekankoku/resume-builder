@@ -1,6 +1,6 @@
 import React, { lazy, startTransition, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
-import { DocumentClient, Repositories, SaveStatusSource } from '../application/ports/repositories';
+import { AiClient, DocumentClient, Repositories, SaveStatusSource } from '../application/ports/repositories';
 import { ApplicationDraft, draftStep, isWizardStep, WizardStep } from '../domain/application/ApplicationDraft';
 import { JobLead } from '../domain/application/JobLead';
 import { initialStage } from '../domain/application/stages';
@@ -13,11 +13,13 @@ import NewApplicationWizard from './applications/NewApplicationWizard';
 import { CoverLetterTab, CvTab } from './DocumentWorkspace';
 import DocumentsView from './documents/DocumentsView';
 import { useApplications } from './hooks/useApplications';
+import { useCvGuide } from './hooks/useCvGuide';
 import { useDrafts } from './hooks/useDrafts';
+import { useJobBank } from './hooks/useJobBank';
 import { useLeads } from './hooks/useLeads';
 import { useProfile } from './hooks/useProfile';
 import { useStages } from './hooks/useStages';
-import SettingsView, { ProfileSettings, StageSettings } from './settings/SettingsView';
+import SettingsView, { AiUsageSettings, CvGuideSettings, JobBankSettings, ProfileSettings, StageSettings } from './settings/SettingsView';
 import AppShell from './shell/AppShell';
 
 const PreviewPage = lazy(() => import('./preview/PreviewPage'));
@@ -25,16 +27,19 @@ const PreviewPage = lazy(() => import('./preview/PreviewPage'));
 interface AppProps {
   repositories: Repositories;
   documents: DocumentClient;
+  ai: AiClient;
   saveStatus: SaveStatusSource;
   onRetrySave: () => void;
 }
 
-const App: React.FC<AppProps> = ({ repositories, documents, saveStatus, onRetrySave }) => {
+const App: React.FC<AppProps> = ({ repositories, documents, ai, saveStatus, onRetrySave }) => {
   const { applications, actions } = useApplications(repositories.applications);
   const { stages, add: addStage, remove: removeStage } = useStages(repositories.stages);
   const { drafts, save: saveDraft, remove: removeDraft } = useDrafts(repositories.drafts);
   const { leads, add: addLead, remove: removeLead, removeForPosting } = useLeads(repositories.leads);
   const { profile, updateField: updateProfileField } = useProfile(repositories.profile);
+  const { jobBank, setJobBank } = useJobBank(repositories.jobBank);
+  const { cvGuide, setCvGuide } = useCvGuide(repositories.cvGuide);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -48,6 +53,8 @@ const App: React.FC<AppProps> = ({ repositories, documents, saveStatus, onRetryS
       applications={applications}
       stages={stages}
       profile={profile}
+      jobBank={jobBank}
+      ai={ai}
       draft={draft}
       initialDetails={lead && { postingUrl: lead.postingUrl, company: lead.company, role: lead.role }}
       stepId={stepId}
@@ -102,6 +109,9 @@ const App: React.FC<AppProps> = ({ repositories, documents, saveStatus, onRetryS
               />
             }
           />
+          <Route path="job-bank" element={<JobBankSettings jobBank={jobBank} onChange={setJobBank} />} />
+          <Route path="cv-guide" element={<CvGuideSettings cvGuide={cvGuide} documents={documents} onChange={setCvGuide} />} />
+          <Route path="ai-usage" element={<AiUsageSettings client={ai} />} />
         </Route>
       </Route>
       <Route path="applications/:id/preview/:doc" element={

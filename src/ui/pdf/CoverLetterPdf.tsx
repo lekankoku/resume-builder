@@ -16,6 +16,7 @@ const styles = StyleSheet.create({
   recipient: { marginBottom: 24 },
   bold: { fontWeight: 700 },
   company: { fontWeight: 700, color: colors.accent },
+  subject: { fontWeight: 700, color: colors.ink, marginBottom: 14 },
   paragraph: { textAlign: 'justify', marginBottom: 10 },
 });
 
@@ -43,6 +44,8 @@ const CoverLetterPdf: React.FC<{ resume: Resume; coverLetter: CoverLetter; targe
           {targetCompany && <Text style={styles.company}>{targetCompany}</Text>}
           {coverLetter.companyAddress && <Text>{coverLetter.companyAddress}</Text>}
         </View>
+
+        {coverLetter.subject ? <Text style={styles.subject}>{coverLetter.subject}</Text> : null}
 
         {paragraphs.map((paragraph, i) => (
           <Text key={i} style={styles.paragraph} orphans={2} widows={2}>

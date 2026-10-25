@@ -1,14 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ResumeRepository } from '../../application/ports/repositories';
-import { BulletSection, ListSection, ListSectionItem, PersonalInfo, Resume } from '../../domain/resume/Resume';
+import { BulletSection, Layout, ListSection, ListSectionItem, PersonalInfo, Position, Resume } from '../../domain/resume/Resume';
 import {
   addBullet,
+  addCrossFunctionalBullet,
+  addEarlierPosition,
   addItem,
   moveItem,
   removeBullet,
+  removeCrossFunctionalBullet,
+  removeEarlierPosition,
   removeItem,
   updateBullet,
+  updateCrossFunctionalBullet,
+  updateCrossFunctionalTitle,
+  updateEarlierPosition,
   updateItemField,
+  updateLayout,
   updatePersonalField,
 } from '../../domain/resume/resumeOperations';
 
@@ -24,6 +32,15 @@ export const createResumeActions = (setResume: (change: (resume: Resume) => Resu
     setResume((r) => updateBullet(r, section, index, bulletIndex, value)),
   removeBullet: (section: BulletSection, index: number, bulletIndex: number) =>
     setResume((r) => removeBullet(r, section, index, bulletIndex)),
+  updateLayout: (layout: Layout) => setResume((r) => updateLayout(r, layout)),
+  addEarlierPosition: (index: number) => setResume((r) => addEarlierPosition(r, index)),
+  updateEarlierPosition: (index: number, positionIndex: number, field: keyof Position, value: string) =>
+    setResume((r) => updateEarlierPosition(r, index, positionIndex, field, value)),
+  removeEarlierPosition: (index: number, positionIndex: number) => setResume((r) => removeEarlierPosition(r, index, positionIndex)),
+  updateCrossFunctionalTitle: (title: string) => setResume((r) => updateCrossFunctionalTitle(r, title)),
+  addCrossFunctionalBullet: () => setResume((r) => addCrossFunctionalBullet(r)),
+  updateCrossFunctionalBullet: (bulletIndex: number, value: string) => setResume((r) => updateCrossFunctionalBullet(r, bulletIndex, value)),
+  removeCrossFunctionalBullet: (bulletIndex: number) => setResume((r) => removeCrossFunctionalBullet(r, bulletIndex)),
 });
 
 export const useResume = (repository: ResumeRepository) => {

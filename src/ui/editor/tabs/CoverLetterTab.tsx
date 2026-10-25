@@ -78,6 +78,17 @@ const CoverLetterTab: React.FC<Props> = ({ coverLetter, onFieldChange, targetCom
       </div>
 
       <div className="space-y-1">
+        <label htmlFor="cover-letter-subject" className="text-sm font-medium text-slate-700">Subject</label>
+        <input
+          id="cover-letter-subject"
+          className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-accent/30 focus:border-accent outline-none"
+          value={coverLetter.subject}
+          onChange={(e) => onFieldChange('subject', e.target.value)}
+          placeholder="Application for Senior Engineer – Ref. 1234"
+        />
+      </div>
+
+      <div className="space-y-1">
         <label htmlFor="cover-letter-body" className="text-sm font-medium text-slate-700">Letter Body</label>
         <p className="text-xs text-slate-500 mb-2">Paste or write your cover letter content here.</p>
         <textarea

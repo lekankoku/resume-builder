@@ -1,9 +1,9 @@
 import { createBlankCv } from '../domain/application/JobApplication';
 import { Resume } from '../domain/resume/Resume';
-import { mergeImportedResume } from '../domain/resume/resumeOperations';
+import { mergeImportedResume, withResumeDefaults } from '../domain/resume/resumeOperations';
 
 export const importResumeFromJson = (current: Resume, json: string): Resume =>
-  mergeImportedResume(current, JSON.parse(json));
+  mergeImportedResume(current, resumeFromJson(json));
 
 export const resumeFromJson = (json: string): Resume => {
   const imported = JSON.parse(json);
@@ -11,5 +11,5 @@ export const resumeFromJson = (json: string): Resume => {
     throw new Error('CV JSON must be an object');
   }
   const blank = createBlankCv(new Date()).resume;
-  return { ...blank, ...imported, personal: { ...blank.personal, ...imported.personal } };
+  return withResumeDefaults({ ...blank, ...imported, personal: { ...blank.personal, ...imported.personal } });
 };

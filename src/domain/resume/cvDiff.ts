@@ -21,22 +21,41 @@ interface Cv {
 const bullets = (items: string[]) => items.map((b) => `• ${b}`);
 
 const SECTIONS: { id: string; label: string; lines: (cv: Cv) => string[] }[] = [
-  { id: 'personal', label: 'Title', lines: ({ resume }) => [resume.personal.title] },
+  {
+    id: 'personal',
+    label: 'Title',
+    lines: ({ resume }) => [resume.personal.title, `Current: ${resume.personal.currentRole} — ${resume.personal.currentCompany}`],
+  },
   {
     id: 'experiences',
     label: 'Experience',
     lines: ({ resume }) =>
-      resume.experiences.flatMap((e) => [`${e.role} — ${e.company}, ${e.location} (${e.period})`, ...bullets(e.bullets)]),
+      resume.experiences.flatMap((e) => [
+        `${e.role} — ${e.company}, ${e.location} (${e.period})`,
+        ...e.earlierPositions.map((p) => `Earlier: ${p.role} (${p.period})`),
+        ...bullets(e.bullets),
+      ]),
   },
   {
     id: 'projects',
     label: 'Projects',
-    lines: ({ resume }) => resume.projects.flatMap((p) => [`${p.title} — ${p.company} (${p.scope})`, ...bullets(p.bullets)]),
+    lines: ({ resume }) => resume.projects.flatMap((p) => [`${p.title} — ${p.company} (${p.scope}) ${p.period}`, ...bullets(p.bullets)]),
+  },
+  {
+    id: 'volunteering',
+    label: 'Volunteering',
+    lines: ({ resume }) =>
+      resume.volunteering.flatMap((v) => [`${v.role} — ${v.organization}, ${v.location} (${v.period})`, ...bullets(v.bullets)]),
   },
   {
     id: 'abilities',
     label: 'Job related abilities',
     lines: ({ resume }) => resume.abilities.flatMap((a) => [a.title, ...bullets(a.bullets)]),
+  },
+  {
+    id: 'leadership',
+    label: 'Leadership',
+    lines: ({ resume }) => [resume.crossFunctional.title, ...bullets(resume.crossFunctional.bullets)],
   },
   {
     id: 'technicalProficiency',
@@ -46,19 +65,20 @@ const SECTIONS: { id: string; label: string; lines: (cv: Cv) => string[] }[] = [
   {
     id: 'education',
     label: 'Education',
-    lines: ({ resume }) => resume.education.map((e) => `${e.degree} — ${e.institution}, ${e.location} (${e.period})`),
+    lines: ({ resume }) => resume.education.flatMap((e) => [`${e.degree} — ${e.institution}, ${e.location} (${e.period})`, ...bullets(e.bullets)]),
   },
   { id: 'languages', label: 'Languages', lines: ({ resume }) => resume.languages.map((l) => `${l.name}: ${l.level}`) },
   {
     id: 'references',
     label: 'References',
-    lines: ({ resume }) => resume.references.map((r) => `${r.name} — ${r.role}, ${r.company} (${r.linkedin})`),
+    lines: ({ resume }) => resume.references.map((r) => `${r.name} — ${r.role}, ${r.company} (${[r.contact, r.linkedin].filter(Boolean).join(', ')})`),
   },
   {
     id: 'coverLetter',
     label: 'Cover Letter',
     lines: ({ coverLetter }) => [
       `Date: ${coverLetter.date}`,
+      `Subject: ${coverLetter.subject}`,
       `Recipient: ${coverLetter.recipientName}`,
       `Recipient title: ${coverLetter.recipientTitle}`,
       `Company address: ${coverLetter.companyAddress}`,

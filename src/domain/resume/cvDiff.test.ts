@@ -48,7 +48,9 @@ describe('cvDiff', () => {
         'personal',
         'experiences',
         'projects',
+        'volunteering',
         'abilities',
+        'leadership',
         'technicalProficiency',
         'education',
         'languages',
@@ -77,6 +79,22 @@ describe('cvDiff', () => {
       expect(changedLines('coverLetter')).toEqual([
         { type: 'added', text: body },
         { type: 'removed', text: before.coverLetter.body },
+      ]);
+    });
+
+    it('shows changes to earlier positions, education highlights, volunteering and leadership', () => {
+      const before = aCv();
+      const after = structuredClone(before);
+      after.resume.experiences[1].earlierPositions[0].role = uuid();
+      after.resume.education[0].bullets[0] = uuid();
+      after.resume.volunteering[0].bullets[0] = uuid();
+      after.resume.crossFunctional.bullets[0] = uuid();
+
+      expect(compareCv(before, after).filter((s) => s.changed).map((s) => s.id)).toEqual([
+        'experiences',
+        'volunteering',
+        'leadership',
+        'education',
       ]);
     });
 
