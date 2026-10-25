@@ -28,6 +28,7 @@ interface Props {
   stages: string[];
   profile: Profile;
   draft?: ApplicationDraft;
+  initialDetails?: Partial<ApplicationDetails>;
   stepId: WizardStep;
   onStepChange: (draftId: string, stepId: WizardStep) => void;
   onSaveDraft: (draft: ApplicationDraft) => void;
@@ -69,13 +70,14 @@ const NewApplicationWizard: React.FC<Props> = ({
   stages,
   profile,
   draft,
+  initialDetails,
   stepId,
   onStepChange,
   onSaveDraft,
   onCreate,
   onCancel,
 }) => {
-  const [details, setDetails] = useState(() => draft?.details ?? emptyDetails());
+  const [details, setDetails] = useState(() => draft?.details ?? { ...emptyDetails(), ...initialDetails });
   const [cvStart, setCvStart] = useState<CvStart>(draft?.cvStart ?? 'new');
   const [sourceId, setSourceId] = useState(draft?.sourceId ?? applications[0]?.id ?? '');
   const [jsonInput, setJsonInput] = useState(draft?.jsonInput ?? '');

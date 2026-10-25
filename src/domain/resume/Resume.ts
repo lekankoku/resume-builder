@@ -19,6 +19,7 @@ export interface Experience {
   location: string;
   role: string;
   period: string;
+  employmentType?: string;
   bullets: string[];
 }
 

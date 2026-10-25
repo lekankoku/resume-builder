@@ -39,6 +39,7 @@ describe('remoteRepositories', () => {
 
       expect(repositories.applications.load()).toEqual([]);
       expect(repositories.drafts.load()).toEqual([]);
+      expect(repositories.leads.load()).toEqual([]);
       expect(repositories.stages.load()).toEqual(DEFAULT_STAGES);
       expect(repositories.profile.load()).toBe(defaultProfile);
     });

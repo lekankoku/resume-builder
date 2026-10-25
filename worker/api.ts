@@ -1,13 +1,15 @@
 import { fetchAccessJwks, FetchJwks, verifyAccessJwt } from './access';
+import { handleDocuments } from './documents';
 
 export interface Env {
   DB: D1Database;
+  DOCUMENTS: R2Bucket;
   ACCESS_TEAM_DOMAIN?: string;
   ACCESS_AUD?: string;
   ACCESS_DISABLED?: string;
 }
 
-const STATE_KEYS = ['applications', 'drafts', 'stages', 'profile'];
+const STATE_KEYS = ['applications', 'drafts', 'leads', 'stages', 'profile'];
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -16,6 +18,7 @@ export const handleApi = async (request: Request, env: Env, fetchJwks: FetchJwks
   if (!(await isAuthorized(request, env, fetchJwks))) return json({ error: 'Unauthorized' }, 401);
 
   const { pathname } = new URL(request.url);
+  if (pathname === '/api/documents' || pathname.startsWith('/api/documents/')) return handleDocuments(request, env.DOCUMENTS, pathname);
   if (pathname === '/api/state' && request.method === 'GET') return loadState(env.DB);
 
   const key = pathname.match(/^\/api\/state\/([^/]+)$/)?.[1];

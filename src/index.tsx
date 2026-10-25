@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import { migrateLocalState } from './application/migrateLocalState';
 import App from './ui/App';
+import { createHttpDocumentClient } from './infrastructure/http/httpDocumentClient';
 import { createHttpStateClient } from './infrastructure/http/httpStateClient';
 import { readLocalState } from './infrastructure/persistence/readLocalState';
 import { createRemoteRepositories } from './infrastructure/persistence/remoteRepositories';
@@ -15,6 +16,7 @@ if (!rootElement) {
 
 const root = ReactDOM.createRoot(rootElement);
 const client = createHttpStateClient();
+const documents = createHttpDocumentClient();
 const { title, ...defaultProfile } = resumeData.personal;
 
 const start = async () => {
@@ -33,7 +35,7 @@ const start = async () => {
     root.render(
       <React.StrictMode>
         <BrowserRouter>
-          <App repositories={remote.repositories} saveStatus={remote.status} onRetrySave={remote.retry} />
+          <App repositories={remote.repositories} documents={documents} saveStatus={remote.status} onRetrySave={remote.retry} />
         </BrowserRouter>
       </React.StrictMode>
     );

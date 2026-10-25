@@ -22,8 +22,14 @@
 			"database_id": "2a0c6d5e-4d4a-41f3-907c-d10e02e4a081"
 		}
 	],
+	"r2_buckets": [
+		{
+			"binding": "DOCUMENTS",
+			"bucket_name": "resume-builder-documents"
+		}
+	],
 	"vars": {
-		"ACCESS_TEAM_DOMAIN": "",
-		"ACCESS_AUD": ""
+		"ACCESS_TEAM_DOMAIN": "dot24labs.cloudflareaccess.com",
+		"ACCESS_AUD": "7f74802e55c22b6500076decfa3c07a7186c05c8a5751c1741c42727e0f96001"
 	}
 }
