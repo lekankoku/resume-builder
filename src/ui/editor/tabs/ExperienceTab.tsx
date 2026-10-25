@@ -1,6 +1,7 @@
 import { Resume } from '../../../domain/resume/Resume';
 import { ResumeActions } from '../../hooks/useResume';
 import BulletList from '../components/BulletList';
+import PeriodField from '../components/PeriodField';
 import SortableSection from '../components/SortableSection';
 import TextField from '../components/TextField';
 
@@ -25,7 +26,6 @@ const ExperienceTab = ({ resume, actions }: Props) => (
           <TextField label="Role" value={exp.role} onChange={(v) => actions.updateItemField('experiences', idx, 'role', v)} />
           <TextField label="Company" value={exp.company} onChange={(v) => actions.updateItemField('experiences', idx, 'company', v)} />
           <TextField label="Location" value={exp.location} onChange={(v) => actions.updateItemField('experiences', idx, 'location', v)} />
-          <TextField label="Period" value={exp.period} onChange={(v) => actions.updateItemField('experiences', idx, 'period', v)} />
           <label className="space-y-1 text-sm font-medium text-slate-700">
             Employment Type
             <select
@@ -38,6 +38,11 @@ const ExperienceTab = ({ resume, actions }: Props) => (
               <option value="Part-time">Part-time</option>
             </select>
           </label>
+          <PeriodField
+            value={exp.period}
+            currentLabel="I currently work here"
+            onChange={(v) => actions.updateItemField('experiences', idx, 'period', v)}
+          />
         </div>
         <BulletList
           label="Highlights"

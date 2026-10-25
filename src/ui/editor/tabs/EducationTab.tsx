@@ -1,5 +1,6 @@
 import { Resume } from '../../../domain/resume/Resume';
 import { ResumeActions } from '../../hooks/useResume';
+import PeriodField from '../components/PeriodField';
 import SortableSection from '../components/SortableSection';
 import TextField from '../components/TextField';
 
@@ -23,7 +24,11 @@ const EducationTab = ({ resume, actions }: Props) => (
         <TextField label="Degree" value={edu.degree} onChange={(v) => actions.updateItemField('education', idx, 'degree', v)} />
         <TextField label="Institution" value={edu.institution} onChange={(v) => actions.updateItemField('education', idx, 'institution', v)} />
         <TextField label="Location" value={edu.location} onChange={(v) => actions.updateItemField('education', idx, 'location', v)} />
-        <TextField label="Period" value={edu.period} onChange={(v) => actions.updateItemField('education', idx, 'period', v)} />
+        <PeriodField
+          value={edu.period}
+          currentLabel="I currently study here"
+          onChange={(v) => actions.updateItemField('education', idx, 'period', v)}
+        />
       </div>
     )}
   />
