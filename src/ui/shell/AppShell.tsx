@@ -2,10 +2,13 @@ import React, { useSyncExternalStore } from 'react';
 import { ClipboardList, FileText, Files, LayoutDashboard, ListTodo, Plus, Settings2 } from 'lucide-react';
 import { Link, NavLink, Outlet } from 'react-router';
 import { SaveStatusSource } from '../../application/ports/repositories';
+import { Searchable } from '../../domain/application/search';
+import GlobalSearch from './GlobalSearch';
 
 interface Props {
   saveStatus: SaveStatusSource;
   onRetrySave: () => void;
+  records: Searchable;
 }
 
 const NAV_ITEMS = [
@@ -21,7 +24,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     isActive ? 'bg-accent/10 text-accent font-semibold' : 'text-slate-600 hover:bg-slate-50'
   }`;
 
-const AppShell: React.FC<Props> = ({ saveStatus, onRetrySave }) => (
+const AppShell: React.FC<Props> = ({ saveStatus, onRetrySave, records }) => (
   <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 font-sans">
     <header className="no-print md:hidden sticky top-0 z-20 bg-white border-b border-slate-200 px-4 pt-3 pb-2 space-y-2">
       <div className="flex items-center justify-between gap-3">
@@ -33,6 +36,7 @@ const AppShell: React.FC<Props> = ({ saveStatus, onRetrySave }) => (
         </Link>
         <SaveIndicator saveStatus={saveStatus} onRetry={onRetrySave} />
       </div>
+      <GlobalSearch records={records} />
       <nav aria-label="Main" className="flex gap-1 overflow-x-auto -mx-1">
         {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end} className={navLinkClass}>
@@ -56,6 +60,8 @@ const AppShell: React.FC<Props> = ({ saveStatus, onRetrySave }) => (
       >
         <Plus size={16} /> New application
       </Link>
+
+      <GlobalSearch records={records} />
 
       <nav aria-label="Main" className="flex flex-col gap-1">
         {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
