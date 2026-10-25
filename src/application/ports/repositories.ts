@@ -56,6 +56,20 @@ export interface StateClient {
   save<K extends StateKey>(key: K, value: RemoteState[K], options?: { keepalive?: boolean }): Promise<void>;
 }
 
+export interface StoredDocument {
+  id: string;
+  name: string;
+  size: number;
+  uploadedAt: string;
+}
+
+export interface DocumentClient {
+  list(): Promise<StoredDocument[]>;
+  upload(file: File): Promise<StoredDocument>;
+  remove(id: string): Promise<void>;
+  urlOf(id: string): string;
+}
+
 export type SaveStatus = 'saved' | 'saving' | 'error';
 
 export interface SaveStatusSource {

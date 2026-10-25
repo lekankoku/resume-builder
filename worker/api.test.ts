@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Env, handleApi } from './api';
+import { MAX_DOCUMENT_BYTES } from './documents';
 import { anAccessKeyPair } from './testing';
 
 class FakeD1 {
@@ -24,15 +25,43 @@ class FakeD1 {
   }
 }
 
+class FakeR2 {
+  readonly objects = new Map<string, { body: ArrayBuffer; contentType?: string; customMetadata: Record<string, string> }>();
+
+  async put(key: string, body: ArrayBuffer, options: R2PutOptions) {
+    this.objects.set(key, { body, contentType: (options.httpMetadata as R2HTTPMetadata).contentType, customMetadata: options.customMetadata ?? {} });
+  }
+
+  async get(key: string) {
+    const object = this.objects.get(key);
+    return object && { body: new Blob([object.body]).stream(), customMetadata: object.customMetadata };
+  }
+
+  async list({ cursor }: R2ListOptions) {
+    const keys = [...this.objects.keys()];
+    const index = cursor ? Number(cursor) : 0;
+    const key = keys[index];
+    const objects = key ? [{ key, size: this.objects.get(key)!.body.byteLength, uploaded: new Date(), customMetadata: this.objects.get(key)!.customMetadata }] : [];
+    const truncated = index + 1 < keys.length;
+    return { objects, truncated, cursor: truncated ? String(index + 1) : undefined };
+  }
+
+  async delete(key: string) {
+    this.objects.delete(key);
+  }
+}
+
 const request = (path: string, init: RequestInit = {}) => new Request(`https://resume.example.com${path}`, init);
 
 describe('handleApi', () => {
   let db: FakeD1;
+  let bucket: FakeR2;
   let env: Env;
 
   beforeEach(() => {
     db = new FakeD1();
-    env = { DB: db as unknown as D1Database, ACCESS_DISABLED: 'true' };
+    bucket = new FakeR2();
+    env = { DB: db as unknown as D1Database, DOCUMENTS: bucket as unknown as R2Bucket, ACCESS_DISABLED: 'true' };
   });
 
   describe('state', () => {
@@ -90,12 +119,94 @@ describe('handleApi', () => {
     });
   });
 
+  describe('documents', () => {
+    const upload = (name: string, body: BodyInit = crypto.randomUUID()) =>
+      handleApi(request('/api/documents', { method: 'POST', headers: { 'X-File-Name': encodeURIComponent(name) }, body }), env);
+
+    const list = async () => (await handleApi(request('/api/documents'), env)).json() as Promise<{ id: string; name: string; size: number }[]>;
+
+    it('stores an uploaded file and lists it with its name and size', async () => {
+      const name = `${crypto.randomUUID()} CV.pdf`;
+      const body = crypto.randomUUID();
+
+      const response = await upload(name, body);
+      const created = (await response.json()) as { id: string };
+
+      expect(response.status).toBe(201);
+      expect(await list()).toEqual([expect.objectContaining({ id: created.id, name, size: body.length })]);
+      expect(bucket.objects.get(created.id)?.contentType).toBe('application/pdf');
+    });
+
+    it('lists documents across every page of the bucket', async () => {
+      await upload(`${crypto.randomUUID()}.pdf`);
+      await upload(`${crypto.randomUUID()}.png`);
+      await upload(`${crypto.randomUUID()}.txt`);
+
+      expect(await list()).toHaveLength(3);
+    });
+
+    it('rejects a file type that is not allowed', async () => {
+      const response = await upload(`${crypto.randomUUID()}.html`, '<script>alert(1)</script>');
+
+      expect(response.status).toBe(415);
+      expect(bucket.objects.size).toBe(0);
+    });
+
+    it('rejects an empty file', async () => {
+      expect((await upload(`${crypto.randomUUID()}.pdf`, '')).status).toBe(400);
+    });
+
+    it('rejects a file larger than 20 MB', async () => {
+      const response = await upload(`${crypto.randomUUID()}.pdf`, new Uint8Array(MAX_DOCUMENT_BYTES + 1));
+
+      expect(response.status).toBe(413);
+      expect(bucket.objects.size).toBe(0);
+    });
+
+    it('serves a PDF inline with its original name', async () => {
+      const name = `${crypto.randomUUID()} résumé.pdf`;
+      const body = crypto.randomUUID();
+      const { id } = (await (await upload(name, body)).json()) as { id: string };
+
+      const response = await handleApi(request(`/api/documents/${id}`), env);
+
+      expect(await response.text()).toBe(body);
+      expect(response.headers.get('Content-Type')).toBe('application/pdf');
+      expect(response.headers.get('Content-Disposition')).toBe(`inline; filename*=UTF-8''${encodeURIComponent(name)}`);
+      expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
+    });
+
+    it('serves a Word document as a download', async () => {
+      const { id } = (await (await upload(`${crypto.randomUUID()}.docx`)).json()) as { id: string };
+
+      const response = await handleApi(request(`/api/documents/${id}`), env);
+
+      expect(response.headers.get('Content-Disposition')).toMatch(/^attachment;/);
+    });
+
+    it('deletes a document', async () => {
+      const { id } = (await (await upload(`${crypto.randomUUID()}.pdf`)).json()) as { id: string };
+
+      const response = await handleApi(request(`/api/documents/${id}`, { method: 'DELETE' }), env);
+
+      expect(response.status).toBe(204);
+      expect(await list()).toEqual([]);
+    });
+
+    it.each([
+      ['a document that does not exist', `/api/documents/${crypto.randomUUID()}`],
+      ['an id that is not a UUID', '/api/documents/..%2Fstate'],
+    ])('returns 404 for %s', async (_, path) => {
+      expect((await handleApi(request(path), env)).status).toBe(404);
+    });
+  });
+
   describe('access', () => {
     const teamDomain = `${crypto.randomUUID()}.cloudflareaccess.com`;
     const aud = crypto.randomUUID();
 
     beforeEach(() => {
-      env = { DB: db as unknown as D1Database, ACCESS_TEAM_DOMAIN: teamDomain, ACCESS_AUD: aud };
+      env = { DB: db as unknown as D1Database, DOCUMENTS: bucket as unknown as R2Bucket, ACCESS_TEAM_DOMAIN: teamDomain, ACCESS_AUD: aud };
     });
 
     it('serves a request carrying a valid Access token', async () => {
@@ -121,7 +232,7 @@ describe('handleApi', () => {
     });
 
     it('rejects every request when Access is not configured', async () => {
-      const response = await handleApi(request('/api/state/stages', { method: 'PUT', body: '[]' }), { DB: env.DB });
+      const response = await handleApi(request('/api/state/stages', { method: 'PUT', body: '[]' }), { DB: env.DB, DOCUMENTS: env.DOCUMENTS });
 
       expect(response.status).toBe(401);
       expect(db.rows.size).toBe(0);

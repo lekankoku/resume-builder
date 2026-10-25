@@ -1,6 +1,6 @@
 import React, { lazy, startTransition, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
-import { Repositories, SaveStatusSource } from '../application/ports/repositories';
+import { DocumentClient, Repositories, SaveStatusSource } from '../application/ports/repositories';
 import { ApplicationDraft, draftStep, isWizardStep, WizardStep } from '../domain/application/ApplicationDraft';
 import { JobLead } from '../domain/application/JobLead';
 import { initialStage } from '../domain/application/stages';
@@ -11,6 +11,7 @@ import HomeView from './applications/HomeView';
 import LeadsView from './applications/LeadsView';
 import NewApplicationWizard from './applications/NewApplicationWizard';
 import { CoverLetterTab, CvTab } from './DocumentWorkspace';
+import DocumentsView from './documents/DocumentsView';
 import { useApplications } from './hooks/useApplications';
 import { useDrafts } from './hooks/useDrafts';
 import { useLeads } from './hooks/useLeads';
@@ -23,11 +24,12 @@ const PreviewPage = lazy(() => import('./preview/PreviewPage'));
 
 interface AppProps {
   repositories: Repositories;
+  documents: DocumentClient;
   saveStatus: SaveStatusSource;
   onRetrySave: () => void;
 }
 
-const App: React.FC<AppProps> = ({ repositories, saveStatus, onRetrySave }) => {
+const App: React.FC<AppProps> = ({ repositories, documents, saveStatus, onRetrySave }) => {
   const { applications, actions } = useApplications(repositories.applications);
   const { stages, add: addStage, remove: removeStage } = useStages(repositories.stages);
   const { drafts, save: saveDraft, remove: removeDraft } = useDrafts(repositories.drafts);
@@ -71,6 +73,7 @@ const App: React.FC<AppProps> = ({ repositories, saveStatus, onRetrySave }) => {
         <Route path="applications/new" element={<NewApplicationRoute leads={leads} wizard={wizard} />} />
         <Route path="to-apply" element={<LeadsView leads={leads} onAdd={addLead} onRemove={removeLead} />} />
         <Route path="cvs" element={<CvsView applications={applications} />} />
+        <Route path="documents" element={<DocumentsView client={documents} />} />
         <Route path="drafts/:id" element={<DraftRoute drafts={drafts} wizard={wizard} />} />
         <Route path="drafts/:id/:step" element={<DraftRoute drafts={drafts} wizard={wizard} />} />
         <Route

@@ -1,5 +1,5 @@
 import React, { useSyncExternalStore } from 'react';
-import { ClipboardList, FileText, Files, LayoutDashboard, ListTodo, Plus, Settings2 } from 'lucide-react';
+import { ClipboardList, FileText, Files, FolderOpen, LayoutDashboard, ListTodo, Plus, Settings2 } from 'lucide-react';
 import { Link, NavLink, Outlet } from 'react-router';
 import { SaveStatusSource } from '../../application/ports/repositories';
 import { Searchable } from '../../domain/application/search';
@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { to: '/applications', label: 'Applications', icon: ClipboardList, end: false },
   { to: '/to-apply', label: 'To apply', icon: ListTodo, end: false },
   { to: '/cvs', label: 'CVs', icon: Files, end: false },
+  { to: '/documents', label: 'Documents', icon: FolderOpen, end: false },
   { to: '/settings', label: 'Settings', icon: Settings2, end: false },
 ];
 
