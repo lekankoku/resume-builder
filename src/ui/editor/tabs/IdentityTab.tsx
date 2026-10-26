@@ -1,7 +1,8 @@
 import React from 'react';
 import { Briefcase } from 'lucide-react';
 import { coverLetterDocumentTitle, resumeDocumentTitle } from '../../../domain/resume/documentTitle';
-import { Resume } from '../../../domain/resume/Resume';
+import { Layout, Resume } from '../../../domain/resume/Resume';
+import TextField from '../components/TextField';
 import { ResumeActions } from '../../hooks/useResume';
 
 interface Props {
@@ -49,6 +50,23 @@ const IdentityTab: React.FC<Props> = ({ resume, actions, targetCompany, onTarget
       />
       <p className="text-xs text-slate-500">Your name and contact details are set once in Settings.</p>
     </div>
+
+    <div className="grid grid-cols-2 gap-4">
+      <TextField label="Current role" value={resume.personal.currentRole} onChange={(v) => actions.updatePersonal('currentRole', v)} />
+      <TextField label="Current company" value={resume.personal.currentCompany} onChange={(v) => actions.updatePersonal('currentCompany', v)} />
+    </div>
+
+    <label className="block space-y-1 text-sm font-medium text-slate-700">
+      Section order
+      <select
+        className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-accent/30 focus:border-accent outline-none"
+        value={resume.layout}
+        onChange={(e) => actions.updateLayout(e.target.value as Layout)}
+      >
+        <option value="experience-first">Experience first</option>
+        <option value="education-first">Education first (no relevant work experience yet)</option>
+      </select>
+    </label>
   </div>
 );
 

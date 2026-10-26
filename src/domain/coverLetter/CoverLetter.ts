@@ -1,4 +1,5 @@
 export interface CoverLetter {
+  subject: string;
   recipientName: string;
   recipientTitle: string;
   companyAddress: string;
@@ -6,7 +7,10 @@ export interface CoverLetter {
   body: string;
 }
 
+export type StoredCoverLetter = Omit<CoverLetter, 'subject'> & { subject?: string };
+
 export const createCoverLetter = (now: Date): CoverLetter => ({
+  subject: '',
   recipientName: '',
   recipientTitle: '',
   companyAddress: '',
@@ -18,3 +22,5 @@ export const updateCoverLetterField = (letter: CoverLetter, field: keyof CoverLe
   ...letter,
   [field]: value,
 });
+
+export const withCoverLetterDefaults = (letter: StoredCoverLetter): CoverLetter => ({ subject: '', ...letter });

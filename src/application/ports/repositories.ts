@@ -1,4 +1,5 @@
 import { ApplicationDraft } from '../../domain/application/ApplicationDraft';
+import { AnalysedJob, Job, UsageReport, WriteCvRequest, WrittenCv } from '../../domain/application/cvGeneration';
 import { JobApplication } from '../../domain/application/JobApplication';
 import { JobLead } from '../../domain/application/JobLead';
 import { Profile, Resume } from '../../domain/resume/Resume';
@@ -33,12 +34,24 @@ export interface ProfileRepository {
   save(profile: Profile): void;
 }
 
+export interface JobBankRepository {
+  load(): string;
+  save(jobBank: string): void;
+}
+
+export interface CvGuideRepository {
+  load(): StoredDocument | null;
+  save(guide: StoredDocument): void;
+}
+
 export interface Repositories {
   applications: ApplicationRepository;
   stages: StageRepository;
   drafts: DraftRepository;
   leads: LeadRepository;
   profile: ProfileRepository;
+  jobBank: JobBankRepository;
+  cvGuide: CvGuideRepository;
 }
 
 export interface RemoteState {
@@ -47,6 +60,8 @@ export interface RemoteState {
   leads?: JobLead[];
   stages?: string[];
   profile?: Profile;
+  jobBank?: string;
+  cvGuide?: StoredDocument;
 }
 
 export type StateKey = keyof RemoteState;
@@ -68,6 +83,12 @@ export interface DocumentClient {
   upload(file: File): Promise<StoredDocument>;
   remove(id: string): Promise<void>;
   urlOf(id: string): string;
+}
+
+export interface AiClient {
+  analyseJob(job: Job): Promise<AnalysedJob>;
+  writeCv(request: WriteCvRequest): Promise<WrittenCv>;
+  usage(): Promise<UsageReport>;
 }
 
 export type SaveStatus = 'saved' | 'saving' | 'error';

@@ -1,7 +1,8 @@
 import { fetchAccessJwks, FetchJwks, verifyAccessJwt } from './access';
 import { handleDocuments } from './documents';
+import { GenerationEnv, handleGeneration } from './generation';
 
-export interface Env {
+export interface Env extends GenerationEnv {
   DB: D1Database;
   DOCUMENTS: R2Bucket;
   ACCESS_TEAM_DOMAIN?: string;
@@ -9,16 +10,23 @@ export interface Env {
   ACCESS_DISABLED?: string;
 }
 
-const STATE_KEYS = ['applications', 'drafts', 'leads', 'stages', 'profile'];
+const STATE_KEYS = ['applications', 'drafts', 'leads', 'stages', 'profile', 'jobBank', 'cvGuide'];
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
-export const handleApi = async (request: Request, env: Env, fetchJwks: FetchJwks = fetchAccessJwks): Promise<Response> => {
+export const handleApi = async (
+  request: Request,
+  env: Env,
+  fetchJwks: FetchJwks = fetchAccessJwks,
+  fetchFn: typeof fetch = (input, init) => fetch(input, init),
+): Promise<Response> => {
   if (!(await isAuthorized(request, env, fetchJwks))) return json({ error: 'Unauthorized' }, 401);
 
   const { pathname } = new URL(request.url);
   if (pathname === '/api/documents' || pathname.startsWith('/api/documents/')) return handleDocuments(request, env.DOCUMENTS, pathname);
+  if (pathname === '/api/cv/analyse' || pathname === '/api/cv/write' || pathname === '/api/usage')
+    return handleGeneration(request, env, pathname, fetchFn);
   if (pathname === '/api/state' && request.method === 'GET') return loadState(env.DB);
 
   const key = pathname.match(/^\/api\/state\/([^/]+)$/)?.[1];

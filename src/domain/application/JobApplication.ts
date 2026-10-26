@@ -1,5 +1,6 @@
-import { CoverLetter, createCoverLetter } from '../coverLetter/CoverLetter';
+import { CoverLetter, createCoverLetter, withCoverLetterDefaults } from '../coverLetter/CoverLetter';
 import { Resume } from '../resume/Resume';
+import { withResumeDefaults } from '../resume/resumeOperations';
 
 export interface StageChange {
   stage: string;
@@ -20,6 +21,7 @@ export interface ApplicationDetails {
   postingUrl: string;
   appliedOn: string;
   notes: string;
+  jobDescription?: string;
 }
 
 export interface JobApplication extends ApplicationDetails {
@@ -36,6 +38,17 @@ export interface CvSource {
   coverLetter: CoverLetter;
 }
 
+export const withApplicationDefaults = (application: JobApplication): JobApplication => ({
+  ...application,
+  resume: withResumeDefaults(application.resume),
+  coverLetter: withCoverLetterDefaults(application.coverLetter),
+  versions: application.versions.map((version) => ({
+    ...version,
+    resume: withResumeDefaults(version.resume),
+    coverLetter: withCoverLetterDefaults(version.coverLetter),
+  })),
+});
+
 export const createBlankCv = (now: Date): CvSource => ({
   resume: {
     personal: {
@@ -49,11 +62,15 @@ export const createBlankCv = (now: Date): CvSource => ({
       linkedin: '',
       github: '',
       photoUrl: '',
+      currentRole: '',
+      currentCompany: '',
     },
+    layout: 'experience-first',
     experiences: [],
     abilities: [],
     education: [],
     projects: [],
+    volunteering: [],
     languages: [],
     technicalProficiency: [],
     references: [],

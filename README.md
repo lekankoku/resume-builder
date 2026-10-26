@@ -20,9 +20,14 @@ Data is stored in Cloudflare D1 through a Worker API (`worker/`). Locally, `wran
    `pnpm db:migrate:local`
 3. Build the app once (`wrangler dev` needs the `dist` folder to exist):
    `pnpm build`
-4. Start the API on port 8787:
+4. To use AI generation locally, create a `.dev.vars` file in the project root with your OpenAI API key (it is gitignored):
+   ```
+   OPENAI_API_KEY=sk-...
+   ```
+   Restart `pnpm dev:api` whenever you change it.
+5. Start the API on port 8787:
    `pnpm dev:api`
-5. In a second terminal, start the app (it proxies `/api` to port 8787):
+6. In a second terminal, start the app (it proxies `/api` to port 8787):
    `pnpm dev`
 
 On first load, if the server has no data yet, whatever the browser has in localStorage from the earlier localStorage version of the app is uploaded once. localStorage is left untouched as a backup.
@@ -141,6 +146,40 @@ pnpm run deploy
 
 Commit the updated `wrangler.jsonc`. The database ID and the Access values aren't secrets.
 
+### Add the OpenAI API key (AI generation)
+
+CV and cover letter generation calls OpenAI from the Worker. The provider, model, reasoning effort and prices are set under `vars` in `wrangler.jsonc`; the API key is a secret and is never stored in the repo.
+
+**1. Get a key**
+
+Create an API key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys). It starts with `sk-`.
+
+**2. Store it as a Worker secret**
+
+From the project folder:
+
+```sh
+pnpm wrangler secret put OPENAI_API_KEY
+```
+
+Wrangler asks for the value; paste the key and press Enter. The prompt keeps the key out of your shell history. The secret takes effect immediately on the deployed Worker; you don't need to deploy again.
+
+If you haven't deployed yet, Wrangler offers to create the Worker first; answer `y`.
+
+**3. Check it is set**
+
+```sh
+pnpm wrangler secret list
+```
+
+`OPENAI_API_KEY` should be listed (the value is never shown).
+
+**4. Try it**
+
+Open the site, save your job bank in **Settings → Job bank**, then start a new application with a job description and choose **Generate from job bank** in the CV step. If the key is missing, generation shows `OpenAI is not configured`.
+
+To replace the key, run the same `secret put` command again. To remove it: `pnpm wrangler secret delete OPENAI_API_KEY`.
+
 ### Deploying updates
 
 Run these from the project folder each time:
@@ -155,4 +194,5 @@ pnpm run deploy               # build and deploy
 
 - **The site loads but your data doesn't:** run `pnpm wrangler tail` and reload the page to see the Worker's logs. If the API returns `401`, `ACCESS_TEAM_DOMAIN` or `ACCESS_AUD` in `wrangler.jsonc` is empty or doesn't match your Access application. Fix it and run `pnpm run deploy` again.
 - **Errors about a missing table:** the migrations haven't run against production yet. Run `pnpm db:migrate:remote`.
+- **Generation says `OpenAI is not configured`:** the `OPENAI_API_KEY` secret is missing. See [Add the OpenAI API key](#add-the-openai-api-key-ai-generation).
 - **`pnpm deploy` printed an error instead of deploying:** use `pnpm run deploy` instead.

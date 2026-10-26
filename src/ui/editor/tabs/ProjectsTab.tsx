@@ -1,6 +1,7 @@
 import { Resume } from '../../../domain/resume/Resume';
 import { ResumeActions } from '../../hooks/useResume';
 import BulletList from '../components/BulletList';
+import PeriodField from '../components/PeriodField';
 import SortableSection from '../components/SortableSection';
 import TextField from '../components/TextField';
 
@@ -26,6 +27,11 @@ const ProjectsTab = ({ resume, actions }: Props) => (
           <TextField label="Company" value={proj.company} onChange={(v) => actions.updateItemField('projects', idx, 'company', v)} />
         </div>
         <TextField label="Scope" value={proj.scope} onChange={(v) => actions.updateItemField('projects', idx, 'scope', v)} />
+        <PeriodField
+          value={proj.period}
+          currentLabel="This project is ongoing"
+          onChange={(v) => actions.updateItemField('projects', idx, 'period', v)}
+        />
         <BulletList
           label="Details"
           addLabel="Add Detail"

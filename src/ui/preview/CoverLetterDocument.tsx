@@ -45,6 +45,8 @@ const CoverLetterDocument: React.FC<{ resume: Resume; coverLetter: CoverLetter; 
       )}
     </div>
 
+    {coverLetter.subject && <p className="mb-6 text-[14px] font-bold text-slate-900">{coverLetter.subject}</p>}
+
     {/* Letter Body */}
     <div className="flex-1 space-y-4 text-[14px] leading-relaxed text-slate-700">
       {coverLetter.body ? (

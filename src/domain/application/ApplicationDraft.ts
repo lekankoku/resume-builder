@@ -1,8 +1,10 @@
-import { CoverLetter } from '../coverLetter/CoverLetter';
+import { CoverLetter, withCoverLetterDefaults } from '../coverLetter/CoverLetter';
 import { Resume } from '../resume/Resume';
+import { withResumeDefaults } from '../resume/resumeOperations';
+import { Generation } from './cvGeneration';
 import { ApplicationDetails } from './JobApplication';
 
-export type CvStart = 'new' | 'reuse' | 'json';
+export type CvStart = 'new' | 'reuse' | 'json' | 'generate';
 
 export interface ApplicationDraft {
   id: string;
@@ -16,7 +18,15 @@ export interface ApplicationDraft {
   resume: Resume;
   coverLetter: CoverLetter;
   verifiedSections: string[];
+  generated?: Generation | null;
 }
+
+export const withDraftDefaults = (draft: ApplicationDraft): ApplicationDraft => ({
+  ...draft,
+  resume: withResumeDefaults(draft.resume),
+  coverLetter: withCoverLetterDefaults(draft.coverLetter),
+  generated: draft.generated?.analysis ? draft.generated : null,
+});
 
 export const upsertDraft = (drafts: ApplicationDraft[], draft: ApplicationDraft): ApplicationDraft[] =>
   drafts.some((d) => d.id === draft.id) ? drafts.map((d) => (d.id === draft.id ? draft : d)) : [...drafts, draft];

@@ -1,7 +1,7 @@
 
-import { Resume } from '../../domain/resume/Resume';
+import { StoredResume } from '../../domain/resume/resumeOperations';
 
-export const resumeData: Resume = {
+export const resumeData: StoredResume = {
   personal: {
     name: "Lekan Koku",
     title: "Senior Fullstack Engineer",

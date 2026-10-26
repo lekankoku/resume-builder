@@ -44,6 +44,34 @@ const ExperienceTab = ({ resume, actions }: Props) => (
             onChange={(v) => actions.updateItemField('experiences', idx, 'period', v)}
           />
         </div>
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-slate-700">Earlier positions at this company</span>
+            <button onClick={() => actions.addEarlierPosition(idx)} className="text-sm font-medium text-accent hover:underline">
+              + Add Earlier Position
+            </button>
+          </div>
+          {exp.earlierPositions.map((position, pIdx) => (
+            <div key={pIdx} className="grid grid-cols-2 gap-4 p-3 bg-slate-50 rounded-lg">
+              <TextField
+                label={`Earlier role ${pIdx + 1}`}
+                value={position.role}
+                onChange={(v) => actions.updateEarlierPosition(idx, pIdx, 'role', v)}
+              />
+              <PeriodField
+                value={position.period}
+                currentLabel="I am still in this role"
+                onChange={(v) => actions.updateEarlierPosition(idx, pIdx, 'period', v)}
+              />
+              <button
+                onClick={() => actions.removeEarlierPosition(idx, pIdx)}
+                className="text-sm font-medium text-red-500 hover:underline justify-self-start"
+              >
+                Remove earlier role {pIdx + 1}
+              </button>
+            </div>
+          ))}
+        </div>
         <BulletList
           label="Highlights"
           addLabel="Add Bullet"

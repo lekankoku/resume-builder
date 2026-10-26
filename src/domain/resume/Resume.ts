@@ -10,9 +10,16 @@ export interface PersonalInfo {
   linkedin: string;
   github: string;
   photoUrl: string;
+  currentRole: string;
+  currentCompany: string;
 }
 
-export type Profile = Omit<PersonalInfo, 'title'>;
+export type Profile = Omit<PersonalInfo, 'title' | 'currentRole' | 'currentCompany'>;
+
+export interface Position {
+  role: string;
+  period: string;
+}
 
 export interface Experience {
   company: string;
@@ -20,6 +27,7 @@ export interface Experience {
   role: string;
   period: string;
   employmentType?: string;
+  earlierPositions: Position[];
   bullets: string[];
 }
 
@@ -33,12 +41,22 @@ export interface Education {
   location: string;
   degree: string;
   period: string;
+  bullets: string[];
 }
 
 export interface Project {
   company: string;
   title: string;
   scope: string;
+  period: string;
+  bullets: string[];
+}
+
+export interface Volunteering {
+  organization: string;
+  location: string;
+  role: string;
+  period: string;
   bullets: string[];
 }
 
@@ -51,15 +69,20 @@ export interface Reference {
   name: string;
   role: string;
   company: string;
+  contact: string;
   linkedin: string;
 }
 
+export type Layout = 'experience-first' | 'education-first';
+
 export interface Resume {
   personal: PersonalInfo;
+  layout: Layout;
   experiences: Experience[];
   abilities: Ability[];
   education: Education[];
   projects: Project[];
+  volunteering: Volunteering[];
   languages: { name: string; level: string }[];
   technicalProficiency: TechnicalProficiency[];
   references: Reference[];
@@ -71,10 +94,11 @@ export type ListSection =
   | 'abilities'
   | 'education'
   | 'projects'
+  | 'volunteering'
   | 'languages'
   | 'technicalProficiency'
   | 'references';
 
-export type BulletSection = 'experiences' | 'abilities' | 'projects';
+export type BulletSection = 'experiences' | 'abilities' | 'projects' | 'education' | 'volunteering';
 
 export type ListSectionItem<S extends ListSection> = Resume[S][number];

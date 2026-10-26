@@ -1,5 +1,5 @@
 import React from 'react';
-import { Briefcase, Code, FileJson, FileText, GraduationCap, Languages, Terminal, User, Users } from 'lucide-react';
+import { Award, Briefcase, Code, FileJson, FileText, GraduationCap, HeartHandshake, Languages, Terminal, User, Users } from 'lucide-react';
 import { NavLink } from 'react-router';
 import { CoverLetter } from '../../domain/coverLetter/CoverLetter';
 import { Resume } from '../../domain/resume/Resume';
@@ -11,16 +11,20 @@ import ExperienceTab from './tabs/ExperienceTab';
 import IdentityTab from './tabs/IdentityTab';
 import JsonTab from './tabs/JsonTab';
 import LanguagesTab from './tabs/LanguagesTab';
+import LeadershipTab from './tabs/LeadershipTab';
 import ProjectsTab from './tabs/ProjectsTab';
 import ReferencesTab from './tabs/ReferencesTab';
 import TechStackTab from './tabs/TechStackTab';
+import VolunteeringTab from './tabs/VolunteeringTab';
 
 export const TABS = [
   { id: 'json', label: 'Raw JSON', icon: FileJson },
   { id: 'personal', label: 'Identity', icon: User },
   { id: 'experiences', label: 'Experience', icon: Briefcase },
   { id: 'projects', label: 'Projects', icon: Terminal },
+  { id: 'volunteering', label: 'Volunteering', icon: HeartHandshake },
   { id: 'abilities', label: 'Job related abilities', icon: Code },
+  { id: 'leadership', label: 'Leadership', icon: Award },
   { id: 'technicalProficiency', label: 'Tech Stack', icon: Code },
   { id: 'education', label: 'Education', icon: GraduationCap },
   { id: 'languages', label: 'Languages', icon: Languages },
@@ -42,6 +46,8 @@ interface Props {
   activeSection: string;
   preview?: React.ReactNode;
 }
+
+export const OPTIONAL_SECTIONS = ['volunteering', 'leadership'];
 
 export const CV_EDITOR_SECTIONS = TABS.filter((tab) => tab.id !== 'coverLetter');
 
@@ -112,6 +118,8 @@ export const EditorSection: React.FC<{
     )}
     {section === 'experiences' && <ExperienceTab resume={resume} actions={actions} />}
     {section === 'projects' && <ProjectsTab resume={resume} actions={actions} />}
+    {section === 'volunteering' && <VolunteeringTab resume={resume} actions={actions} />}
+    {section === 'leadership' && <LeadershipTab resume={resume} actions={actions} />}
     {section === 'education' && <EducationTab resume={resume} actions={actions} />}
     {section === 'abilities' && <AbilitiesTab resume={resume} actions={actions} />}
     {section === 'languages' && <LanguagesTab resume={resume} actions={actions} />}

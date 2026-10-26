@@ -294,6 +294,15 @@ export const DetailFields: React.FC<{
         onChange={(e) => onChange('notes', e.target.value)}
       />
     </div>
+    <div className="space-y-1 col-span-2">
+      <label htmlFor="application-job-description" className={labelClass}>Job description</label>
+      <textarea
+        id="application-job-description"
+        className={`${inputClass} min-h-[200px] leading-relaxed`}
+        value={details.jobDescription ?? ''}
+        onChange={(e) => onChange('jobDescription', e.target.value)}
+      />
+    </div>
   </div>
 );
 

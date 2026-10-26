@@ -6,6 +6,8 @@ import {
   StateClient,
   StateKey,
 } from '../../application/ports/repositories';
+import { withDraftDefaults } from '../../domain/application/ApplicationDraft';
+import { withApplicationDefaults } from '../../domain/application/JobApplication';
 import { DEFAULT_STAGES } from '../../domain/application/stages';
 import { Profile } from '../../domain/resume/Resume';
 
@@ -15,7 +17,11 @@ export const createRemoteRepositories = (
   defaultProfile: Profile,
   delayMs = 1000,
 ) => {
-  const snapshot: RemoteState = { ...state };
+  const snapshot: RemoteState = {
+    ...state,
+    applications: state.applications?.map(withApplicationDefaults),
+    drafts: state.drafts?.map(withDraftDefaults),
+  };
   const timers = new Map<StateKey, ReturnType<typeof setTimeout>>();
   const queues = new Map<StateKey, Promise<unknown>>();
   const failed = new Set<StateKey>();
@@ -61,6 +67,11 @@ export const createRemoteRepositories = (
     leads: repository('leads', () => []),
     stages: repository('stages', () => DEFAULT_STAGES),
     profile: repository('profile', () => defaultProfile),
+    jobBank: repository('jobBank', () => ''),
+    cvGuide: {
+      load: () => snapshot.cvGuide ?? null,
+      save: (guide) => repository('cvGuide', () => guide).save(guide),
+    },
   };
 
   const status: SaveStatusSource = {

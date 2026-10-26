@@ -47,6 +47,14 @@ describe('ResumePdf', () => {
     expect(first.equals(second)).toBe(true);
   });
 
+  it('renders an education-first resume with volunteering, leadership and earlier positions', async () => {
+    const resume = aResume({ personal: { ...aResume().personal, photoUrl: '' }, layout: 'education-first' });
+
+    const pdf = await renderResume(resume);
+
+    expect(pageCount(pdf)).toBeGreaterThanOrEqual(1);
+  });
+
   it('renders without optional collections', async () => {
     const resume = aResume({
       personal: { ...aResume().personal, photoUrl: '' },
@@ -57,6 +65,8 @@ describe('ResumePdf', () => {
       technicalProficiency: [],
       languages: [],
       references: [],
+      volunteering: [],
+      crossFunctional: { title: '', bullets: [] },
     });
 
     const pdf = await renderResume(resume, '');
@@ -83,6 +93,18 @@ describe('CoverLetterPdf', () => {
     const body = Array.from({ length: 40 }, () => 'A paragraph of the letter. '.repeat(20)).join('\n');
 
     expect(pageCount(await render(body))).toBeGreaterThan(1);
+  });
+
+  it('renders a letter with a subject', async () => {
+    const pdf = await renderToBuffer(
+      createElement(CoverLetterPdf, {
+        resume: aResume(),
+        coverLetter: { ...createCoverLetter(new Date()), subject: 'Application for Engineer', body: 'Hello' },
+        targetCompany: 'Acme',
+      }),
+    );
+
+    expect(pageCount(pdf)).toBe(1);
   });
 
   it('renders an empty letter', async () => {
