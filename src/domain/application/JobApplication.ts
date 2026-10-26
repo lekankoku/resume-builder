@@ -38,6 +38,7 @@ export interface JobApplication extends ApplicationDetails {
 export interface CvSource {
   resume: Resume;
   coverLetter: CoverLetter;
+  suggestions?: SuggestionSet | null;
 }
 
 export const withApplicationDefaults = (application: JobApplication): JobApplication => ({
@@ -96,6 +97,7 @@ export const createApplication = (
   resume: structuredClone(source.resume),
   coverLetter: structuredClone(source.coverLetter),
   versions: [],
+  suggestions: source.suggestions ?? null,
 });
 
 export const updateApplicationField = (

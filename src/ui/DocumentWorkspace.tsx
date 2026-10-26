@@ -1,10 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Navigate, useParams } from 'react-router';
 import { CoverLetter, updateCoverLetterField } from '../domain/coverLetter/CoverLetter';
 import { Resume } from '../domain/resume/Resume';
 import { applyProfile } from '../domain/resume/resumeOperations';
 import { useApplicationContext } from './applications/ApplicationPage';
-import SuggestionsPanel, { SuggestionScope } from './applications/SuggestionsPanel';
+import { PreviewWithSuggestions, SuggestionScope } from './applications/SuggestionsPanel';
 import EditorView, { CV_EDITOR_SECTIONS, EditorSection } from './editor/EditorView';
 import { createResumeActions } from './hooks/useResume';
 import { useJsonSource } from './hooks/useJsonSource';
@@ -14,36 +14,23 @@ import ResumeDocument from './preview/ResumeDocument';
 
 const SidePanel: React.FC<{ scope: SuggestionScope; preview: React.ReactNode }> = ({ scope, preview }) => {
   const { application, actions, ai, jobBank, onRememberAnswers } = useApplicationContext();
-  const [view, setView] = useState<'preview' | 'suggestions'>('preview');
-  const pending =
-    application.suggestions?.items.filter((item) => item.status === 'pending' && (scope === 'coverLetter') === (item.section === 'coverLetter'))
-      .length ?? 0;
-  const tabClass = (active: boolean) =>
-    `px-3 py-1.5 rounded-lg text-sm ${active ? 'bg-accent text-white font-semibold' : 'text-slate-600 hover:bg-slate-100'}`;
-
   return (
-    <div className="space-y-3">
-      <div className="flex gap-2">
-        <button aria-pressed={view === 'preview'} onClick={() => setView('preview')} className={tabClass(view === 'preview')}>
-          Preview
-        </button>
-        <button aria-pressed={view === 'suggestions'} onClick={() => setView('suggestions')} className={tabClass(view === 'suggestions')}>
-          AI suggestions{pending > 0 ? ` (${pending})` : ''}
-        </button>
-      </div>
-      {view === 'preview' ? (
-        preview
-      ) : (
-        <SuggestionsPanel
-          application={application}
-          scope={scope}
-          ai={ai}
-          jobBank={jobBank}
-          onUpdate={(change) => actions.update(application.id, change)}
-          onRememberAnswers={onRememberAnswers}
-        />
-      )}
-    </div>
+    <PreviewWithSuggestions
+      scope={scope}
+      preview={preview}
+      job={application}
+      state={{ resume: application.resume, coverLetter: application.coverLetter, suggestions: application.suggestions ?? null }}
+      ai={ai}
+      jobBank={jobBank}
+      jobDescriptionAt={{ label: 'Overview', to: `/applications/${application.id}/overview` }}
+      onUpdate={(change) =>
+        actions.update(application.id, (a) => ({
+          ...a,
+          ...change({ resume: a.resume, coverLetter: a.coverLetter, suggestions: a.suggestions ?? null }),
+        }))
+      }
+      onRememberAnswers={onRememberAnswers}
+    />
   );
 };
 

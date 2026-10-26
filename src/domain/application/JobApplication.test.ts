@@ -62,6 +62,15 @@ describe('JobApplication', () => {
 
       expect(application).toMatchObject({ ...details, id, stage, versions: [] });
       expect(application.stageHistory).toEqual([{ stage, changedAt: now.toISOString() }]);
+      expect(application.suggestions).toBeNull();
+    });
+
+    it('keeps the suggestions made while drafting', () => {
+      const suggestions = { createdAt: uuid(), summary: uuid(), gaps: [], questions: [], usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, costUsd: 0 }, items: [] };
+
+      const application = createApplication(someDetails(), { resume: aResume(), coverLetter: aCoverLetter(), suggestions }, uuid(), new Date(), uuid());
+
+      expect(application.suggestions).toBe(suggestions);
     });
 
     it('copies the source CV so later edits to the source do not leak in', () => {

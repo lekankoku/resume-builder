@@ -93,7 +93,7 @@ Wrangler only reads `.dev.vars` when it starts. Restart `pnpm dev:api` after cha
 2. **Settings → Profile**: check your details and set your **Work authorisation**. Your name, residence, nationality and links are sent to the AI; phone, email and photo are not.
 3. **Settings → CV facts**: add your languages (level and how you got it), references (whether they agreed to be listed and whether they are your current manager) and education. These are trusted over the job bank.
 4. **Create the application** with the full **job description**, starting from a new CV, a copy of another application's CV, or JSON.
-5. Open the application's **CV** or **Cover letter** tab and switch the right-hand panel from **Preview** to **AI suggestions** (the panel shows on wide screens). Click **Get suggestions**.
+5. In the new-application **Review** step, or later in the application's **CV** or **Cover letter** tab, switch the right-hand panel from **Preview** to **AI suggestions** (the panel shows on wide screens). Click **Get suggestions**.
 6. Read the summary and gaps, then **Accept** or **Decline** each suggestion. Accepting changes the CV straight away; nothing changes otherwise. If you edited the text a suggestion refers to, it can no longer be applied and you can only decline it.
 7. Answer any questions and click **Save to CV facts**, then **Refresh suggestions** to use the answers.
 

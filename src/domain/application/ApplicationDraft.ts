@@ -2,6 +2,7 @@ import { CoverLetter, withCoverLetterDefaults } from '../coverLetter/CoverLetter
 import { Resume } from '../resume/Resume';
 import { withResumeDefaults } from '../resume/resumeOperations';
 import { ApplicationDetails } from './JobApplication';
+import { SuggestionSet } from './suggestions';
 
 export type CvStart = 'new' | 'reuse' | 'json';
 
@@ -17,6 +18,7 @@ export interface ApplicationDraft {
   resume: Resume;
   coverLetter: CoverLetter;
   verifiedSections: string[];
+  suggestions?: SuggestionSet | null;
 }
 
 export const withDraftDefaults = (draft: ApplicationDraft & { generated?: unknown }): ApplicationDraft => {

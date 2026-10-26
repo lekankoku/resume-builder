@@ -9,7 +9,7 @@ import { createApplication, JobApplication } from '../../domain/application/JobA
 import { Suggestion, SuggestionsResponse } from '../../domain/application/suggestions';
 import { createCoverLetter } from '../../domain/coverLetter/CoverLetter';
 import { aResume } from '../../testing/resumeFixture';
-import SuggestionsPanel, { SuggestionScope } from './SuggestionsPanel';
+import { PreviewWithSuggestions, SuggestionScope } from './SuggestionsPanel';
 
 const uuid = () => crypto.randomUUID();
 
@@ -58,12 +58,20 @@ const renderPanel = ({
     const [state, setState] = useState(application);
     latest.current = state;
     return (
-      <SuggestionsPanel
-        application={state}
+      <PreviewWithSuggestions
+        preview={<p>CV preview content</p>}
+        job={state}
+        state={{ resume: state.resume, coverLetter: state.coverLetter, suggestions: state.suggestions ?? null }}
         scope={scope}
         ai={{ suggest, usage: vi.fn() }}
         jobBank={jobBank}
-        onUpdate={(change) => setState((current) => change(current))}
+        jobDescriptionAt={{ label: 'Overview', to: '/overview' }}
+        onUpdate={(change) =>
+          setState((current) => ({
+            ...current,
+            ...change({ resume: current.resume, coverLetter: current.coverLetter, suggestions: current.suggestions ?? null }),
+          }))
+        }
         onRememberAnswers={onRememberAnswers}
       />
     );
@@ -76,6 +84,10 @@ const renderPanel = ({
   return { latest, suggest, onRememberAnswers };
 };
 
+const openSuggestions = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.click(screen.getByRole('button', { name: /AI suggestions/ }));
+};
+
 describe('SuggestionsPanel', () => {
   it('sends the CV without contact details and the job, then lists the suggestions with summary, gaps and cost', async () => {
     // Given
@@ -85,8 +97,10 @@ describe('SuggestionsPanel', () => {
     const suggestion = aSuggestion({ item: experience.company, field: 'bullets', before: experience.bullets[0] });
     const response = aResponse([suggestion]);
     const { suggest } = renderPanel({ application, suggest: vi.fn(async () => response) });
+    expect(screen.getByText('CV preview content')).toBeVisible();
 
     // When
+    await openSuggestions(user);
     await user.click(screen.getByRole('button', { name: 'Get suggestions' }));
 
     // Then
@@ -104,6 +118,7 @@ describe('SuggestionsPanel', () => {
     expect(screen.getByRole('heading', { name: 'Experience' })).toBeVisible();
     expect(screen.getByRole('article', { name: `Refine: ${suggestion.reason}` })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Refresh suggestions' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'AI suggestions (1)' })).toBeVisible();
   });
 
   it('applies an accepted suggestion to the CV and removes it from the list', async () => {
@@ -113,6 +128,7 @@ describe('SuggestionsPanel', () => {
     const experience = application.resume.experiences[0];
     const suggestion = aSuggestion({ item: experience.company, field: 'bullets', before: experience.bullets[0] });
     const { latest } = renderPanel({ application, suggest: vi.fn(async () => aResponse([suggestion])) });
+    await openSuggestions(user);
     await user.click(screen.getByRole('button', { name: 'Get suggestions' }));
     const card = await screen.findByRole('article', { name: `Refine: ${suggestion.reason}` });
 
@@ -132,6 +148,7 @@ describe('SuggestionsPanel', () => {
     const application = anApplication();
     const suggestion = aSuggestion({ section: 'personal', field: 'title', before: application.resume.personal.title });
     const { latest } = renderPanel({ application, suggest: vi.fn(async () => aResponse([suggestion])) });
+    await openSuggestions(user);
     await user.click(screen.getByRole('button', { name: 'Get suggestions' }));
 
     // When
@@ -149,6 +166,7 @@ describe('SuggestionsPanel', () => {
 
     // When
     renderPanel({ suggest: vi.fn(async () => aResponse([suggestion])) });
+    await openSuggestions(user);
     await user.click(screen.getByRole('button', { name: 'Get suggestions' }));
 
     // Then
@@ -166,6 +184,7 @@ describe('SuggestionsPanel', () => {
 
     // When
     renderPanel({ application, scope: 'coverLetter', suggest: vi.fn(async () => aResponse([letter, cv])) });
+    await openSuggestions(user);
     await user.click(screen.getByRole('button', { name: 'Get suggestions' }));
 
     // Then
@@ -178,6 +197,7 @@ describe('SuggestionsPanel', () => {
     const user = userEvent.setup();
     const response = aResponse([]);
     const { onRememberAnswers } = renderPanel({ suggest: vi.fn(async () => response) });
+    await openSuggestions(user);
     await user.click(screen.getByRole('button', { name: 'Get suggestions' }));
     const [question] = response.questions;
     const answer = uuid();
@@ -198,6 +218,7 @@ describe('SuggestionsPanel', () => {
 
     // When
     renderPanel({ suggest: vi.fn(async () => Promise.reject(new Error(message))) });
+    await openSuggestions(user);
     await user.click(screen.getByRole('button', { name: 'Get suggestions' }));
 
     // Then
@@ -207,9 +228,13 @@ describe('SuggestionsPanel', () => {
   it.each([
     ['no job bank', { jobBank: ' ' }, 'Add your job bank in Settings first.', 'Open job bank settings'],
     ['no job description', { application: anApplication({ jobDescription: '' }) }, 'Add the job description in Overview first.', 'Open Overview'],
-  ])('disables suggestions with %s and links to where to fix it', (_, options, message, link) => {
-    // Given / When
+  ])('disables suggestions with %s and links to where to fix it', async (_, options, message, link) => {
+    // Given
+    const user = userEvent.setup();
     renderPanel(options);
+
+    // When
+    await openSuggestions(user);
 
     // Then
     expect(screen.getByRole('button', { name: 'Get suggestions' })).toBeDisabled();

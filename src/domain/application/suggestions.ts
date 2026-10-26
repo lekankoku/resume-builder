@@ -58,9 +58,9 @@ export const setSuggestionStatus = (set: SuggestionSet, id: string, status: Sugg
   items: set.items.map((item) => (item.id === id ? { ...item, status } : item)),
 });
 
-export const suggestionBlocker = (jobDescription: string | undefined, jobBank: string): string | null => {
+export const suggestionBlocker = (jobDescription: string | undefined, jobBank: string, where = 'Overview'): string | null => {
   if (!jobBank.trim()) return 'Add your job bank in Settings first.';
-  if (!jobDescription?.trim()) return 'Add the job description in Overview first.';
+  if (!jobDescription?.trim()) return `Add the job description in ${where} first.`;
   return null;
 };
 

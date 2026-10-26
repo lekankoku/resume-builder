@@ -3,27 +3,40 @@ import { Check, Loader2, Sparkles, X } from 'lucide-react';
 import { Link } from 'react-router';
 import { AiClient } from '../../application/ports/repositories';
 import { formatUsd } from '../../domain/application/cvGeneration';
-import { JobApplication } from '../../domain/application/JobApplication';
 import {
   applySuggestion,
   createSuggestionSet,
   setSuggestionStatus,
   SuggestionItem,
   SuggestionSection,
+  SuggestionSet,
   suggestionBlocker,
 } from '../../domain/application/suggestions';
 import { RememberedAnswer } from '../../domain/candidate/CandidateFacts';
+import { CoverLetter } from '../../domain/coverLetter/CoverLetter';
+import { Resume } from '../../domain/resume/Resume';
 import { buttonClass, inputClass, labelClass, primaryButtonClass } from './ApplicationsView';
 
 export type SuggestionScope = 'cv' | 'coverLetter';
 
-interface Props {
-  application: JobApplication;
-  scope: SuggestionScope;
+export interface SuggestionState {
+  resume: Resume;
+  coverLetter: CoverLetter;
+  suggestions: SuggestionSet | null;
+}
+
+export interface SuggestionContext {
+  job: { company: string; role: string; jobDescription?: string };
+  state: SuggestionState;
   ai: AiClient;
   jobBank: string;
-  onUpdate: (change: (application: JobApplication) => JobApplication) => void;
+  jobDescriptionAt: { label: string; to: string };
+  onUpdate: (change: (state: SuggestionState) => SuggestionState) => void;
   onRememberAnswers: (answers: RememberedAnswer[]) => void;
+}
+
+interface Props extends SuggestionContext {
+  scope: SuggestionScope;
 }
 
 const SECTION_LABELS: Record<SuggestionSection, string> = {
@@ -44,12 +57,39 @@ const ACTION_LABELS: Record<SuggestionItem['action'], string> = { add: 'Add', re
 
 const inScope = (scope: SuggestionScope) => (item: SuggestionItem) => (scope === 'coverLetter') === (item.section === 'coverLetter');
 
-const SuggestionsPanel: React.FC<Props> = ({ application, scope, ai, jobBank, onUpdate, onRememberAnswers }) => {
+export const pendingCount = (suggestions: SuggestionSet | null, scope: SuggestionScope): number =>
+  suggestions?.items.filter((item) => item.status === 'pending' && inScope(scope)(item)).length ?? 0;
+
+export const PreviewWithSuggestions: React.FC<SuggestionContext & { scope: SuggestionScope; preview: React.ReactNode }> = ({
+  preview,
+  ...panel
+}) => {
+  const [view, setView] = useState<'preview' | 'suggestions'>('preview');
+  const pending = pendingCount(panel.state.suggestions, panel.scope);
+  const tabClass = (active: boolean) =>
+    `px-3 py-1.5 rounded-lg text-sm ${active ? 'bg-accent text-white font-semibold' : 'text-slate-600 hover:bg-slate-100'}`;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <button aria-pressed={view === 'preview'} onClick={() => setView('preview')} className={tabClass(view === 'preview')}>
+          Preview
+        </button>
+        <button aria-pressed={view === 'suggestions'} onClick={() => setView('suggestions')} className={tabClass(view === 'suggestions')}>
+          AI suggestions{pending > 0 ? ` (${pending})` : ''}
+        </button>
+      </div>
+      {view === 'preview' ? preview : <SuggestionsPanel {...panel} />}
+    </div>
+  );
+};
+
+const SuggestionsPanel: React.FC<Props> = ({ job, state, scope, ai, jobBank, jobDescriptionAt, onUpdate, onRememberAnswers }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const set = application.suggestions ?? null;
-  const blocker = suggestionBlocker(application.jobDescription, jobBank);
-  const cv = { resume: application.resume, coverLetter: application.coverLetter };
+  const set = state.suggestions;
+  const blocker = suggestionBlocker(job.jobDescription, jobBank, jobDescriptionAt.label);
+  const cv = { resume: state.resume, coverLetter: state.coverLetter };
   const pending = set?.items.filter((item) => item.status === 'pending' && inScope(scope)(item)) ?? [];
   const decided = set?.items.filter((item) => item.status !== 'pending' && inScope(scope)(item)) ?? [];
   const sections = pending.map((item) => item.section).filter((section, i, all) => all.indexOf(section) === i);
@@ -58,16 +98,16 @@ const SuggestionsPanel: React.FC<Props> = ({ application, scope, ai, jobBank, on
     setLoading(true);
     setError(null);
     try {
-      const { title, currentRole, currentCompany } = application.resume.personal;
+      const { title, currentRole, currentCompany } = state.resume.personal;
       const response = await ai.suggest({
-        company: application.company,
-        role: application.role,
-        jobDescription: application.jobDescription ?? '',
-        resume: { ...application.resume, personal: { title, currentRole, currentCompany } as typeof application.resume.personal },
-        coverLetter: application.coverLetter,
+        company: job.company,
+        role: job.role,
+        jobDescription: job.jobDescription ?? '',
+        resume: { ...state.resume, personal: { title, currentRole, currentCompany } as Resume['personal'] },
+        coverLetter: state.coverLetter,
       });
       const next = createSuggestionSet(response, new Date(), () => crypto.randomUUID());
-      onUpdate((a) => ({ ...a, suggestions: next }));
+      onUpdate((current) => ({ ...current, suggestions: next }));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -76,11 +116,11 @@ const SuggestionsPanel: React.FC<Props> = ({ application, scope, ai, jobBank, on
   };
 
   const decide = (item: SuggestionItem, status: 'accepted' | 'declined') =>
-    onUpdate((a) => {
-      if (!a.suggestions) return a;
-      const next = status === 'accepted' ? applySuggestion({ resume: a.resume, coverLetter: a.coverLetter }, item) : null;
-      if (status === 'accepted' && !next) return a;
-      return { ...a, ...next, suggestions: setSuggestionStatus(a.suggestions, item.id, status) };
+    onUpdate((current) => {
+      if (!current.suggestions) return current;
+      const next = status === 'accepted' ? applySuggestion({ resume: current.resume, coverLetter: current.coverLetter }, item) : null;
+      if (status === 'accepted' && !next) return current;
+      return { ...current, ...next, suggestions: setSuggestionStatus(current.suggestions, item.id, status) };
     });
 
   return (
@@ -100,7 +140,9 @@ const SuggestionsPanel: React.FC<Props> = ({ application, scope, ai, jobBank, on
             {!jobBank.trim() ? (
               <Link to="/settings/job-bank" className="font-semibold text-accent hover:underline">Open job bank settings</Link>
             ) : (
-              <Link to="../overview" relative="path" className="font-semibold text-accent hover:underline">Open Overview</Link>
+              <Link to={jobDescriptionAt.to} relative="path" className="font-semibold text-accent hover:underline">
+                Open {jobDescriptionAt.label}
+              </Link>
             )}
           </p>
         )}

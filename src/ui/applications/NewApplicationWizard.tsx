@@ -2,9 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Copy, FileJson, FilePlus, Plus, X } from 'lucide-react';
 import { Navigate } from 'react-router';
 import { resumeFromJson } from '../../application/importResumeFromJson';
-import { ResumeRepository } from '../../application/ports/repositories';
+import { AiClient, ResumeRepository } from '../../application/ports/repositories';
 import { ApplicationDraft, CvStart, WizardStep } from '../../domain/application/ApplicationDraft';
 import { initialStage } from '../../domain/application/stages';
+import { SuggestionSet } from '../../domain/application/suggestions';
+import { RememberedAnswer } from '../../domain/candidate/CandidateFacts';
 import {
   ApplicationDetails,
   CvSource,
@@ -22,16 +24,20 @@ import LivePreview from '../preview/LivePreview';
 import ResumeDocument from '../preview/ResumeDocument';
 import PageHeader from '../shell/PageHeader';
 import { buttonClass, DetailFields, inputClass, labelClass, primaryButtonClass } from './ApplicationsView';
+import { PreviewWithSuggestions, SuggestionContext } from './SuggestionsPanel';
 
 interface Props {
   applications: JobApplication[];
   stages: string[];
   profile: Profile;
+  jobBank: string;
+  ai: AiClient;
   draft?: ApplicationDraft;
   initialDetails?: Partial<ApplicationDetails>;
   stepId: WizardStep;
   onStepChange: (draftId: string, stepId: WizardStep) => void;
   onSaveDraft: (draft: ApplicationDraft) => void;
+  onRememberAnswers: (answers: RememberedAnswer[]) => void;
   onCreate: (details: ApplicationDetails, cv: CvSource, draftId: string | null) => void;
   onCancel: () => void;
 }
@@ -70,11 +76,14 @@ const NewApplicationWizard: React.FC<Props> = ({
   applications,
   stages,
   profile,
+  jobBank,
+  ai,
   draft,
   initialDetails,
   stepId,
   onStepChange,
   onSaveDraft,
+  onRememberAnswers,
   onCreate,
   onCancel,
 }) => {
@@ -90,6 +99,7 @@ const NewApplicationWizard: React.FC<Props> = ({
   const { resume, setResume, actions } = useResume(resumeRepository);
   const [coverLetter, setCoverLetter] = useState<CoverLetter>(() => draft?.coverLetter ?? createBlankCv(new Date()).coverLetter);
   const [verifiedSections, setVerifiedSections] = useState<string[]>(draft?.verifiedSections ?? []);
+  const [suggestions, setSuggestions] = useState<SuggestionSet | null>(draft?.suggestions ?? null);
 
   const step = STEPS.findIndex((s) => s.id === stepId);
   const sourceApplication = applications.find((a) => a.id === sourceId);
@@ -138,8 +148,9 @@ const NewApplicationWizard: React.FC<Props> = ({
       resume,
       coverLetter,
       verifiedSections,
+      suggestions,
     });
-  }, [stepId, details, cvStart, sourceId, jsonInput, cvKey, resume, coverLetter, verifiedSections]);
+  }, [stepId, details, cvStart, sourceId, jsonInput, cvKey, resume, coverLetter, verifiedSections, suggestions]);
 
   if (draft && step > firstOpenStep) return <Navigate to={`/drafts/${draft.id}/${STEPS[firstOpenStep].id}`} replace />;
 
@@ -149,6 +160,7 @@ const NewApplicationWizard: React.FC<Props> = ({
     setResume(cvStart === 'json' ? resumeFromJson(jsonInput) : structuredClone(cv.resume));
     setCoverLetter(structuredClone(cv.coverLetter));
     setVerifiedSections([]);
+    setSuggestions(null);
     setCvKey(chosenKey);
   };
 
@@ -168,6 +180,7 @@ const NewApplicationWizard: React.FC<Props> = ({
         resume,
         coverLetter,
         verifiedSections,
+        suggestions,
       });
       onStepChange(id, target);
       return;
@@ -307,6 +320,20 @@ const NewApplicationWizard: React.FC<Props> = ({
           onCompanyChange={(company) => setDetails((d) => ({ ...d, company }))}
           verifiedSections={verifiedSections}
           onVerifiedSectionsChange={setVerifiedSections}
+          suggestionContext={{
+            job: details,
+            state: { resume, coverLetter, suggestions },
+            ai,
+            jobBank,
+            jobDescriptionAt: { label: 'the Details step', to: draft ? `/drafts/${draft.id}/details` : '.' },
+            onUpdate: (change) => {
+              const next = change({ resume, coverLetter, suggestions });
+              setResume(next.resume);
+              setCoverLetter(next.coverLetter);
+              setSuggestions(next.suggestions);
+            },
+            onRememberAnswers,
+          }}
         />
       )}
 
@@ -323,7 +350,7 @@ const NewApplicationWizard: React.FC<Props> = ({
           ]}
           problems={problems}
           stage={initialStage(stages)}
-          onCreate={() => onCreate(details, { resume, coverLetter }, draft?.id ?? null)}
+          onCreate={() => onCreate(details, { resume, coverLetter, suggestions }, draft?.id ?? null)}
         />
       )}
 
@@ -377,6 +404,7 @@ const ReviewStep: React.FC<{
   onCompanyChange: (company: string) => void;
   verifiedSections: string[];
   onVerifiedSectionsChange: (sections: string[]) => void;
+  suggestionContext: SuggestionContext;
 }> = ({
   resume,
   actions,
@@ -386,6 +414,7 @@ const ReviewStep: React.FC<{
   onCompanyChange,
   verifiedSections,
   onVerifiedSectionsChange,
+  suggestionContext,
 }) => {
   const [open, setOpen] = useState<string | null>(
     () => REQUIRED_SECTIONS.find((section) => !verifiedSections.includes(section.id))?.id ?? null,
@@ -452,15 +481,21 @@ const ReviewStep: React.FC<{
       </div>
 
       <div className="hidden xl:block min-w-0">
-        {open === 'coverLetter' ? (
-          <LivePreview title="Cover letter preview">
-            <CoverLetterDocument resume={resume} coverLetter={coverLetter} targetCompany={company} />
-          </LivePreview>
-        ) : (
-          <LivePreview title="CV preview">
-            <ResumeDocument resume={resume} />
-          </LivePreview>
-        )}
+        <PreviewWithSuggestions
+          {...suggestionContext}
+          scope={open === 'coverLetter' ? 'coverLetter' : 'cv'}
+          preview={
+            open === 'coverLetter' ? (
+              <LivePreview title="Cover letter preview">
+                <CoverLetterDocument resume={resume} coverLetter={coverLetter} targetCompany={company} />
+              </LivePreview>
+            ) : (
+              <LivePreview title="CV preview">
+                <ResumeDocument resume={resume} />
+              </LivePreview>
+            )
+          }
+        />
       </div>
     </div>
   );

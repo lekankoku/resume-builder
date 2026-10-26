@@ -64,11 +64,14 @@ const App: React.FC<AppProps> = ({ repositories, documents, ai, saveStatus, onRe
       applications={applications}
       stages={stages}
       profile={profile}
+      jobBank={jobBank}
+      ai={ai}
       draft={draft}
       initialDetails={lead && { postingUrl: lead.postingUrl, company: lead.company, role: lead.role }}
       stepId={stepId}
       onStepChange={(draftId, step) => navigate(`/drafts/${draftId}/${step}`, { replace: !draft })}
       onSaveDraft={saveDraft}
+      onRememberAnswers={(answers) => setFacts((current) => rememberAnswers(current, answers))}
       onCreate={(details, source, draftId) => {
         const id = actions.create(details, source, initialStage(stages));
         startTransition(() => {
