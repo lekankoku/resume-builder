@@ -27,11 +27,8 @@ const aDraft = (overrides: Partial<ApplicationDraft> = {}): ApplicationDraft => 
   jsonInput: '',
   cvKey: null,
   ...createBlankCv(new Date()),
-  verifiedSections: [],
   ...overrides,
 });
-
-const REQUIRED = ['personal', 'experiences', 'projects', 'abilities', 'technicalProficiency', 'education', 'languages', 'references', 'coverLetter'];
 
 const aSuggestion = (overrides: Partial<Suggestion>): Suggestion => ({
   action: 'replace',
@@ -123,27 +120,35 @@ describe('NewApplicationWizard', () => {
       new Date(),
       () => crypto.randomUUID(),
     );
-    const draft = aDraft({ stepId: 'confirm', cvKey: 'new', verifiedSections: REQUIRED, suggestions });
+    const draft = aDraft({ stepId: 'confirm', cvKey: 'new', suggestions });
     const { onCreate } = renderWizard({ draft, stepId: 'confirm' });
 
     // When
-    for (const checkbox of screen.getAllByRole('checkbox')) await user.click(checkbox);
     await user.click(screen.getByRole('button', { name: /Create application/ }));
 
     // Then
     expect(onCreate).toHaveBeenCalledWith(draft.details, expect.objectContaining({ suggestions }), draft.id);
   });
 
-  it('lets Review finish without checking the optional Volunteering and Leadership sections', () => {
-    // Given
-    const draft = aDraft({ stepId: 'review', cvKey: 'new', verifiedSections: REQUIRED });
-
-    // When
-    renderWizard({ draft, stepId: 'review' });
+  it('lets you move on from Review and create from Confirm without ticking anything', () => {
+    // Given / When
+    renderWizard({ draft: aDraft({ stepId: 'review', cvKey: 'new' }), stepId: 'review' });
 
     // Then
-    expect(screen.getByText(/9 of 9 required/)).toBeVisible();
-    expect(screen.getAllByText('Optional')).toHaveLength(2);
+    expect(screen.queryByRole('checkbox')).toBeNull();
     expect(screen.getByRole('button', { name: /Next/ })).toBeEnabled();
+  });
+
+  it('shows the details to confirm without checkboxes and enables Create', () => {
+    // Given
+    const draft = aDraft({ stepId: 'confirm', cvKey: 'new' });
+
+    // When
+    renderWizard({ draft, stepId: 'confirm' });
+
+    // Then
+    expect(screen.queryByRole('checkbox')).toBeNull();
+    expect(screen.getByText(draft.details.company)).toBeVisible();
+    expect(screen.getByRole('button', { name: /Create application/ })).toBeEnabled();
   });
 });

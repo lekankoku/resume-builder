@@ -16,7 +16,6 @@ const aDraft = (id: string = uuid()): ApplicationDraft => ({
   cvKey: null,
   resume: aResume(),
   coverLetter: createCoverLetter(new Date()),
-  verifiedSections: [],
 });
 
 describe('ApplicationDraft', () => {

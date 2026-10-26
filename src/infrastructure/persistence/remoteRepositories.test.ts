@@ -92,6 +92,7 @@ describe('remoteRepositories', () => {
       const draft = {
         id: crypto.randomUUID(),
         cvStart: 'generate',
+        verifiedSections: ['personal'],
         resume: anOldResume(),
         coverLetter: anOldCoverLetter(),
         generated: { analysis: {} },
@@ -104,6 +105,7 @@ describe('remoteRepositories', () => {
       expect(loaded.coverLetter.subject).toBe('');
       expect(loaded.cvStart).toBe('new');
       expect(loaded).not.toHaveProperty('generated');
+      expect(loaded).not.toHaveProperty('verifiedSections');
     });
 
     it('gives applications without suggestions an empty suggestion set', () => {

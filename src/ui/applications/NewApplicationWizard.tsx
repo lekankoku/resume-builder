@@ -17,7 +17,7 @@ import {
 import { CoverLetter, updateCoverLetterField } from '../../domain/coverLetter/CoverLetter';
 import { Profile, Resume } from '../../domain/resume/Resume';
 import { applyProfile } from '../../domain/resume/resumeOperations';
-import { EditorSection, OPTIONAL_SECTIONS, TABS } from '../editor/EditorView';
+import { EditorSection, TABS } from '../editor/EditorView';
 import { ResumeActions, useResume } from '../hooks/useResume';
 import CoverLetterDocument from '../preview/CoverLetterDocument';
 import LivePreview from '../preview/LivePreview';
@@ -43,7 +43,6 @@ interface Props {
 }
 
 const CV_SECTIONS = TABS.filter((tab) => tab.id !== 'json');
-const REQUIRED_SECTIONS = CV_SECTIONS.filter((tab) => !OPTIONAL_SECTIONS.includes(tab.id));
 export const STEPS: { id: WizardStep; label: string }[] = [
   { id: 'details', label: 'Details' },
   { id: 'cv', label: 'CV' },
@@ -98,7 +97,6 @@ const NewApplicationWizard: React.FC<Props> = ({
   }));
   const { resume, setResume, actions } = useResume(resumeRepository);
   const [coverLetter, setCoverLetter] = useState<CoverLetter>(() => draft?.coverLetter ?? createBlankCv(new Date()).coverLetter);
-  const [verifiedSections, setVerifiedSections] = useState<string[]>(draft?.verifiedSections ?? []);
   const [suggestions, setSuggestions] = useState<SuggestionSet | null>(draft?.suggestions ?? null);
 
   const step = STEPS.findIndex((s) => s.id === stepId);
@@ -125,7 +123,7 @@ const NewApplicationWizard: React.FC<Props> = ({
   const isDone = (id: WizardStep) =>
     (id === 'details' && problems.length === 0) ||
     (id === 'cv' && cvChosen) ||
-    (id === 'review' && chosenKey === cvKey && REQUIRED_SECTIONS.every((section) => verifiedSections.includes(section.id)));
+    (id === 'review' && chosenKey === cvKey);
   const canReach = (index: number) => (draft || index <= CV_STEP) && STEPS.slice(0, index).every((s) => isDone(s.id));
   const firstOpenStep = STEPS.findIndex((s) => !isDone(s.id));
 
@@ -147,10 +145,9 @@ const NewApplicationWizard: React.FC<Props> = ({
       cvKey,
       resume,
       coverLetter,
-      verifiedSections,
       suggestions,
     });
-  }, [stepId, details, cvStart, sourceId, jsonInput, cvKey, resume, coverLetter, verifiedSections, suggestions]);
+  }, [stepId, details, cvStart, sourceId, jsonInput, cvKey, resume, coverLetter, suggestions]);
 
   if (draft && step > firstOpenStep) return <Navigate to={`/drafts/${draft.id}/${STEPS[firstOpenStep].id}`} replace />;
 
@@ -159,7 +156,6 @@ const NewApplicationWizard: React.FC<Props> = ({
     const cv = cvStart === 'reuse' && sourceApplication ? sourceApplication : createBlankCv(new Date());
     setResume(cvStart === 'json' ? resumeFromJson(jsonInput) : structuredClone(cv.resume));
     setCoverLetter(structuredClone(cv.coverLetter));
-    setVerifiedSections([]);
     setSuggestions(null);
     setCvKey(chosenKey);
   };
@@ -179,7 +175,6 @@ const NewApplicationWizard: React.FC<Props> = ({
         cvKey,
         resume,
         coverLetter,
-        verifiedSections,
         suggestions,
       });
       onStepChange(id, target);
@@ -318,8 +313,6 @@ const NewApplicationWizard: React.FC<Props> = ({
           onCoverLetterFieldChange={(field, value) => setCoverLetter((letter) => updateCoverLetterField(letter, field, value))}
           company={details.company}
           onCompanyChange={(company) => setDetails((d) => ({ ...d, company }))}
-          verifiedSections={verifiedSections}
-          onVerifiedSectionsChange={setVerifiedSections}
           suggestionContext={{
             job: details,
             state: { resume, coverLetter, suggestions },
@@ -346,7 +339,7 @@ const NewApplicationWizard: React.FC<Props> = ({
             ['Date applied', details.appliedOn],
             ['Notes', details.notes.trim() || 'None'],
             ['Job description', details.jobDescription?.trim() || 'None'],
-            ['CV', `${cvLabel} · all ${REQUIRED_SECTIONS.length} required sections checked`],
+            ['CV', cvLabel],
           ]}
           problems={problems}
           stage={initialStage(stages)}
@@ -402,8 +395,6 @@ const ReviewStep: React.FC<{
   onCoverLetterFieldChange: (field: keyof CoverLetter, value: string) => void;
   company: string;
   onCompanyChange: (company: string) => void;
-  verifiedSections: string[];
-  onVerifiedSectionsChange: (sections: string[]) => void;
   suggestionContext: SuggestionContext;
 }> = ({
   resume,
@@ -412,30 +403,16 @@ const ReviewStep: React.FC<{
   onCoverLetterFieldChange,
   company,
   onCompanyChange,
-  verifiedSections,
-  onVerifiedSectionsChange,
   suggestionContext,
 }) => {
-  const [open, setOpen] = useState<string | null>(
-    () => REQUIRED_SECTIONS.find((section) => !verifiedSections.includes(section.id))?.id ?? null,
-  );
-
-  const verify = (id: string, verified: boolean) => {
-    const next = verified ? [...verifiedSections, id] : verifiedSections.filter((s) => s !== id);
-    onVerifiedSectionsChange(next);
-    if (verified) setOpen(REQUIRED_SECTIONS.find((section) => !next.includes(section.id))?.id ?? null);
-  };
+  const [open, setOpen] = useState<string | null>(CV_SECTIONS[0].id);
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
       <div className="space-y-3 min-w-0">
-        <p className="text-sm text-slate-600">
-          {REQUIRED_SECTIONS.filter((section) => verifiedSections.includes(section.id)).length} of {REQUIRED_SECTIONS.length} required
-          sections checked. Open each section, fix anything that's wrong and mark it as correct. Volunteering and Leadership are optional.
-        </p>
+        <p className="text-sm text-slate-600">Open any section to change it. You can keep editing after the application is created.</p>
         {CV_SECTIONS.map((section) => {
           const isOpen = open === section.id;
-          const isVerified = verifiedSections.includes(section.id);
           return (
             <section key={section.id} className="bg-white rounded-2xl border border-slate-200">
               <h2>
@@ -444,17 +421,10 @@ const ReviewStep: React.FC<{
                   aria-expanded={isOpen}
                   className="w-full flex items-center gap-3 px-5 py-4 text-left"
                 >
-                  <span
-                    className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                      isVerified ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'
-                    }`}
-                  >
-                    {isVerified ? <Check size={12} /> : <section.icon size={12} />}
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center bg-slate-100 text-slate-400">
+                    <section.icon size={12} />
                   </span>
                   <span className="flex-1 text-sm font-semibold text-slate-900">{section.label}</span>
-                  <span className="text-xs text-slate-500">
-                    {isVerified ? 'Checked' : OPTIONAL_SECTIONS.includes(section.id) ? 'Optional' : 'To check'}
-                  </span>
                   <ChevronDown size={16} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
               </h2>
@@ -469,10 +439,6 @@ const ReviewStep: React.FC<{
                     targetCompany={company}
                     onTargetCompanyChange={onCompanyChange}
                   />
-                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl text-sm font-semibold text-slate-900">
-                    <input type="checkbox" checked={isVerified} onChange={(e) => verify(section.id, e.target.checked)} />
-                    This {section.label} section is correct
-                  </label>
                 </div>
               )}
             </section>
@@ -507,30 +473,18 @@ const ConfirmStep: React.FC<{
   stage: string;
   onCreate: () => void;
 }> = ({ items, problems, stage, onCreate }) => {
-  const [checked, setChecked] = useState<string[]>([]);
-  const canCreate = problems.length === 0 && items.every(([label]) => checked.includes(label));
+  const canCreate = problems.length === 0;
 
   return (
     <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6 max-w-4xl">
-      <p className="text-sm text-slate-600">Tick each detail once you have checked it.</p>
-      <ul className="space-y-2">
+      <dl className="space-y-2">
         {items.map(([label, value]) => (
-          <li key={label}>
-            <label className="flex items-start gap-3 px-4 py-3 rounded-lg border border-slate-200">
-              <input
-                type="checkbox"
-                className="mt-1"
-                checked={checked.includes(label)}
-                onChange={(e) => setChecked((c) => (e.target.checked ? [...c, label] : c.filter((l) => l !== label)))}
-              />
-              <span>
-                <span className={`block ${labelClass}`}>{label}</span>
-                <span className="block text-sm text-slate-900 whitespace-pre-wrap">{value}</span>
-              </span>
-            </label>
-          </li>
+          <div key={label} className="px-4 py-3 rounded-lg border border-slate-200">
+            <dt className={labelClass}>{label}</dt>
+            <dd className="text-sm text-slate-900 whitespace-pre-wrap">{value}</dd>
+          </div>
         ))}
-      </ul>
+      </dl>
       {problems.length > 0 && (
         <ul className="text-xs text-red-500 space-y-1">
           {problems.map((problem) => (

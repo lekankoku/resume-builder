@@ -47,8 +47,6 @@ interface Props {
   preview?: React.ReactNode;
 }
 
-export const OPTIONAL_SECTIONS = ['volunteering', 'leadership'];
-
 export const CV_EDITOR_SECTIONS = TABS.filter((tab) => tab.id !== 'coverLetter');
 
 const EditorView: React.FC<Props> = ({

@@ -33,7 +33,6 @@ const aDraft = (overrides: Partial<ApplicationDetails> = {}): ApplicationDraft =
   cvKey: null,
   resume: aResume(),
   coverLetter: createCoverLetter(new Date()),
-  verifiedSections: [],
 });
 
 const nothing = { applications: [], leads: [], drafts: [] };

@@ -17,12 +17,11 @@ export interface ApplicationDraft {
   cvKey: string | null;
   resume: Resume;
   coverLetter: CoverLetter;
-  verifiedSections: string[];
   suggestions?: SuggestionSet | null;
 }
 
-export const withDraftDefaults = (draft: ApplicationDraft & { generated?: unknown }): ApplicationDraft => {
-  const { generated, ...rest } = draft;
+export const withDraftDefaults = (draft: ApplicationDraft & { generated?: unknown; verifiedSections?: unknown }): ApplicationDraft => {
+  const { generated, verifiedSections, ...rest } = draft;
   return {
     ...rest,
     cvStart: (draft.cvStart as string) === 'generate' ? 'new' : draft.cvStart,
