@@ -3,6 +3,7 @@ import { StateClient } from '../../application/ports/repositories';
 import { ApplicationDraft } from '../../domain/application/ApplicationDraft';
 import { createBlankCv, JobApplication } from '../../domain/application/JobApplication';
 import { DEFAULT_STAGES } from '../../domain/application/stages';
+import { createCandidateFacts } from '../../domain/candidate/CandidateFacts';
 import { Profile } from '../../domain/resume/Resume';
 import { aResume } from '../../testing/resumeFixture';
 import { createRemoteRepositories } from './remoteRepositories';
@@ -44,6 +45,17 @@ describe('remoteRepositories', () => {
       expect(repositories.leads.load()).toEqual([]);
       expect(repositories.stages.load()).toEqual(DEFAULT_STAGES);
       expect(repositories.profile.load()).toBe(defaultProfile);
+      expect(repositories.facts.load()).toEqual(createCandidateFacts());
+    });
+  });
+
+  describe('load of saved candidate facts', () => {
+    it('fills fields the saved facts do not have', () => {
+      const languages = [{ name: crypto.randomUUID(), level: 'C1', basis: 'certificate' as const }];
+
+      const { repositories } = createRemoteRepositories({ facts: { languages } as never }, aClient(), aProfile());
+
+      expect(repositories.facts.load()).toEqual({ ...createCandidateFacts(), languages });
     });
   });
 
@@ -76,12 +88,13 @@ describe('remoteRepositories', () => {
       expect(loaded.versions[0].coverLetter.subject).toBe('');
     });
 
-    it('fills the new fields of drafts and drops a generation made with the old single-step prompt', () => {
+    it('fills the new fields of drafts and turns a draft that generated its CV into a new CV', () => {
       const draft = {
         id: crypto.randomUUID(),
+        cvStart: 'generate',
         resume: anOldResume(),
         coverLetter: anOldCoverLetter(),
-        generated: { resume: aResume(), generatedAt: new Date().toISOString() },
+        generated: { analysis: {} },
       } as unknown as ApplicationDraft;
 
       const { repositories } = createRemoteRepositories({ drafts: [draft] }, aClient(), aProfile());
@@ -89,16 +102,16 @@ describe('remoteRepositories', () => {
       const [loaded] = repositories.drafts.load();
       expect(loaded.resume.volunteering).toEqual([]);
       expect(loaded.coverLetter.subject).toBe('');
-      expect(loaded.generated).toBeNull();
+      expect(loaded.cvStart).toBe('new');
+      expect(loaded).not.toHaveProperty('generated');
     });
 
-    it('keeps a draft generation made with the analysis step', () => {
-      const generated = { analysis: { tagline: crypto.randomUUID() } };
-      const draft = { id: crypto.randomUUID(), ...createBlankCv(new Date()), generated } as unknown as ApplicationDraft;
+    it('gives applications without suggestions an empty suggestion set', () => {
+      const application = { id: crypto.randomUUID(), ...createBlankCv(new Date()), versions: [] } as unknown as JobApplication;
 
-      const { repositories } = createRemoteRepositories({ drafts: [draft] }, aClient(), aProfile());
+      const { repositories } = createRemoteRepositories({ applications: [application] }, aClient(), aProfile());
 
-      expect(repositories.drafts.load()[0].generated).toBe(generated);
+      expect(repositories.applications.load()[0].suggestions).toBeNull();
     });
   });
 

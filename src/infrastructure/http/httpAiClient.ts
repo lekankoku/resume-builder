@@ -17,8 +17,7 @@ const post = async (fetchFn: typeof fetch, path: string, body: unknown, action: 
 };
 
 export const createHttpAiClient = (fetchFn: typeof fetch = (input, init) => fetch(input, init)): AiClient => ({
-  analyseJob: (job) => post(fetchFn, '/api/cv/analyse', job, 'Analysing the job'),
-  writeCv: (request) => post(fetchFn, '/api/cv/write', request, 'Writing the CV'),
+  suggest: (request) => post(fetchFn, '/api/cv/suggest', request, 'Getting suggestions'),
   usage: async () => {
     const response = await fetchFn('/api/usage', { credentials: 'same-origin' });
     if (!response.ok) throw await errorOf(response, 'Loading AI usage');

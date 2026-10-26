@@ -1,6 +1,7 @@
 import { CoverLetter, createCoverLetter, withCoverLetterDefaults } from '../coverLetter/CoverLetter';
 import { Resume } from '../resume/Resume';
 import { withResumeDefaults } from '../resume/resumeOperations';
+import { SuggestionSet } from './suggestions';
 
 export interface StageChange {
   stage: string;
@@ -31,6 +32,7 @@ export interface JobApplication extends ApplicationDetails {
   resume: Resume;
   coverLetter: CoverLetter;
   versions: CvVersion[];
+  suggestions?: SuggestionSet | null;
 }
 
 export interface CvSource {
@@ -40,6 +42,7 @@ export interface CvSource {
 
 export const withApplicationDefaults = (application: JobApplication): JobApplication => ({
   ...application,
+  suggestions: application.suggestions ?? null,
   resume: withResumeDefaults(application.resume),
   coverLetter: withCoverLetterDefaults(application.coverLetter),
   versions: application.versions.map((version) => ({

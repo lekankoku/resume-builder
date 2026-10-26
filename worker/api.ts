@@ -10,7 +10,7 @@ export interface Env extends GenerationEnv {
   ACCESS_DISABLED?: string;
 }
 
-const STATE_KEYS = ['applications', 'drafts', 'leads', 'stages', 'profile', 'jobBank', 'cvGuide'];
+const STATE_KEYS = ['applications', 'drafts', 'leads', 'stages', 'profile', 'jobBank', 'facts', 'cvGuide'];
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -25,7 +25,7 @@ export const handleApi = async (
 
   const { pathname } = new URL(request.url);
   if (pathname === '/api/documents' || pathname.startsWith('/api/documents/')) return handleDocuments(request, env.DOCUMENTS, pathname);
-  if (pathname === '/api/cv/analyse' || pathname === '/api/cv/write' || pathname === '/api/usage')
+  if (pathname === '/api/cv/suggest' || pathname === '/api/usage')
     return handleGeneration(request, env, pathname, fetchFn);
   if (pathname === '/api/state' && request.method === 'GET') return loadState(env.DB);
 

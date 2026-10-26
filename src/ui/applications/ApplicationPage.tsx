@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronLeft, Eye, GitCompare, History, Printer, RotateCcw, Save } from 'lucide-react';
 import { Link, Navigate, NavLink, Outlet, useOutletContext, useParams } from 'react-router';
+import { AiClient } from '../../application/ports/repositories';
 import { isWebUrl, JobApplication } from '../../domain/application/JobApplication';
+import { RememberedAnswer } from '../../domain/candidate/CandidateFacts';
 import { compareCv } from '../../domain/resume/cvDiff';
 import { resumeDocumentTitle } from '../../domain/resume/documentTitle';
 import { Profile } from '../../domain/resume/Resume';
@@ -15,6 +17,9 @@ export interface ApplicationContext {
   actions: ApplicationActions;
   profile: Profile;
   stages: string[];
+  ai: AiClient;
+  jobBank: string;
+  onRememberAnswers: (answers: RememberedAnswer[]) => void;
 }
 
 export const useApplicationContext = () => useOutletContext<ApplicationContext>();
@@ -33,6 +38,9 @@ const ApplicationPage: React.FC<Omit<ApplicationContext, 'application'> & { appl
   actions,
   profile,
   stages,
+  ai,
+  jobBank,
+  onRememberAnswers,
 }) => {
   const { id } = useParams();
   const application = applications.find((a) => a.id === id);
@@ -87,7 +95,7 @@ const ApplicationPage: React.FC<Omit<ApplicationContext, 'application'> & { appl
         ))}
       </nav>
 
-      <Outlet context={{ application, actions, profile, stages } satisfies ApplicationContext} />
+      <Outlet context={{ application, actions, profile, stages, ai, jobBank, onRememberAnswers } satisfies ApplicationContext} />
     </div>
   );
 };

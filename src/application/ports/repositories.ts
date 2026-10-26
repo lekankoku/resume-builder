@@ -1,5 +1,8 @@
 import { ApplicationDraft } from '../../domain/application/ApplicationDraft';
-import { AnalysedJob, Job, UsageReport, WriteCvRequest, WrittenCv } from '../../domain/application/cvGeneration';
+import { CandidateFacts } from '../../domain/candidate/CandidateFacts';
+import { UsageReport } from '../../domain/application/cvGeneration';
+import { SuggestionsResponse } from '../../domain/application/suggestions';
+import { CoverLetter } from '../../domain/coverLetter/CoverLetter';
 import { JobApplication } from '../../domain/application/JobApplication';
 import { JobLead } from '../../domain/application/JobLead';
 import { Profile, Resume } from '../../domain/resume/Resume';
@@ -39,6 +42,11 @@ export interface JobBankRepository {
   save(jobBank: string): void;
 }
 
+export interface CandidateFactsRepository {
+  load(): CandidateFacts;
+  save(facts: CandidateFacts): void;
+}
+
 export interface CvGuideRepository {
   load(): StoredDocument | null;
   save(guide: StoredDocument): void;
@@ -51,6 +59,7 @@ export interface Repositories {
   leads: LeadRepository;
   profile: ProfileRepository;
   jobBank: JobBankRepository;
+  facts: CandidateFactsRepository;
   cvGuide: CvGuideRepository;
 }
 
@@ -61,6 +70,7 @@ export interface RemoteState {
   stages?: string[];
   profile?: Profile;
   jobBank?: string;
+  facts?: CandidateFacts;
   cvGuide?: StoredDocument;
 }
 
@@ -85,9 +95,16 @@ export interface DocumentClient {
   urlOf(id: string): string;
 }
 
+export interface SuggestRequest {
+  company: string;
+  role: string;
+  jobDescription: string;
+  resume: Resume;
+  coverLetter: CoverLetter;
+}
+
 export interface AiClient {
-  analyseJob(job: Job): Promise<AnalysedJob>;
-  writeCv(request: WriteCvRequest): Promise<WrittenCv>;
+  suggest(request: SuggestRequest): Promise<SuggestionsResponse>;
   usage(): Promise<UsageReport>;
 }
 
