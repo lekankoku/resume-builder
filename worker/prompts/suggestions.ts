@@ -123,6 +123,7 @@ Rules:
 - An add uses only facts from candidate_data. A replace keeps the facts of the text it replaces and adds none. A remove only removes what is irrelevant or harmful for this job.
 - Use a number only if it appears in the cv or candidate_data.
 - Never claim a skill the candidate has no evidence for; list it under gaps instead.
+- Every suggestion refers to the cv and cover_letter exactly as given, never to text from your other suggestions. When the candidate accepts one, the app updates the others that point at the same text.
 - One change per suggestion. Do not bundle. Do not suggest the same change twice. Do not suggest changes that conflict with each other.
 - At most 30 suggestions, most important first. Fewer is fine when the CV is already strong.
 </suggestion_format>

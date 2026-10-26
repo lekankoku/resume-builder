@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { AiClient } from '../../application/ports/repositories';
 import { formatUsd } from '../../domain/application/cvGeneration';
 import {
+  acceptSuggestion,
   applySuggestion,
   createSuggestionSet,
   setSuggestionStatus,
@@ -118,9 +119,9 @@ const SuggestionsPanel: React.FC<Props> = ({ job, state, scope, ai, jobBank, job
   const decide = (item: SuggestionItem, status: 'accepted' | 'declined') =>
     onUpdate((current) => {
       if (!current.suggestions) return current;
-      const next = status === 'accepted' ? applySuggestion({ resume: current.resume, coverLetter: current.coverLetter }, item) : null;
-      if (status === 'accepted' && !next) return current;
-      return { ...current, ...next, suggestions: setSuggestionStatus(current.suggestions, item.id, status) };
+      if (status === 'declined') return { ...current, suggestions: setSuggestionStatus(current.suggestions, item.id, status) };
+      const accepted = acceptSuggestion({ resume: current.resume, coverLetter: current.coverLetter }, current.suggestions, item.id);
+      return accepted ? { ...accepted.cv, suggestions: accepted.set } : current;
     });
 
   return (

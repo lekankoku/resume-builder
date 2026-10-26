@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { aResume } from '../../testing/resumeFixture';
 import { createCoverLetter } from '../coverLetter/CoverLetter';
 import {
+  acceptSuggestion,
   applySuggestion,
   createSuggestionSet,
   Cv,
@@ -226,6 +227,77 @@ describe('suggestions', () => {
 
         expect(result!.resume.experiences[0].bullets).toEqual([replaceSecond.after]);
       });
+    });
+  });
+
+  describe('acceptSuggestion', () => {
+    const setOf = (...suggestions: Suggestion[]) =>
+      createSuggestionSet(
+        { summary: '', gaps: [], questions: [], suggestions, usage: { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, costUsd: 0 } },
+        new Date(),
+        () => uuid(),
+      );
+
+    it('keeps suggestions for an entry applicable after the entry is renamed', () => {
+      const cv = aCv();
+      const ability = cv.resume.abilities[0];
+      const newTitle = uuid();
+      const rename = aSuggestion({ section: 'abilities', item: ability.title, field: 'title', before: ability.title, after: newTitle });
+      const rewrite = aSuggestion({ section: 'abilities', item: ability.title, field: 'bullets', before: ability.bullets[0], after: uuid() });
+      const set = setOf(rename, rewrite);
+
+      const renamed = acceptSuggestion(cv, set, set.items[0].id)!;
+      const rewritten = acceptSuggestion(renamed.cv, renamed.set, renamed.set.items[1].id)!;
+
+      expect(rewritten.cv.resume.abilities[0]).toEqual({ title: newTitle, bullets: [rewrite.after] });
+      expect(rewritten.set.items.map((item) => item.status)).toEqual(['accepted', 'accepted']);
+    });
+
+    it('anchors an added bullet to the new text after the bullet it follows is rewritten', () => {
+      const cv = aCv();
+      const { company, bullets } = cv.resume.experiences[0];
+      const rewrite = aSuggestion({ item: company, field: 'bullets', before: bullets[0], after: uuid() });
+      const addAfter = aSuggestion({ action: 'add', item: company, field: 'bullets', before: bullets[0], after: uuid() });
+      const set = setOf(rewrite, addAfter);
+
+      const first = acceptSuggestion(cv, set, set.items[0].id)!;
+      const second = acceptSuggestion(first.cv, first.set, first.set.items[1].id)!;
+
+      expect(second.cv.resume.experiences[0].bullets).toEqual([rewrite.after, addAfter.after, bullets[1]]);
+    });
+
+    it('adds at the end when the bullet it follows was removed', () => {
+      const cv = aCv();
+      const { company, bullets } = cv.resume.experiences[0];
+      const remove = aSuggestion({ action: 'remove', item: company, field: 'bullets', before: bullets[0] });
+      const addAfter = aSuggestion({ action: 'add', item: company, field: 'bullets', before: bullets[0], after: uuid() });
+      const set = setOf(remove, addAfter);
+
+      const first = acceptSuggestion(cv, set, set.items[0].id)!;
+      const second = acceptSuggestion(first.cv, first.set, first.set.items[1].id)!;
+
+      expect(second.cv.resume.experiences[0].bullets).toEqual([bullets[1], addAfter.after]);
+    });
+
+    it('leaves a conflicting change to a removed bullet unapplicable and keeps decided suggestions as they were', () => {
+      const cv = aCv();
+      const { company, bullets } = cv.resume.experiences[0];
+      const remove = aSuggestion({ action: 'remove', item: company, field: 'bullets', before: bullets[0] });
+      const rewrite = aSuggestion({ item: company, field: 'bullets', before: bullets[0], after: uuid() });
+      const set = setOf(remove, rewrite);
+
+      const first = acceptSuggestion(cv, set, set.items[0].id)!;
+
+      expect(first.set.items[1]).toEqual(set.items[1]);
+      expect(acceptSuggestion(first.cv, first.set, first.set.items[1].id)).toBeNull();
+    });
+
+    it('returns null for an unknown id or a suggestion that no longer applies', () => {
+      const cv = aCv();
+      const set = setOf(aSuggestion({ item: uuid(), field: 'bullets', before: uuid() }));
+
+      expect(acceptSuggestion(cv, set, uuid())).toBeNull();
+      expect(acceptSuggestion(cv, set, set.items[0].id)).toBeNull();
     });
   });
 

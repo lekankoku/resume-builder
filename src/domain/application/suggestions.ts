@@ -58,6 +58,31 @@ export const setSuggestionStatus = (set: SuggestionSet, id: string, status: Sugg
   items: set.items.map((item) => (item.id === id ? { ...item, status } : item)),
 });
 
+export const acceptSuggestion = (cv: Cv, set: SuggestionSet, id: string): { cv: Cv; set: SuggestionSet } | null => {
+  const accepted = set.items.find((item) => item.id === id);
+  const next = accepted && applySuggestion(cv, accepted);
+  if (!accepted || !next) return null;
+  return {
+    cv: next,
+    set: {
+      ...set,
+      items: set.items.map((item) =>
+        item.id === id ? { ...item, status: 'accepted' } : item.status === 'pending' ? retarget(item, accepted) : item,
+      ),
+    },
+  };
+};
+
+const retarget = (item: SuggestionItem, accepted: Suggestion): SuggestionItem => {
+  if (item.section !== accepted.section || accepted.action === 'add') return item;
+  const renamesEntry =
+    accepted.action === 'replace' && IDENTIFYING_FIELD[accepted.section as ListSection] === accepted.field && same(item.item, accepted.before);
+  const renamed = renamesEntry ? { ...item, item: accepted.after } : item;
+  if (!same(renamed.item, accepted.item) || renamed.field !== accepted.field || !same(renamed.before, accepted.before)) return renamed;
+  if (accepted.action === 'replace') return { ...renamed, before: accepted.after };
+  return renamed.action === 'add' ? { ...renamed, before: '' } : renamed;
+};
+
 export const suggestionBlocker = (jobDescription: string | undefined, jobBank: string, where = 'Overview'): string | null => {
   if (!jobBank.trim()) return 'Add your job bank in Settings first.';
   if (!jobDescription?.trim()) return `Add the job description in ${where} first.`;
