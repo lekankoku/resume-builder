@@ -26,7 +26,7 @@ export type StoredResume = Omit<Resume, 'personal' | 'layout' | 'experiences' | 
   references: WithOptional<Reference, 'contact'>[];
 };
 
-const itemTemplates: { [S in ListSection]: () => ListSectionItem<S> } = {
+export const itemTemplates: { [S in ListSection]: () => ListSectionItem<S> } = {
   experiences: () => ({ role: '', company: '', location: '', period: '', earlierPositions: [], bullets: [''] }),
   projects: () => ({ title: '', company: '', scope: '', period: '', bullets: [''] }),
   education: () => ({ degree: '', institution: '', location: '', period: '', bullets: [] }),

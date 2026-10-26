@@ -9,6 +9,7 @@ import {
 import { withDraftDefaults } from '../../domain/application/ApplicationDraft';
 import { withApplicationDefaults } from '../../domain/application/JobApplication';
 import { DEFAULT_STAGES } from '../../domain/application/stages';
+import { createCandidateFacts, withFactsDefaults } from '../../domain/candidate/CandidateFacts';
 import { Profile } from '../../domain/resume/Resume';
 
 export const createRemoteRepositories = (
@@ -21,6 +22,7 @@ export const createRemoteRepositories = (
     ...state,
     applications: state.applications?.map(withApplicationDefaults),
     drafts: state.drafts?.map(withDraftDefaults),
+    facts: state.facts && withFactsDefaults(state.facts),
   };
   const timers = new Map<StateKey, ReturnType<typeof setTimeout>>();
   const queues = new Map<StateKey, Promise<unknown>>();
@@ -68,6 +70,7 @@ export const createRemoteRepositories = (
     stages: repository('stages', () => DEFAULT_STAGES),
     profile: repository('profile', () => defaultProfile),
     jobBank: repository('jobBank', () => ''),
+    facts: repository('facts', createCandidateFacts),
     cvGuide: {
       load: () => snapshot.cvGuide ?? null,
       save: (guide) => repository('cvGuide', () => guide).save(guide),

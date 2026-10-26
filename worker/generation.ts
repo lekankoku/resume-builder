@@ -1,6 +1,5 @@
-import { ANALYSIS_INSTRUCTIONS, ANALYSIS_SCHEMA, analysisInput, Job } from './prompts/analysis';
-import { COVER_LETTER_INSTRUCTIONS, COVER_LETTER_SCHEMA, coverLetterInput } from './prompts/coverLetter';
-import { Answer, CV_INSTRUCTIONS, CV_SCHEMA, cvInput } from './prompts/cv';
+import { candidateData, StoredFacts, StoredProfile } from './prompts/candidate';
+import { Job, SUGGESTIONS_INSTRUCTIONS, SUGGESTIONS_SCHEMA, suggestionsInput } from './prompts/suggestions';
 import { LlmEnv, LlmJsonRequest, LlmJsonResult, LlmNotConfiguredError, LlmUsage, providerFrom } from './llm';
 
 export interface GenerationEnv extends LlmEnv {
@@ -36,11 +35,9 @@ interface JobRequest {
   jobDescription?: string;
 }
 
-interface WriteRequest extends JobRequest {
-  analysis?: unknown;
-  answers?: Answer[];
-  coverLetter?: boolean;
-  motivation?: string;
+interface SuggestRequest extends JobRequest {
+  resume?: unknown;
+  coverLetter?: unknown;
 }
 
 type Stage = (purpose: string, request: LlmJsonRequest) => Promise<unknown>;
@@ -49,54 +46,27 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
 export const handleGeneration = async (request: Request, env: GenerationEnv, pathname: string, fetchFn: typeof fetch): Promise<Response> => {
-  if (pathname === '/api/cv/analyse' && request.method === 'POST') return analyse(request, env, fetchFn);
-  if (pathname === '/api/cv/write' && request.method === 'POST') return write(request, env, fetchFn);
+  if (pathname === '/api/cv/suggest' && request.method === 'POST') return suggest(request, env, fetchFn);
   if (pathname === '/api/usage' && request.method === 'GET') return usageReport(env.DB);
   return json({ error: 'Not found' }, 404);
 };
 
-const analyse = async (request: Request, env: GenerationEnv, fetchFn: typeof fetch): Promise<Response> => {
-  const body = (await request.json()) as JobRequest;
+const suggest = async (request: Request, env: GenerationEnv, fetchFn: typeof fetch): Promise<Response> => {
+  const body = (await request.json()) as SuggestRequest;
   const jobBank = (await loadState<string>(env.DB, 'jobBank')) ?? '';
-  const missing = missingInput(body, jobBank);
+  const missing = missingInput(body, jobBank) ?? (body.resume ? null : 'Send the CV to review');
   if (missing) return json({ error: missing }, 400);
 
   const job = jobOf(body);
-  return generating(env, fetchFn, job, async (stage) => ({
-    analysis: await stage('cv-analysis', {
-      instructions: ANALYSIS_INSTRUCTIONS,
-      input: analysisInput(jobBank, job),
-      schemaName: 'cv_analysis',
-      schema: ANALYSIS_SCHEMA,
-    }),
-  }));
-};
-
-const write = async (request: Request, env: GenerationEnv, fetchFn: typeof fetch): Promise<Response> => {
-  const body = (await request.json()) as WriteRequest;
-  const jobBank = (await loadState<string>(env.DB, 'jobBank')) ?? '';
-  const missing = missingInput(body, jobBank) ?? (body.analysis ? null : 'Analyse the job first');
-  if (missing) return json({ error: missing }, 400);
-
-  const job = jobOf(body);
-  const answers = body.answers ?? [];
-  return generating(env, fetchFn, job, async (stage) => {
-    const { cv, review } = (await stage('cv', {
-      instructions: CV_INSTRUCTIONS,
-      input: cvInput(jobBank, job, body.analysis, answers),
-      schemaName: 'tailored_cv',
-      schema: CV_SCHEMA,
-    })) as { cv: unknown; review: unknown };
-    const coverLetter = body.coverLetter
-      ? await stage('cover-letter', {
-          instructions: COVER_LETTER_INSTRUCTIONS,
-          input: coverLetterInput(jobBank, job, body.analysis, cv, answers, body.motivation ?? ''),
-          schemaName: 'cover_letter',
-          schema: COVER_LETTER_SCHEMA,
-        })
-      : null;
-    return { cv, review, coverLetter };
-  });
+  const candidate = await candidateOf(env.DB, jobBank);
+  return generating(env, fetchFn, job, async (stage) =>
+    (await stage('suggestions', {
+      instructions: SUGGESTIONS_INSTRUCTIONS,
+      input: suggestionsInput(candidate, job, body.resume, body.coverLetter ?? null),
+      schemaName: 'cv_suggestions',
+      schema: SUGGESTIONS_SCHEMA,
+    })) as object,
+  );
 };
 
 const missingInput = (body: JobRequest, jobBank: string): string | null => {
@@ -104,6 +74,9 @@ const missingInput = (body: JobRequest, jobBank: string): string | null => {
   if (!jobBank.trim()) return 'Add your job bank in Settings first';
   return null;
 };
+
+const candidateOf = async (db: D1Database, jobBank: string): Promise<string> =>
+  candidateData(jobBank, await loadState<StoredProfile>(db, 'profile'), await loadState<StoredFacts>(db, 'facts'));
 
 const jobOf = (body: JobRequest): Job => ({ company: body.company ?? '', role: body.role ?? '', jobDescription: body.jobDescription ?? '' });
 

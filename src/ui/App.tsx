@@ -4,6 +4,7 @@ import { AiClient, DocumentClient, Repositories, SaveStatusSource } from '../app
 import { ApplicationDraft, draftStep, isWizardStep, WizardStep } from '../domain/application/ApplicationDraft';
 import { JobLead } from '../domain/application/JobLead';
 import { initialStage } from '../domain/application/stages';
+import { rememberAnswers } from '../domain/candidate/CandidateFacts';
 import ApplicationPage, { CompareTab, OverviewTab, VersionsTab } from './applications/ApplicationPage';
 import ApplicationsView from './applications/ApplicationsView';
 import CvsView from './applications/CvsView';
@@ -13,13 +14,22 @@ import NewApplicationWizard from './applications/NewApplicationWizard';
 import { CoverLetterTab, CvTab } from './DocumentWorkspace';
 import DocumentsView from './documents/DocumentsView';
 import { useApplications } from './hooks/useApplications';
+import { useCandidateFacts } from './hooks/useCandidateFacts';
 import { useCvGuide } from './hooks/useCvGuide';
 import { useDrafts } from './hooks/useDrafts';
 import { useJobBank } from './hooks/useJobBank';
 import { useLeads } from './hooks/useLeads';
 import { useProfile } from './hooks/useProfile';
 import { useStages } from './hooks/useStages';
-import SettingsView, { AiUsageSettings, CvGuideSettings, JobBankSettings, ProfileSettings, StageSettings } from './settings/SettingsView';
+import SettingsView, {
+  AiUsageSettings,
+  CvFactsSettings,
+  CvGuideSettings,
+  JobBankSettings,
+  ProfileSettings,
+  StageSettings,
+  WorkAuthorizationSettings,
+} from './settings/SettingsView';
 import AppShell from './shell/AppShell';
 
 const PreviewPage = lazy(() => import('./preview/PreviewPage'));
@@ -39,6 +49,7 @@ const App: React.FC<AppProps> = ({ repositories, documents, ai, saveStatus, onRe
   const { leads, add: addLead, remove: removeLead, removeForPosting } = useLeads(repositories.leads);
   const { profile, updateField: updateProfileField } = useProfile(repositories.profile);
   const { jobBank, setJobBank } = useJobBank(repositories.jobBank);
+  const { facts, setFacts } = useCandidateFacts(repositories.facts);
   const { cvGuide, setCvGuide } = useCvGuide(repositories.cvGuide);
   const navigate = useNavigate();
   const location = useLocation();
@@ -53,8 +64,6 @@ const App: React.FC<AppProps> = ({ repositories, documents, ai, saveStatus, onRe
       applications={applications}
       stages={stages}
       profile={profile}
-      jobBank={jobBank}
-      ai={ai}
       draft={draft}
       initialDetails={lead && { postingUrl: lead.postingUrl, company: lead.company, role: lead.role }}
       stepId={stepId}
@@ -85,7 +94,17 @@ const App: React.FC<AppProps> = ({ repositories, documents, ai, saveStatus, onRe
         <Route path="drafts/:id/:step" element={<DraftRoute drafts={drafts} wizard={wizard} />} />
         <Route
           path="applications/:id"
-          element={<ApplicationPage applications={applications} actions={actions} profile={profile} stages={stages} />}
+          element={
+            <ApplicationPage
+              applications={applications}
+              actions={actions}
+              profile={profile}
+              stages={stages}
+              ai={ai}
+              jobBank={jobBank}
+              onRememberAnswers={(answers) => setFacts((current) => rememberAnswers(current, answers))}
+            />
+          }
         >
           <Route index element={<Navigate to="overview" replace />} />
           <Route path="overview" element={<OverviewTab />} />
@@ -97,7 +116,15 @@ const App: React.FC<AppProps> = ({ repositories, documents, ai, saveStatus, onRe
         </Route>
         <Route path="settings" element={<SettingsView />}>
           <Route index element={<Navigate to="profile" replace />} />
-          <Route path="profile" element={<ProfileSettings profile={profile} onChange={updateProfileField} />} />
+          <Route
+            path="profile"
+            element={
+              <>
+                <ProfileSettings profile={profile} onChange={updateProfileField} />
+                <WorkAuthorizationSettings facts={facts} onChange={setFacts} />
+              </>
+            }
+          />
           <Route
             path="stages"
             element={
@@ -110,6 +137,7 @@ const App: React.FC<AppProps> = ({ repositories, documents, ai, saveStatus, onRe
             }
           />
           <Route path="job-bank" element={<JobBankSettings jobBank={jobBank} onChange={setJobBank} />} />
+          <Route path="cv-facts" element={<CvFactsSettings facts={facts} onChange={setFacts} />} />
           <Route path="cv-guide" element={<CvGuideSettings cvGuide={cvGuide} documents={documents} onChange={setCvGuide} />} />
           <Route path="ai-usage" element={<AiUsageSettings client={ai} />} />
         </Route>

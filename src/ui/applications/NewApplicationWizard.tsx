@@ -1,17 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Check, ChevronDown, ChevronLeft, ChevronRight, Copy, FileJson, FilePlus, Loader2, Plus, Sparkles, X } from 'lucide-react';
-import { Link, Navigate } from 'react-router';
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Copy, FileJson, FilePlus, Plus, X } from 'lucide-react';
+import { Navigate } from 'react-router';
 import { resumeFromJson } from '../../application/importResumeFromJson';
-import { AiClient, ResumeRepository } from '../../application/ports/repositories';
+import { ResumeRepository } from '../../application/ports/repositories';
 import { ApplicationDraft, CvStart, WizardStep } from '../../domain/application/ApplicationDraft';
-import {
-  coverLetterFromGenerated,
-  formatUsd,
-  Generation,
-  generationBlocker,
-  resumeFromGeneratedCv,
-  WrittenCv,
-} from '../../domain/application/cvGeneration';
 import { initialStage } from '../../domain/application/stages';
 import {
   ApplicationDetails,
@@ -35,8 +27,6 @@ interface Props {
   applications: JobApplication[];
   stages: string[];
   profile: Profile;
-  jobBank: string;
-  ai: AiClient;
   draft?: ApplicationDraft;
   initialDetails?: Partial<ApplicationDetails>;
   stepId: WizardStep;
@@ -80,8 +70,6 @@ const NewApplicationWizard: React.FC<Props> = ({
   applications,
   stages,
   profile,
-  jobBank,
-  ai,
   draft,
   initialDetails,
   stepId,
@@ -95,9 +83,6 @@ const NewApplicationWizard: React.FC<Props> = ({
   const [sourceId, setSourceId] = useState(draft?.sourceId ?? applications[0]?.id ?? '');
   const [jsonInput, setJsonInput] = useState(draft?.jsonInput ?? '');
   const [cvKey, setCvKey] = useState<string | null>(draft?.cvKey ?? null);
-  const [generated, setGenerated] = useState<Generation | null>(draft?.generated ?? null);
-  const [generating, setGenerating] = useState<'analysing' | 'writing' | null>(null);
-  const [generateError, setGenerateError] = useState<string | null>(null);
   const [resumeRepository] = useState<ResumeRepository>(() => ({
     load: () => draft?.resume ?? createBlankCv(new Date()).resume,
     save: () => {},
@@ -113,25 +98,19 @@ const NewApplicationWizard: React.FC<Props> = ({
       ? `Copy of ${applicationLabel(sourceApplication)}`
       : cvStart === 'json'
         ? 'Imported from JSON'
-        : cvStart === 'generate'
-          ? 'Generated from job bank'
-          : 'New CV';
+        : 'New CV';
   const jsonError = cvStart === 'json' && jsonInput.trim() ? jsonErrorOf(jsonInput) : null;
   const cvChosen =
     cvStart === 'new' ||
     (cvStart === 'reuse' && !!sourceApplication) ||
-    (cvStart === 'json' && !!jsonInput.trim() && !jsonError) ||
-    (cvStart === 'generate' && !!generated?.written);
-  const generateBlocker = generationBlocker(details, jobBank);
+    (cvStart === 'json' && !!jsonInput.trim() && !jsonError);
   const problems = validateDetails(details);
   const chosenKey =
     cvStart === 'reuse'
       ? sourceId
       : cvStart === 'json'
         ? `json:${jsonInput}`
-        : cvStart === 'generate'
-          ? `generate:${generated?.written?.writtenAt ?? ''}`
-          : 'new';
+        : 'new';
 
   const isDone = (id: WizardStep) =>
     (id === 'details' && problems.length === 0) ||
@@ -159,22 +138,16 @@ const NewApplicationWizard: React.FC<Props> = ({
       resume,
       coverLetter,
       verifiedSections,
-      generated,
     });
-  }, [stepId, details, cvStart, sourceId, jsonInput, cvKey, resume, coverLetter, verifiedSections, generated]);
+  }, [stepId, details, cvStart, sourceId, jsonInput, cvKey, resume, coverLetter, verifiedSections]);
 
   if (draft && step > firstOpenStep) return <Navigate to={`/drafts/${draft.id}/${STEPS[firstOpenStep].id}`} replace />;
 
   const startDraft = () => {
     if (chosenKey === cvKey) return;
     const cv = cvStart === 'reuse' && sourceApplication ? sourceApplication : createBlankCv(new Date());
-    const written = cvStart === 'generate' ? generated?.written : null;
-    setResume(
-      cvStart === 'json' ? resumeFromJson(jsonInput) : written ? resumeFromGeneratedCv(written.cv) : structuredClone(cv.resume),
-    );
-    setCoverLetter(
-      written?.coverLetter ? coverLetterFromGenerated(written.coverLetter, cv.coverLetter) : structuredClone(cv.coverLetter),
-    );
+    setResume(cvStart === 'json' ? resumeFromJson(jsonInput) : structuredClone(cv.resume));
+    setCoverLetter(structuredClone(cv.coverLetter));
     setVerifiedSections([]);
     setCvKey(chosenKey);
   };
@@ -195,7 +168,6 @@ const NewApplicationWizard: React.FC<Props> = ({
         resume,
         coverLetter,
         verifiedSections,
-        generated,
       });
       onStepChange(id, target);
       return;
@@ -203,46 +175,6 @@ const NewApplicationWizard: React.FC<Props> = ({
     if (index > CV_STEP) startDraft();
     onStepChange(draft.id, target);
   };
-
-  const job = { company: details.company, role: details.role, jobDescription: details.jobDescription ?? '' };
-
-  const run = async (step: 'analysing' | 'writing', work: () => Promise<void>) => {
-    setGenerating(step);
-    setGenerateError(null);
-    try {
-      await work();
-    } catch (e) {
-      setGenerateError((e as Error).message);
-    } finally {
-      setGenerating(null);
-    }
-  };
-
-  const analyse = () =>
-    run('analysing', async () => {
-      const { analysis, usage } = await ai.analyseJob(job);
-      setGenerated({
-        analysis,
-        analysisUsage: usage,
-        analysedAt: new Date().toISOString(),
-        answers: analysis.questions.map(({ field }) => ({ field, answer: '' })),
-        coverLetterRequested: generated?.coverLetterRequested ?? false,
-        motivation: generated?.motivation ?? '',
-        written: null,
-      });
-    });
-
-  const write = (generation: Generation) =>
-    run('writing', async () => {
-      const written = await ai.writeCv({
-        ...job,
-        analysis: generation.analysis,
-        answers: generation.answers.filter(({ answer }) => answer.trim()),
-        coverLetter: generation.coverLetterRequested,
-        motivation: generation.coverLetterRequested ? generation.motivation : '',
-      });
-      setGenerated({ ...generation, written: { ...written, writtenAt: new Date().toISOString() } });
-    });
 
   const displayedResume = applyProfile(resume, profile);
 
@@ -344,44 +276,7 @@ const NewApplicationWizard: React.FC<Props> = ({
               title="Import CV from JSON"
               description="Paste CV JSON to fill the sections. The cover letter starts empty."
             />
-            <CvStartOption
-              checked={cvStart === 'generate'}
-              disabled={!!generateBlocker}
-              onSelect={() => setCvStart('generate')}
-              icon={<Sparkles size={18} />}
-              title="Generate from job bank"
-              description={
-                generateBlocker ??
-                'Analyse the job against your job bank, answer any open questions, then write a tailored CV and, if you ask for one, a cover letter.'
-              }
-            >
-              {!jobBank.trim() && (
-                <Link to="/settings/job-bank" className="inline-block mt-3 text-xs font-semibold text-accent hover:underline">
-                  Open job bank settings
-                </Link>
-              )}
-            </CvStartOption>
           </fieldset>
-          {cvStart === 'generate' && !generateBlocker && (
-            <div className="space-y-4">
-              <button onClick={analyse} disabled={!!generating} className={`${generated ? buttonClass : primaryButtonClass} disabled:opacity-40`}>
-                {generating === 'analysing' ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                {generating === 'analysing' ? 'Analysing… this can take a minute' : generated ? 'Analyse again' : 'Analyse job'}
-              </button>
-              {generated && (
-                <AnalysisPanel
-                  generation={generated}
-                  onChange={setGenerated}
-                  onWrite={() => write(generated)}
-                  writing={generating === 'writing'}
-                  disabled={!!generating}
-                />
-              )}
-              {generateError && (
-                <p role="alert" className="text-red-500 text-xs bg-red-50 p-3 rounded-lg border border-red-100">{generateError}</p>
-              )}
-            </div>
-          )}
           {cvStart === 'json' && (
             <div className="space-y-2">
               <textarea
@@ -412,7 +307,6 @@ const NewApplicationWizard: React.FC<Props> = ({
           onCompanyChange={(company) => setDetails((d) => ({ ...d, company }))}
           verifiedSections={verifiedSections}
           onVerifiedSectionsChange={setVerifiedSections}
-          audit={cvKey?.startsWith('generate:') && generated?.written ? generated.written : null}
         />
       )}
 
@@ -483,7 +377,6 @@ const ReviewStep: React.FC<{
   onCompanyChange: (company: string) => void;
   verifiedSections: string[];
   onVerifiedSectionsChange: (sections: string[]) => void;
-  audit: WrittenCv | null;
 }> = ({
   resume,
   actions,
@@ -493,7 +386,6 @@ const ReviewStep: React.FC<{
   onCompanyChange,
   verifiedSections,
   onVerifiedSectionsChange,
-  audit,
 }) => {
   const [open, setOpen] = useState<string | null>(
     () => REQUIRED_SECTIONS.find((section) => !verifiedSections.includes(section.id))?.id ?? null,
@@ -512,7 +404,6 @@ const ReviewStep: React.FC<{
           {REQUIRED_SECTIONS.filter((section) => verifiedSections.includes(section.id)).length} of {REQUIRED_SECTIONS.length} required
           sections checked. Open each section, fix anything that's wrong and mark it as correct. Volunteering and Leadership are optional.
         </p>
-        {audit && <AuditPanel audit={audit} />}
         {CV_SECTIONS.map((section) => {
           const isOpen = open === section.id;
           const isVerified = verifiedSections.includes(section.id);
@@ -572,196 +463,6 @@ const ReviewStep: React.FC<{
         )}
       </div>
     </div>
-  );
-};
-
-const AnalysisPanel: React.FC<{
-  generation: Generation;
-  onChange: (generation: Generation) => void;
-  onWrite: () => void;
-  writing: boolean;
-  disabled: boolean;
-}> = ({ generation, onChange, onWrite, writing, disabled }) => {
-  const { analysis, answers, written } = generation;
-  const setAnswer = (field: string, answer: string) =>
-    onChange({ ...generation, answers: answers.map((a) => (a.field === field ? { ...a, answer } : a)) });
-
-  return (
-    <section aria-label="Job analysis" className="space-y-5 rounded-xl border border-slate-200 p-5 text-sm text-slate-800">
-      <p className="text-xs text-slate-500">
-        Analysed {new Date(generation.analysedAt).toLocaleString()} · estimated cost {formatUsd(generation.analysisUsage.costUsd)}
-      </p>
-      <div>
-        <h3 className={labelClass}>Tagline</h3>
-        <p>{analysis.tagline}</p>
-        <p className="text-xs text-slate-500 mt-1">
-          Header: {analysis.currentPosition.title} at {analysis.currentPosition.company} ·{' '}
-          {analysis.layout === 'education-first' ? 'Education first' : 'Experience first'}
-        </p>
-      </div>
-      <div>
-        <h3 className={labelClass}>Skills the job asks for</h3>
-        <ul className="space-y-2 mt-1">
-          {analysis.skills.map((skill) => (
-            <li key={skill.skill}>
-              <span className="font-semibold">{skill.skill}</span> · {skill.status}
-              {skill.origin === 'candidate' && ' · from your job bank'}
-              {skill.keywords.length > 0 && (
-                <span className="block text-xs text-slate-500">Keywords: {skill.keywords.map((k) => k.term).join(', ')}</span>
-              )}
-              {skill.evidence.map((e) => (
-                <span key={e.source + e.quote} className="block text-xs text-slate-500">
-                  {e.source}: “{e.quote}”
-                </span>
-              ))}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <h3 className={labelClass}>Roles</h3>
-        <ul className="space-y-1 mt-1">
-          {analysis.roles.map((role) => (
-            <li key={role.company}>
-              <span className="font-semibold">{role.company}</span> · {role.relevance} · {role.bulletBudget} bullets
-              <span className="block text-xs text-slate-500">{role.reason}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-      {analysis.titleAdjustments.length > 0 && (
-        <div>
-          <h3 className={labelClass}>Title adjustments</h3>
-          <ul className="space-y-1 mt-1">
-            {analysis.titleAdjustments.map((t) => (
-              <li key={t.source}>
-                {t.original} → {t.proposed}
-                <span className="block text-xs text-slate-500">“{t.quote}”</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {analysis.questions.length > 0 && (
-        <fieldset className="space-y-3">
-          <legend className={labelClass}>Questions — answers are used as facts, leave blank to skip</legend>
-          {analysis.questions.map((q) => (
-            <label key={q.field} className="block space-y-1">
-              <span className="block">{q.question}</span>
-              <textarea
-                className={inputClass}
-                rows={2}
-                value={answers.find((a) => a.field === q.field)?.answer ?? ''}
-                onChange={(e) => setAnswer(q.field, e.target.value)}
-              />
-            </label>
-          ))}
-        </fieldset>
-      )}
-      <div className="space-y-2">
-        <label className="flex items-center gap-2 font-semibold text-slate-900">
-          <input
-            type="checkbox"
-            checked={generation.coverLetterRequested}
-            onChange={(e) => onChange({ ...generation, coverLetterRequested: e.target.checked })}
-          />
-          Also write a cover letter
-        </label>
-        {generation.coverLetterRequested && (
-          <label className="block space-y-1">
-            <span className={labelClass}>Why this company and role (optional)</span>
-            <textarea
-              className={inputClass}
-              rows={3}
-              value={generation.motivation}
-              onChange={(e) => onChange({ ...generation, motivation: e.target.value })}
-            />
-          </label>
-        )}
-      </div>
-      <button onClick={onWrite} disabled={disabled} className={`${primaryButtonClass} disabled:opacity-40`}>
-        {writing ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-        {writing ? 'Writing… this can take a minute' : written ? 'Write again' : generation.coverLetterRequested ? 'Write CV and cover letter' : 'Write CV'}
-      </button>
-      {written && !writing && (
-        <p className="text-xs text-slate-500">
-          Written {new Date(written.writtenAt).toLocaleString()} · estimated cost {formatUsd(written.usage.costUsd)}
-          {written.coverLetter ? ' · with cover letter' : ''}
-        </p>
-      )}
-    </section>
-  );
-};
-
-const AuditList: React.FC<{ heading: string; empty: string; items: { key: string; text: string; detail?: string }[] }> = ({
-  heading,
-  empty,
-  items,
-}) => (
-  <div>
-    <h3 className={labelClass}>{heading}</h3>
-    {items.length === 0 ? (
-      <p className="text-slate-500">{empty}</p>
-    ) : (
-      <ul className="space-y-2">
-        {items.map((item) => (
-          <li key={item.key}>
-            <span className="block">{item.text}</span>
-            {item.detail && <span className="block text-xs text-slate-500">{item.detail}</span>}
-          </li>
-        ))}
-      </ul>
-    )}
-  </div>
-);
-
-const AuditPanel: React.FC<{ audit: WrittenCv }> = ({ audit: { review, coverLetter } }) => {
-  const claims = [...review.claimsToCheck, ...(coverLetter?.review.claimsToCheck ?? [])];
-  const questions = [...review.questions, ...(coverLetter?.review.questions ?? [])];
-  return (
-    <details open className="bg-amber-50 rounded-2xl border border-amber-200 px-5 py-4 text-sm text-slate-800">
-      <summary className="font-semibold text-slate-900 cursor-pointer">Check before sending</summary>
-      <div className="mt-3 space-y-4">
-        <AuditList
-          heading="Gaps — job requirements your job bank doesn't support"
-          empty="None found."
-          items={review.gaps.map((gap) => ({ key: gap, text: gap }))}
-        />
-        <AuditList
-          heading="Claims to double-check"
-          empty="None flagged."
-          items={claims.map((c) => ({ key: c.claim, text: c.claim, detail: `Source: ${c.source}` }))}
-        />
-        <AuditList
-          heading="Adjusted job titles"
-          empty="None."
-          items={review.adjustedTitles.map((t) => ({ key: t.original, text: `${t.original} → ${t.used}` }))}
-        />
-        <AuditList
-          heading="Job keywords not used"
-          empty="All keywords used."
-          items={review.keywordCoverage.unused.map((k) => ({
-            key: k.term,
-            text: k.term,
-            detail: k.reason === 'gap' ? 'No evidence in your job bank' : 'Evidence exists but did not fit',
-          }))}
-        />
-        <AuditList
-          heading="Timeline gaps to be ready to explain"
-          empty="None."
-          items={review.timelineGaps.map((g) => ({
-            key: g.from + g.to,
-            text: `${g.from} – ${g.to}`,
-            detail: g.cause === 'omitted' ? `Left out: ${g.detail}` : g.detail || 'Nothing in your job bank',
-          }))}
-        />
-        <AuditList
-          heading="Open questions"
-          empty="None."
-          items={questions.map((q) => ({ key: q.field + q.question, text: q.question }))}
-        />
-      </div>
-    </details>
   );
 };
 

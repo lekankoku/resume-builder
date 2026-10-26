@@ -4,9 +4,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Env, handleApi } from './api';
 import { costOf } from './generation';
-import { ANALYSIS_INSTRUCTIONS, ANALYSIS_SCHEMA } from './prompts/analysis';
-import { COVER_LETTER_INSTRUCTIONS, COVER_LETTER_SCHEMA } from './prompts/coverLetter';
-import { CV_INSTRUCTIONS, CV_SCHEMA } from './prompts/cv';
+import { SUGGESTIONS_INSTRUCTIONS, SUGGESTIONS_SCHEMA } from './prompts/suggestions';
 
 const sqliteD1 = (): D1Database => {
   const db = new DatabaseSync(':memory:');
@@ -48,7 +46,7 @@ const purposes = async (env: Env) =>
 
 describe('CV generation', () => {
   let env: Env;
-  let job: { company: string; role: string; jobDescription: string };
+  let job: { company: string; role: string; jobDescription: string; resume: object; coverLetter: object };
   let jobBank: string;
 
   beforeEach(async () => {
@@ -63,24 +61,30 @@ describe('CV generation', () => {
       LLM_PRICE_CACHED_INPUT_PER_M: '1',
       LLM_PRICE_OUTPUT_PER_M: '50',
     };
-    job = { company: crypto.randomUUID(), role: crypto.randomUUID(), jobDescription: crypto.randomUUID() };
+    job = {
+      company: crypto.randomUUID(),
+      role: crypto.randomUUID(),
+      jobDescription: crypto.randomUUID(),
+      resume: { personal: { title: crypto.randomUUID() } },
+      coverLetter: { body: crypto.randomUUID() },
+    };
     jobBank = crypto.randomUUID();
     await handleApi(request('/api/state/jobBank', { method: 'PUT', body: JSON.stringify(jobBank) }), env);
   });
 
-  describe('POST /api/cv/analyse', () => {
-    it('sends the job bank and job description with the analysis prompt and returns the analysis and cost', async () => {
+  describe('POST /api/cv/suggest', () => {
+    it('sends the CV, cover letter, candidate data and job description with the suggestions prompt and returns the suggestions and cost', async () => {
       // Given
-      const analysis = { tagline: crypto.randomUUID() };
-      const fetchFn = vi.fn(async () => anOpenAiResponse(analysis));
+      const suggestions = { summary: crypto.randomUUID(), gaps: [], questions: [], suggestions: [] };
+      const fetchFn = vi.fn(async () => anOpenAiResponse(suggestions));
 
       // When
-      const response = await post('/api/cv/analyse', env, fetchFn, job);
+      const response = await post('/api/cv/suggest', env, fetchFn, job);
 
       // Then
       expect(response.status).toBe(200);
       expect(await response.json()).toEqual({
-        analysis,
+        ...suggestions,
         usage: { inputTokens: 8000, cachedInputTokens: 3000, outputTokens: 2000, costUsd: 0.153 },
       });
       const [url, init] = fetchFn.mock.calls[0] as unknown as [string, RequestInit];
@@ -88,18 +92,90 @@ describe('CV generation', () => {
       expect(url).toBe('https://api.openai.com/v1/responses');
       expect((init.headers as Record<string, string>).Authorization).toBe(`Bearer ${env.OPENAI_API_KEY}`);
       expect(sent.model).toBe(env.LLM_MODEL);
-      expect(sent.instructions).toBe(ANALYSIS_INSTRUCTIONS);
-      expect(sent.text.format).toEqual({ type: 'json_schema', name: 'cv_analysis', strict: true, schema: ANALYSIS_SCHEMA });
+      expect(sent.instructions).toBe(SUGGESTIONS_INSTRUCTIONS);
+      expect(sent.text.format).toEqual({ type: 'json_schema', name: 'cv_suggestions', strict: true, schema: SUGGESTIONS_SCHEMA });
       expect(sent.input).toEqual([{ role: 'user', content: [{ type: 'input_text', text: expect.any(String) }] }]);
       const text = sent.input[0].content[0].text;
-      expect(text).toContain(`<candidate_data>\n${jobBank}\n</candidate_data>`);
+      expect(text).toContain(`<cv>\n${JSON.stringify(job.resume)}\n</cv>`);
+      expect(text).toContain(`<cover_letter>\n${JSON.stringify(job.coverLetter)}\n</cover_letter>`);
+      expect(text).toContain(`<job_bank>\n${jobBank}\n</job_bank>\n</candidate_data>`);
       expect(text).toContain(`<target_role>\n${job.role} at ${job.company}\n</target_role>`);
       expect(text).toContain(`<job_description>\n${job.jobDescription}\n</job_description>`);
+      expect(await purposes(env)).toEqual(['suggestions']);
+    });
+
+    it('rejects a request without a CV to review', async () => {
+      // Given
+      const fetchFn = vi.fn();
+
+      // When
+      const response = await post('/api/cv/suggest', env, fetchFn, { ...job, resume: undefined });
+
+      // Then
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({ error: 'Send the CV to review' });
+      expect(fetchFn).not.toHaveBeenCalled();
+    });
+
+    it('sends the profile without contact details and the saved facts as candidate data', async () => {
+      // Given
+      const profile = {
+        name: crypto.randomUUID(),
+        residence: crypto.randomUUID(),
+        nationality: crypto.randomUUID(),
+        website: crypto.randomUUID(),
+        linkedin: crypto.randomUUID(),
+        github: crypto.randomUUID(),
+        phone: crypto.randomUUID(),
+        email: crypto.randomUUID(),
+        photoUrl: crypto.randomUUID(),
+      };
+      const facts = {
+        workAuthorization: 'has-permit',
+        permit: crypto.randomUUID(),
+        languages: [{ name: crypto.randomUUID(), level: 'C1', basis: 'certificate' }],
+        references: [{ name: crypto.randomUUID(), consented: true, isCurrentManager: false }],
+        education: [{ institution: crypto.randomUUID(), completed: true }],
+        answers: [{ question: crypto.randomUUID(), answer: crypto.randomUUID() }],
+      };
+      await handleApi(request('/api/state/profile', { method: 'PUT', body: JSON.stringify(profile) }), env);
+      await handleApi(request('/api/state/facts', { method: 'PUT', body: JSON.stringify(facts) }), env);
+      const fetchFn = vi.fn(async () => anOpenAiResponse({}));
+
+      // When
+      await post('/api/cv/suggest', env, fetchFn, job);
+
+      // Then
+      const text: string = sentBodies(fetchFn)[0].input[0].content[0].text;
+      const { name, residence, nationality, website, linkedin, github } = profile;
+      expect(text).toContain(`<profile>\n${JSON.stringify({ name, residence, nationality, website, linkedin, github })}\n</profile>`);
+      expect(text).not.toContain(profile.phone);
+      expect(text).not.toContain(profile.email);
+      expect(text).not.toContain(profile.photoUrl);
+      expect(text).toContain(`<work_authorization>\n${JSON.stringify({ status: 'has-permit', permit: facts.permit })}\n</work_authorization>`);
+      expect(text).toContain(`<languages>\n${JSON.stringify(facts.languages)}\n</languages>`);
+      expect(text).toContain(`<references>\n${JSON.stringify(facts.references)}\n</references>`);
+      expect(text).toContain(`<education>\n${JSON.stringify(facts.education)}\n</education>`);
+      expect(text).toContain(`<remembered_answers>\n${JSON.stringify(facts.answers)}\n</remembered_answers>`);
+    });
+
+    it('marks work authorisation as unknown and sends empty facts when none are saved', async () => {
+      // Given
+      const fetchFn = vi.fn(async () => anOpenAiResponse({}));
+
+      // When
+      await post('/api/cv/suggest', env, fetchFn, job);
+
+      // Then
+      const text: string = sentBodies(fetchFn)[0].input[0].content[0].text;
+      expect(text).toContain(`<work_authorization>\n${JSON.stringify({ status: 'unknown', permit: '' })}\n</work_authorization>`);
+      expect(text).toContain('<languages>\n[]\n</languages>');
+      expect(text).toContain('<remembered_answers>\n[]\n</remembered_answers>');
     });
 
     it('records the call in the usage report', async () => {
       // Given
-      await post('/api/cv/analyse', env, async () => anOpenAiResponse({}), job);
+      await post('/api/cv/suggest', env, async () => anOpenAiResponse({}), job);
 
       // When
       const report = await (await handleApi(request('/api/usage'), env)).json();
@@ -121,7 +197,7 @@ describe('CV generation', () => {
         monthUsd: 0.153,
         totalUsd: 0.153,
       });
-      expect(await purposes(env)).toEqual(['cv-analysis']);
+      expect(await purposes(env)).toEqual(['suggestions']);
     });
 
     it('rejects a missing job description without calling the LLM', async () => {
@@ -129,7 +205,7 @@ describe('CV generation', () => {
       const fetchFn = vi.fn();
 
       // When
-      const response = await post('/api/cv/analyse', env, fetchFn, { ...job, jobDescription: '  ' });
+      const response = await post('/api/cv/suggest', env, fetchFn, { ...job, jobDescription: '  ' });
 
       // Then
       expect(response.status).toBe(400);
@@ -137,13 +213,13 @@ describe('CV generation', () => {
       expect(fetchFn).not.toHaveBeenCalled();
     });
 
-    it('rejects analysis when no job bank is saved', async () => {
+    it('rejects suggestions when no job bank is saved', async () => {
       // Given
       await handleApi(request('/api/state/jobBank', { method: 'PUT', body: JSON.stringify('') }), env);
       const fetchFn = vi.fn();
 
       // When
-      const response = await post('/api/cv/analyse', env, fetchFn, job);
+      const response = await post('/api/cv/suggest', env, fetchFn, job);
 
       // Then
       expect(response.status).toBe(400);
@@ -159,7 +235,7 @@ describe('CV generation', () => {
       const fetchFn = vi.fn();
 
       // When
-      const response = await post('/api/cv/analyse', { ...env, ...override }, fetchFn, job);
+      const response = await post('/api/cv/suggest', { ...env, ...override }, fetchFn, job);
 
       // Then
       expect(response.status).toBe(503);
@@ -172,7 +248,7 @@ describe('CV generation', () => {
       const fetchFn = async () => new Response(JSON.stringify({ error: { message } }), { status: 429 });
 
       // When
-      const response = await post('/api/cv/analyse', env, fetchFn, job);
+      const response = await post('/api/cv/suggest', env, fetchFn, job);
 
       // Then
       expect(response.status).toBe(502);
@@ -189,104 +265,11 @@ describe('CV generation', () => {
       const fetchFn = async () => new Response(JSON.stringify(body), { status: 200 });
 
       // When
-      const response = await post('/api/cv/analyse', env, fetchFn, job);
+      const response = await post('/api/cv/suggest', env, fetchFn, job);
 
       // Then
       expect(response.status).toBe(502);
       expect(await response.json()).toEqual({ error });
-    });
-  });
-
-  describe('POST /api/cv/write', () => {
-    let analysis: object;
-    let answers: { field: string; answer: string }[];
-    let written: { cv: object; review: object };
-
-    beforeEach(() => {
-      analysis = { tagline: crypto.randomUUID() };
-      answers = [{ field: crypto.randomUUID(), answer: crypto.randomUUID() }];
-      written = { cv: { header: { title: crypto.randomUUID() } }, review: { gaps: [crypto.randomUUID()] } };
-    });
-
-    it('writes the CV from the analysis and answers without a cover letter when none is requested', async () => {
-      // Given
-      const fetchFn = vi.fn(async () => anOpenAiResponse(written));
-
-      // When
-      const response = await post('/api/cv/write', env, fetchFn, { ...job, analysis, answers, coverLetter: false });
-
-      // Then
-      expect(response.status).toBe(200);
-      expect(await response.json()).toEqual({
-        ...written,
-        coverLetter: null,
-        usage: { inputTokens: 8000, cachedInputTokens: 3000, outputTokens: 2000, costUsd: 0.153 },
-      });
-      expect(fetchFn).toHaveBeenCalledTimes(1);
-      const [sent] = sentBodies(fetchFn);
-      expect(sent.instructions).toBe(CV_INSTRUCTIONS);
-      expect(sent.text.format).toEqual({ type: 'json_schema', name: 'tailored_cv', strict: true, schema: CV_SCHEMA });
-      const text = sent.input[0].content[0].text;
-      expect(text).toContain(`<analysis>\n${JSON.stringify(analysis)}\n</analysis>`);
-      expect(text).toContain(`<answers>\n${JSON.stringify(answers)}\n</answers>`);
-      expect(text).toContain(`<candidate_data>\n${jobBank}\n</candidate_data>`);
-      expect(text).toContain(`<job_description>\n${job.jobDescription}\n</job_description>`);
-      expect(await purposes(env)).toEqual(['cv']);
-    });
-
-    it('writes the cover letter from the written CV and motivation when one is requested', async () => {
-      // Given
-      const coverLetter = { letter: { subject: crypto.randomUUID() }, review: { questions: [] } };
-      const motivation = crypto.randomUUID();
-      const fetchFn = vi.fn().mockResolvedValueOnce(anOpenAiResponse(written)).mockResolvedValueOnce(anOpenAiResponse(coverLetter));
-
-      // When
-      const response = await post('/api/cv/write', env, fetchFn, { ...job, analysis, answers, coverLetter: true, motivation });
-
-      // Then
-      expect(await response.json()).toEqual({
-        ...written,
-        coverLetter,
-        usage: { inputTokens: 16000, cachedInputTokens: 6000, outputTokens: 4000, costUsd: expect.closeTo(0.306) },
-      });
-      const [, sent] = sentBodies(fetchFn);
-      expect(sent.instructions).toBe(COVER_LETTER_INSTRUCTIONS);
-      expect(sent.text.format).toEqual({ type: 'json_schema', name: 'cover_letter', strict: true, schema: COVER_LETTER_SCHEMA });
-      const text = sent.input[0].content[0].text;
-      expect(text).toContain(`<cv>\n${JSON.stringify(written.cv)}\n</cv>`);
-      expect(text).toContain(`<motivation>\n${motivation}\n</motivation>`);
-      expect(text).toContain(`<answers>\n${JSON.stringify(answers)}\n</answers>`);
-      expect(await purposes(env)).toEqual(['cv', 'cover-letter']);
-    });
-
-    it('rejects writing before the job is analysed', async () => {
-      // Given
-      const fetchFn = vi.fn();
-
-      // When
-      const response = await post('/api/cv/write', env, fetchFn, { ...job, answers });
-
-      // Then
-      expect(response.status).toBe(400);
-      expect(await response.json()).toEqual({ error: 'Analyse the job first' });
-      expect(fetchFn).not.toHaveBeenCalled();
-    });
-
-    it('returns 502 when the cover letter fails after the CV was written', async () => {
-      // Given
-      const message = crypto.randomUUID();
-      const fetchFn = vi
-        .fn()
-        .mockResolvedValueOnce(anOpenAiResponse(written))
-        .mockResolvedValueOnce(new Response(JSON.stringify({ error: { message } }), { status: 500 }));
-
-      // When
-      const response = await post('/api/cv/write', env, fetchFn, { ...job, analysis, answers, coverLetter: true });
-
-      // Then
-      expect(response.status).toBe(502);
-      expect(await response.json()).toEqual({ error: message });
-      expect(await purposes(env)).toEqual(['cv']);
     });
   });
 
@@ -299,7 +282,7 @@ describe('CV generation', () => {
       )
         .bind(crypto.randomUUID(), lastYear)
         .run();
-      await post('/api/cv/analyse', env, async () => anOpenAiResponse({}), job);
+      await post('/api/cv/suggest', env, async () => anOpenAiResponse({}), job);
 
       // When
       const report = (await (await handleApi(request('/api/usage'), env)).json()) as { entries: { createdAt: string }[]; monthUsd: number; totalUsd: number };
@@ -312,8 +295,7 @@ describe('CV generation', () => {
 
     it.each([
       ['/api/usage', 'POST'],
-      ['/api/cv/analyse', 'GET'],
-      ['/api/cv/write', 'GET'],
+      ['/api/cv/suggest', 'GET'],
     ])('returns 404 for %s with %s', async (path, method) => {
       expect((await handleApi(request(path, { method }), env)).status).toBe(404);
     });
