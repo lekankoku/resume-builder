@@ -9,6 +9,7 @@ import { createHttpStateClient } from './infrastructure/http/httpStateClient';
 import { readLocalState } from './infrastructure/persistence/readLocalState';
 import { createRemoteRepositories } from './infrastructure/persistence/remoteRepositories';
 import { resumeData } from './infrastructure/seed/defaultResume';
+import { shouldReloadForNewVersion } from './ui/staleBuild';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -32,6 +33,11 @@ const start = async () => {
     });
     window.addEventListener('beforeunload', (event) => {
       if (remote.status.get() !== 'saved') event.preventDefault();
+    });
+    window.addEventListener('vite:preloadError', (event) => {
+      if (!shouldReloadForNewVersion(sessionStorage, Date.now())) return;
+      event.preventDefault();
+      remote.flush().finally(() => window.location.reload());
     });
 
     root.render(
