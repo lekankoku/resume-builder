@@ -87,7 +87,7 @@ const App: React.FC<AppProps> = ({ repositories, documents, ai, saveStatus, onRe
   return (
     <Routes>
       <Route element={<AppShell saveStatus={saveStatus} onRetrySave={onRetrySave} records={{ applications, leads, drafts }} />}>
-        <Route index element={<HomeView applications={applications} stages={stages} drafts={drafts} onDiscardDraft={removeDraft} />} />
+        <Route index element={<HomeView applications={applications} stages={stages} drafts={drafts} leads={leads} onDiscardDraft={removeDraft} />} />
         <Route path="applications" element={<ApplicationsView applications={applications} stages={stages} onChangeStage={actions.changeStage} />} />
         <Route path="applications/new" element={<NewApplicationRoute leads={leads} wizard={wizard} />} />
         <Route path="to-apply" element={<LeadsView leads={leads} onAdd={addLead} onRemove={removeLead} />} />
