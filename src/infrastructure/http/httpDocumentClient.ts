@@ -23,6 +23,16 @@ export const createHttpDocumentClient = (
     if (!response.ok) throw await errorOf(response, `Uploading ${file.name}`);
     return response.json();
   },
+  rename: async (id, name) => {
+    const response = await fetchFn(`/api/documents/${id}`, {
+      method: 'PATCH',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    if (!response.ok) throw await errorOf(response, 'Renaming the document');
+    return response.json();
+  },
   remove: async (id) => {
     const response = await fetchFn(`/api/documents/${id}`, { method: 'DELETE', credentials: 'same-origin' });
     if (!response.ok) throw await errorOf(response, 'Deleting the document');

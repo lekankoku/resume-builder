@@ -34,7 +34,7 @@ class FakeR2 {
 
   async get(key: string) {
     const object = this.objects.get(key);
-    return object && { body: new Blob([object.body]).stream(), customMetadata: object.customMetadata };
+    return object && { body: new Blob([object.body]).stream(), arrayBuffer: async () => object.body, customMetadata: object.customMetadata };
   }
 
   async list({ cursor }: R2ListOptions) {
@@ -176,6 +176,15 @@ describe('handleApi', () => {
       expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
     });
 
+    it('serves a text file inline so it can be previewed', async () => {
+      const { id } = (await (await upload(`${crypto.randomUUID()}.txt`)).json()) as { id: string };
+
+      const response = await handleApi(request(`/api/documents/${id}`), env);
+
+      expect(response.headers.get('Content-Type')).toBe('text/plain; charset=utf-8');
+      expect(response.headers.get('Content-Disposition')).toMatch(/^inline;/);
+    });
+
     it('serves a Word document as a download', async () => {
       const { id } = (await (await upload(`${crypto.randomUUID()}.docx`)).json()) as { id: string };
 
@@ -191,6 +200,59 @@ describe('handleApi', () => {
 
       expect(response.status).toBe(204);
       expect(await list()).toEqual([]);
+    });
+
+    describe('rename', () => {
+      const rename = (id: string, body: unknown) =>
+        handleApi(request(`/api/documents/${id}`, { method: 'PATCH', body: JSON.stringify(body) }), env);
+
+      it('renames a document, keeping its content and upload date', async () => {
+        // Given
+        const content = crypto.randomUUID();
+        const { id, uploadedAt } = (await (await upload(`${crypto.randomUUID()}.pdf`, content)).json()) as { id: string; uploadedAt: string };
+        const name = `${crypto.randomUUID()} renamed.pdf`;
+
+        // When
+        const response = await rename(id, { name: `  ${name}  ` });
+
+        // Then
+        expect(response.status).toBe(200);
+        expect(await response.json()).toEqual({ id, name, size: content.length, uploadedAt });
+        expect(await list()).toEqual([expect.objectContaining({ id, name })]);
+        expect(await (await handleApi(request(`/api/documents/${id}`), env)).text()).toBe(content);
+      });
+
+      it('serves the document with the content type of its new extension', async () => {
+        // Given
+        const { id } = (await (await upload(`${crypto.randomUUID()}.txt`)).json()) as { id: string };
+
+        // When
+        await rename(id, { name: `${crypto.randomUUID()}.pdf` });
+
+        // Then
+        expect(bucket.objects.get(id)?.contentType).toBe('application/pdf');
+      });
+
+      it.each([
+        ['an extension that is not allowed', { name: `${crypto.randomUUID()}.html` }],
+        ['a blank name', { name: '   ' }],
+        ['a name that is not a string', { name: 1 }],
+      ])('rejects %s and keeps the original name', async (_, body) => {
+        // Given
+        const original = `${crypto.randomUUID()}.pdf`;
+        const { id } = (await (await upload(original)).json()) as { id: string };
+
+        // When
+        const response = await rename(id, body);
+
+        // Then
+        expect(response.status).toBe(415);
+        expect(await list()).toEqual([expect.objectContaining({ id, name: original })]);
+      });
+
+      it('returns 404 for a document that does not exist', async () => {
+        expect((await rename(crypto.randomUUID(), { name: `${crypto.randomUUID()}.pdf` })).status).toBe(404);
+      });
     });
 
     it.each([

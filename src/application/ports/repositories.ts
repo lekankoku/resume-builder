@@ -91,6 +91,7 @@ export interface StoredDocument {
 export interface DocumentClient {
   list(): Promise<StoredDocument[]>;
   upload(file: File): Promise<StoredDocument>;
+  rename(id: string, name: string): Promise<StoredDocument>;
   remove(id: string): Promise<void>;
   urlOf(id: string): string;
 }

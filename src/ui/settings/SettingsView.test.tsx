@@ -157,6 +157,7 @@ describe('Settings', () => {
     const documentsWith = (upload: DocumentClient['upload']): DocumentClient => ({
       list: vi.fn(),
       upload,
+      rename: vi.fn(),
       remove: vi.fn(),
       urlOf: (id) => `/api/documents/${id}`,
     });

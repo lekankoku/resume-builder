@@ -29,6 +29,19 @@ describe('httpDocumentClient', () => {
     });
   });
 
+  it('renames a document and returns the stored result', async () => {
+    const renamed = aDocument();
+    const fetchFn = respond(200, renamed);
+
+    expect(await createHttpDocumentClient(fetchFn).rename(renamed.id, renamed.name)).toEqual(renamed);
+    expect(fetchFn).toHaveBeenCalledWith(`/api/documents/${renamed.id}`, {
+      method: 'PATCH',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: renamed.name }),
+    });
+  });
+
   it('deletes a document by id', async () => {
     const fetchFn = respond(204);
     const id = crypto.randomUUID();
@@ -54,5 +67,8 @@ describe('httpDocumentClient', () => {
   it('fails with the status when the response has no reason', async () => {
     await expect(createHttpDocumentClient(respond(500)).list()).rejects.toThrow('Loading documents failed with 500');
     await expect(createHttpDocumentClient(respond(500)).remove(crypto.randomUUID())).rejects.toThrow('Deleting the document failed with 500');
+    await expect(createHttpDocumentClient(respond(500)).rename(crypto.randomUUID(), crypto.randomUUID())).rejects.toThrow(
+      'Renaming the document failed with 500',
+    );
   });
 });

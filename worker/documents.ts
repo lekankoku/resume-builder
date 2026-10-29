@@ -7,7 +7,7 @@ const FILE_TYPES: Record<string, { contentType: string; inline: boolean }> = {
   jpeg: { contentType: 'image/jpeg', inline: true },
   doc: { contentType: 'application/msword', inline: false },
   docx: { contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', inline: false },
-  txt: { contentType: 'text/plain; charset=utf-8', inline: false },
+  txt: { contentType: 'text/plain; charset=utf-8', inline: true },
 };
 
 const ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -37,6 +37,7 @@ export const handleDocuments = async (request: Request, bucket: R2Bucket, pathna
       await bucket.delete(id);
       return new Response(null, { status: 204 });
     }
+    if (request.method === 'PATCH') return renameDocument(request, bucket, id);
   }
 
   return json({ error: 'Not found' }, 404);
@@ -66,6 +67,21 @@ const uploadDocument = async (request: Request, bucket: R2Bucket): Promise<Respo
   const uploadedAt = new Date().toISOString();
   await bucket.put(id, body, { httpMetadata: { contentType: fileType.contentType }, customMetadata: { name, uploadedAt } });
   return json({ id, name, size: body.byteLength, uploadedAt }, 201);
+};
+
+const renameDocument = async (request: Request, bucket: R2Bucket, id: string): Promise<Response> => {
+  const body = (await request.json().catch(() => null)) as { name?: unknown } | null;
+  const name = typeof body?.name === 'string' ? body.name.trim() : '';
+  const fileType = fileTypeOf(name);
+  if (!name || !fileType) return json({ error: 'Only PDF, Word, text, PNG and JPG files are allowed' }, 415);
+
+  const object = await bucket.get(id);
+  if (!object) return json({ error: 'Not found' }, 404);
+
+  const content = await object.arrayBuffer();
+  const uploadedAt = object.customMetadata?.uploadedAt ?? object.uploaded.toISOString();
+  await bucket.put(id, content, { httpMetadata: { contentType: fileType.contentType }, customMetadata: { name, uploadedAt } });
+  return json({ id, name, size: content.byteLength, uploadedAt });
 };
 
 const downloadDocument = async (bucket: R2Bucket, id: string): Promise<Response> => {
