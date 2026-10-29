@@ -241,4 +241,23 @@ describe('SuggestionsPanel', () => {
     expect(screen.getByText(message)).toBeVisible();
     expect(screen.getByRole('link', { name: link })).toBeVisible();
   });
+
+  it('shows placeholder cards while the first suggestions are on their way', async () => {
+    // Given
+    const user = userEvent.setup();
+    const application = anApplication();
+    const suggestion = aSuggestion({ before: application.resume.personal.title });
+    let resolve: (response: ReturnType<typeof aResponse>) => void = () => {};
+    renderPanel({ application, suggest: vi.fn(() => new Promise<ReturnType<typeof aResponse>>((r) => (resolve = r))) });
+    await openSuggestions(user);
+
+    // When
+    await user.click(screen.getByRole('button', { name: 'Get suggestions' }));
+
+    // Then
+    expect(screen.getByRole('status', { name: 'Loading suggestions' })).toBeVisible();
+    resolve(aResponse([suggestion]));
+    expect(await screen.findByRole('article')).toBeVisible();
+    expect(screen.queryByRole('status', { name: 'Loading suggestions' })).not.toBeInTheDocument();
+  });
 });

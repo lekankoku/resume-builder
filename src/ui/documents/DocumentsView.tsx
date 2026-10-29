@@ -4,6 +4,7 @@ import { DocumentClient, StoredDocument } from '../../application/ports/reposito
 import { matchesQuery } from '../../domain/application/search';
 import { buttonClass, primaryButtonClass } from '../applications/ApplicationsView';
 import PageHeader from '../shell/PageHeader';
+import { ListSkeleton } from '../shell/Skeleton';
 import ViewSearch, { useViewQuery } from '../shell/ViewSearch';
 
 const ACCEPTED = '.pdf,.doc,.docx,.txt,.png,.jpg,.jpeg';
@@ -96,6 +97,7 @@ const DocumentsView: React.FC<{ client: DocumentClient }> = ({ client }) => {
       <p className="text-sm text-slate-500">PDF, Word, text, PNG or JPG, up to 20 MB each.</p>
       {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
 
+      {!documents && !error && <ListSkeleton label="Loading documents" />}
       {documents && documents.length === 0 && <p className="text-sm text-slate-500">No documents yet.</p>}
       {documents && documents.length > 0 && (
         <>

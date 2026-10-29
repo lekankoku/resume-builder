@@ -9,6 +9,7 @@ import { createHttpStateClient } from './infrastructure/http/httpStateClient';
 import { readLocalState } from './infrastructure/persistence/readLocalState';
 import { createRemoteRepositories } from './infrastructure/persistence/remoteRepositories';
 import { resumeData } from './infrastructure/seed/defaultResume';
+import { AppSkeleton } from './ui/shell/Skeleton';
 import { shouldReloadForNewVersion } from './ui/staleBuild';
 
 const rootElement = document.getElementById('root');
@@ -23,7 +24,7 @@ const ai = createHttpAiClient();
 const { title, ...defaultProfile } = resumeData.personal;
 
 const start = async () => {
-  root.render(<p className="p-10 text-sm text-slate-500 font-sans">Loading…</p>);
+  root.render(<AppSkeleton />);
   try {
     const state = await migrateLocalState(await client.load(), readLocalState(localStorage), client);
     const remote = createRemoteRepositories(state, client, defaultProfile);

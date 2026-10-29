@@ -19,6 +19,7 @@ import { useCvGuide } from './hooks/useCvGuide';
 import { useDrafts } from './hooks/useDrafts';
 import { useJobBank } from './hooks/useJobBank';
 import { useLeads } from './hooks/useLeads';
+import { DocumentPageSkeleton } from './shell/Skeleton';
 import { useProfile } from './hooks/useProfile';
 import { useStages } from './hooks/useStages';
 import SettingsView, {
@@ -146,14 +147,14 @@ const App: React.FC<AppProps> = ({ repositories, documents, ai, saveStatus, onRe
         </Route>
       </Route>
       <Route path="applications/:id/preview/:doc" element={
-          <Suspense fallback={null}>
+          <Suspense fallback={<DocumentPageSkeleton label="Loading preview" />}>
             <PreviewPage applications={applications} profile={profile} />
           </Suspense>
         } />
       <Route
         path="applications/:id/versions/:versionId/preview/:doc"
         element={
-          <Suspense fallback={null}>
+          <Suspense fallback={<DocumentPageSkeleton label="Loading preview" />}>
             <PreviewPage applications={applications} profile={profile} />
           </Suspense>
         }

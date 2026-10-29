@@ -185,4 +185,34 @@ describe('DocumentsView', () => {
       expect(screen.getByText('No documents match your search.')).toBeVisible();
     });
   });
+
+  describe('loading', () => {
+    it('shows placeholder rows until the documents arrive', async () => {
+      // Given
+      const document = aStoredDocument();
+      let resolve: (documents: StoredDocument[]) => void = () => {};
+      const client = { ...clientWith([]), list: () => new Promise<StoredDocument[]>((r) => (resolve = r)) };
+      renderView(client);
+      expect(screen.getByRole('status', { name: 'Loading documents' })).toBeVisible();
+
+      // When
+      resolve([document]);
+
+      // Then
+      expect(await screen.findByRole('link', { name: document.name })).toBeVisible();
+      expect(screen.queryByRole('status', { name: 'Loading documents' })).not.toBeInTheDocument();
+    });
+
+    it('replaces the placeholder rows with the error when the documents cannot be loaded', async () => {
+      // Given
+      const message = crypto.randomUUID();
+
+      // When
+      renderView({ ...clientWith([]), list: async () => Promise.reject(new Error(message)) });
+
+      // Then
+      expect(await screen.findByRole('alert')).toHaveTextContent(message);
+      expect(screen.queryByRole('status', { name: 'Loading documents' })).not.toBeInTheDocument();
+    });
+  });
 });

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { usePDF } from '@react-pdf/renderer';
 import PrintToolbar from '../preview/PrintToolbar';
+import { DocumentPageSkeleton } from '../shell/Skeleton';
 import { registerPdfFonts } from './fonts';
 
 registerPdfFonts((file) => `/fonts/${file}`);
@@ -33,7 +34,7 @@ const PdfFrame: React.FC<Props> = ({ document, fileName, active, onBack, onShowR
           Could not generate the PDF: {String(pdf.error)}
         </p>
       ) : (
-        pdf.url && <iframe title="PDF preview" src={pdf.url} className="flex-1 w-full" />
+        pdf.url ? <iframe title="PDF preview" src={pdf.url} className="flex-1 w-full" /> : <DocumentPageSkeleton label="Generating PDF" />
       )}
     </div>
   );

@@ -16,6 +16,7 @@ import {
 import { RememberedAnswer } from '../../domain/candidate/CandidateFacts';
 import { CoverLetter } from '../../domain/coverLetter/CoverLetter';
 import { Resume } from '../../domain/resume/Resume';
+import { Loading, Skeleton } from '../shell/Skeleton';
 import { buttonClass, inputClass, labelClass, primaryButtonClass } from './ApplicationsView';
 
 export type SuggestionScope = 'cv' | 'coverLetter';
@@ -149,6 +150,22 @@ const SuggestionsPanel: React.FC<Props> = ({ job, state, scope, ai, jobBank, job
         )}
         {error && <p role="alert" className="text-red-500 text-xs bg-red-50 p-3 rounded-lg border border-red-100">{error}</p>}
       </div>
+
+      {loading && !set && (
+        <Loading label="Loading suggestions" className="space-y-3">
+          {[0, 1, 2].map((card) => (
+            <div key={card} className="rounded-xl border border-slate-200 p-4 space-y-2">
+              <Skeleton className="h-3.5 w-1/4" />
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-5/6" />
+              <div className="flex gap-2 pt-1">
+                <Skeleton className="h-8 w-20 rounded-lg" />
+                <Skeleton className="h-8 w-20 rounded-lg" />
+              </div>
+            </div>
+          ))}
+        </Loading>
+      )}
 
       {set && (
         <>

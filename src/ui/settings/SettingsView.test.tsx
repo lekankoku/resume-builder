@@ -244,6 +244,20 @@ describe('Settings', () => {
       expect(row).toHaveTextContent('$0.31');
     });
 
+    it('shows a placeholder until the usage arrives', async () => {
+      // Given
+      let resolve: (report: UsageReport) => void = () => {};
+      render(<AiUsageSettings client={clientWith(() => new Promise<UsageReport>((r) => (resolve = r)))} />);
+      expect(screen.getByRole('status', { name: 'Loading AI usage' })).toBeVisible();
+
+      // When
+      resolve({ entries: [], monthUsd: 0, totalUsd: 0 });
+
+      // Then
+      expect(await screen.findByText('No CVs generated yet.')).toBeVisible();
+      expect(screen.queryByRole('status', { name: 'Loading AI usage' })).not.toBeInTheDocument();
+    });
+
     it('says so when nothing has been generated yet', async () => {
       // Given / When
       render(<AiUsageSettings client={clientWith(async () => ({ entries: [], monthUsd: 0, totalUsd: 0 }))} />);

@@ -17,6 +17,7 @@ import { isStageInUse } from '../../domain/application/stages';
 import { Profile } from '../../domain/resume/Resume';
 import { inputClass, labelClass, primaryButtonClass } from '../applications/ApplicationsView';
 import PageHeader from '../shell/PageHeader';
+import { Loading, Skeleton } from '../shell/Skeleton';
 
 const PROFILE_LABELS: Record<keyof Profile, string> = {
   name: 'Name',
@@ -414,7 +415,26 @@ export const AiUsageSettings: React.FC<{ client: AiClient }> = ({ client }) => {
   }, [client]);
 
   if (error) return <p role="alert" className="text-sm text-red-500">{error}</p>;
-  if (!report) return <p className="text-sm text-slate-500">Loading…</p>;
+  if (!report) {
+    return (
+      <Loading label="Loading AI usage" className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
+        <Skeleton className="h-4 w-2/3" />
+        <div className="grid grid-cols-2 gap-6">
+          {[0, 1].map((total) => (
+            <div key={total} className="space-y-2">
+              <Skeleton className="h-3.5 w-20" />
+              <Skeleton className="h-8 w-24" />
+            </div>
+          ))}
+        </div>
+        <div className="space-y-3">
+          {[0, 1, 2, 3].map((row) => (
+            <Skeleton key={row} className="h-4" />
+          ))}
+        </div>
+      </Loading>
+    );
+  }
 
   return (
     <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
