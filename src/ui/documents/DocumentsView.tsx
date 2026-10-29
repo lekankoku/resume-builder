@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Download, Eye, FileText, Pencil, Trash2, Upload, X } from 'lucide-react';
 import { DocumentClient, StoredDocument } from '../../application/ports/repositories';
+import { matchesQuery } from '../../domain/application/search';
 import { buttonClass, primaryButtonClass } from '../applications/ApplicationsView';
 import PageHeader from '../shell/PageHeader';
+import ViewSearch, { useViewQuery } from '../shell/ViewSearch';
 
 const ACCEPTED = '.pdf,.doc,.docx,.txt,.png,.jpg,.jpeg';
 
@@ -22,6 +24,8 @@ const DocumentsView: React.FC<{ client: DocumentClient }> = ({ client }) => {
   const [error, setError] = useState('');
   const [previewing, setPreviewing] = useState<StoredDocument | null>(null);
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
+  const [query, setQuery] = useViewQuery();
+  const visible = (documents ?? []).filter((d) => matchesQuery(query, d.name));
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -73,19 +77,19 @@ const DocumentsView: React.FC<{ client: DocumentClient }> = ({ client }) => {
         subtitle={documents ? `${documents.length} stored` : 'Loading…'}
         actions={
           <>
-            <input
-              ref={input}
-              id="document-upload"
-              type="file"
-              multiple
-              accept={ACCEPTED}
-              className="sr-only"
-              onChange={(e) => e.target.files?.length && upload(e.target.files)}
-            />
-            <label htmlFor="document-upload" className={`${primaryButtonClass} cursor-pointer ${uploading ? 'opacity-60 pointer-events-none' : ''}`}>
-              <Upload size={14} /> {uploading ? 'Uploading…' : 'Upload'}
-            </label>
-          </>
+              <input
+                ref={input}
+                id="document-upload"
+                type="file"
+                multiple
+                accept={ACCEPTED}
+                className="sr-only"
+                onChange={(e) => e.target.files?.length && upload(e.target.files)}
+              />
+              <label htmlFor="document-upload" className={`${primaryButtonClass} cursor-pointer ${uploading ? 'opacity-60 pointer-events-none' : ''}`}>
+                <Upload size={14} /> {uploading ? 'Uploading…' : 'Upload'}
+              </label>
+            </>
         }
       />
 
@@ -94,8 +98,11 @@ const DocumentsView: React.FC<{ client: DocumentClient }> = ({ client }) => {
 
       {documents && documents.length === 0 && <p className="text-sm text-slate-500">No documents yet.</p>}
       {documents && documents.length > 0 && (
+        <>
+        <ViewSearch label="Search documents" query={query} onChange={setQuery} />
+        {visible.length === 0 && <p className="text-sm text-slate-500">No documents match your search.</p>}
         <ul className="space-y-2">
-          {documents.map((document) => (
+          {visible.map((document) => (
             <li key={document.id} className="flex flex-wrap items-center gap-3 bg-white rounded-xl border border-slate-200 px-4 py-3">
               <FileText size={18} className="text-slate-400 shrink-0" />
               {renaming?.id === document.id ? (
@@ -149,6 +156,7 @@ const DocumentsView: React.FC<{ client: DocumentClient }> = ({ client }) => {
             </li>
           ))}
         </ul>
+        </>
       )}
 
       {previewing && (

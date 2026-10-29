@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { DocumentClient, StoredDocument } from '../../application/ports/repositories';
 import DocumentsView from './DocumentsView';
@@ -20,6 +21,13 @@ const clientWith = (documents: StoredDocument[], rename: DocumentClient['rename'
   urlOf: (id) => `/api/documents/${id}`,
 });
 
+const renderView = (client: DocumentClient) =>
+  render(
+    <MemoryRouter>
+      <DocumentsView client={client} />
+    </MemoryRouter>,
+  );
+
 describe('DocumentsView', () => {
   describe('rename', () => {
     it('renames a document and shows its new name', async () => {
@@ -28,7 +36,7 @@ describe('DocumentsView', () => {
       const document = aStoredDocument();
       const name = `${crypto.randomUUID()}.docx`;
       const rename = vi.fn(async () => ({ ...document, name }));
-      render(<DocumentsView client={clientWith([document], rename)} />);
+      renderView(clientWith([document], rename));
 
       // When
       await user.click(await screen.findByRole('button', { name: `Rename ${document.name}` }));
@@ -46,7 +54,7 @@ describe('DocumentsView', () => {
       const user = userEvent.setup();
       const document = aStoredDocument();
       const rename = vi.fn();
-      render(<DocumentsView client={clientWith([document], rename)} />);
+      renderView(clientWith([document], rename));
 
       // When
       await user.click(await screen.findByRole('button', { name: `Rename ${document.name}` }));
@@ -62,7 +70,7 @@ describe('DocumentsView', () => {
       // Given
       const user = userEvent.setup();
       const document = aStoredDocument();
-      render(<DocumentsView client={clientWith([document], vi.fn())} />);
+      renderView(clientWith([document], vi.fn()));
 
       // When
       await user.click(await screen.findByRole('button', { name: `Rename ${document.name}` }));
@@ -77,7 +85,7 @@ describe('DocumentsView', () => {
       const user = userEvent.setup();
       const document = aStoredDocument();
       const message = crypto.randomUUID();
-      render(<DocumentsView client={clientWith([document], async () => Promise.reject(new Error(message)))} />);
+      renderView(clientWith([document], async () => Promise.reject(new Error(message))));
 
       // When
       await user.click(await screen.findByRole('button', { name: `Rename ${document.name}` }));
@@ -94,7 +102,7 @@ describe('DocumentsView', () => {
       // Given
       const user = userEvent.setup();
       const document = aStoredDocument(extension);
-      render(<DocumentsView client={clientWith([document])} />);
+      renderView(clientWith([document]));
 
       // When
       await user.click(await screen.findByRole('button', { name: `Preview ${document.name}` }));
@@ -109,7 +117,7 @@ describe('DocumentsView', () => {
       // Given
       const user = userEvent.setup();
       const document = aStoredDocument(extension);
-      render(<DocumentsView client={clientWith([document])} />);
+      renderView(clientWith([document]));
 
       // When
       await user.click(await screen.findByRole('button', { name: `Preview ${document.name}` }));
@@ -123,7 +131,7 @@ describe('DocumentsView', () => {
       const document = aStoredDocument(extension);
 
       // When
-      render(<DocumentsView client={clientWith([document])} />);
+      renderView(clientWith([document]));
 
       // Then
       expect(await screen.findByRole('link', { name: document.name })).toBeVisible();
@@ -138,7 +146,7 @@ describe('DocumentsView', () => {
       // Given
       const user = userEvent.setup();
       const document = aStoredDocument();
-      render(<DocumentsView client={clientWith([document])} />);
+      renderView(clientWith([document]));
       await user.click(await screen.findByRole('button', { name: `Preview ${document.name}` }));
 
       // When
@@ -146,6 +154,35 @@ describe('DocumentsView', () => {
 
       // Then
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('search', () => {
+    it('shows only the documents whose name matches', async () => {
+      // Given
+      const user = userEvent.setup();
+      const match = aStoredDocument();
+      const other = aStoredDocument();
+      renderView(clientWith([match, other]));
+
+      // When
+      await user.type(await screen.findByRole('searchbox', { name: 'Search documents' }), match.name.slice(0, 8));
+
+      // Then
+      expect(screen.getByRole('link', { name: match.name })).toBeVisible();
+      expect(screen.queryByRole('link', { name: other.name })).not.toBeInTheDocument();
+    });
+
+    it('says so when no document matches', async () => {
+      // Given
+      const user = userEvent.setup();
+      renderView(clientWith([aStoredDocument()]));
+
+      // When
+      await user.type(await screen.findByRole('searchbox', { name: 'Search documents' }), crypto.randomUUID());
+
+      // Then
+      expect(screen.getByText('No documents match your search.')).toBeVisible();
     });
   });
 });

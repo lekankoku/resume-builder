@@ -5,8 +5,10 @@ import { CSS } from '@dnd-kit/utilities';
 import { Link, useSearchParams } from 'react-router';
 import { ApplicationDetails, JobApplication } from '../../domain/application/JobApplication';
 import { StageColumn, stageColumns } from '../../domain/application/pipeline';
+import { matchesQuery } from '../../domain/application/search';
 import { CLOSED_STAGES, stageOptions } from '../../domain/application/stages';
 import PageHeader from '../shell/PageHeader';
+import ViewSearch, { useViewQuery } from '../shell/ViewSearch';
 
 interface Props {
   applications: JobApplication[];
@@ -26,7 +28,9 @@ const ApplicationsView: React.FC<Props> = ({ applications, stages, onChangeStage
   const [params, setParams] = useSearchParams();
   const view = params.get('view') === 'table' ? 'table' : 'board';
   const stageFilter = params.get('stage') ?? '';
-  const visible = stageFilter ? applications.filter((a) => a.stage === stageFilter) : applications;
+  const [query, setQuery] = useViewQuery();
+  const matching = applications.filter((a) => matchesQuery(query, a.company, a.role, a.stage, a.notes, a.postingUrl));
+  const visible = stageFilter ? matching.filter((a) => a.stage === stageFilter) : matching;
 
   const setParam = (key: string, value: string) =>
     setParams(
@@ -52,20 +56,23 @@ const ApplicationsView: React.FC<Props> = ({ applications, stages, onChangeStage
       />
 
       <div className="mb-6 flex items-end justify-between gap-4">
-        <div role="group" aria-label="View" className="flex gap-1 p-1 bg-slate-100 rounded-xl">
-          {(['board', 'table'] as const).map((option) => (
-            <button
-              key={option}
-              onClick={() => setParam('view', option === 'board' ? '' : option)}
-              aria-pressed={view === option}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all ${
-                view === option ? 'bg-white text-slate-900 font-medium shadow-sm' : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              {option === 'board' ? <Columns3 size={14} /> : <Rows3 size={14} />}
-              {option === 'board' ? 'Board' : 'Table'}
-            </button>
-          ))}
+        <div className="flex flex-1 items-center gap-4">
+          <div role="group" aria-label="View" className="flex gap-1 p-1 bg-slate-100 rounded-xl">
+            {(['board', 'table'] as const).map((option) => (
+              <button
+                key={option}
+                onClick={() => setParam('view', option === 'board' ? '' : option)}
+                aria-pressed={view === option}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all ${
+                  view === option ? 'bg-white text-slate-900 font-medium shadow-sm' : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                {option === 'board' ? <Columns3 size={14} /> : <Rows3 size={14} />}
+                {option === 'board' ? 'Board' : 'Table'}
+              </button>
+            ))}
+          </div>
+          <ViewSearch label="Search applications" query={query} onChange={setQuery} />
         </div>
         {view === 'table' && (
           <div className="w-64 space-y-1">
@@ -81,7 +88,7 @@ const ApplicationsView: React.FC<Props> = ({ applications, stages, onChangeStage
       </div>
 
       {view === 'board' ? (
-        <StageBoard applications={applications} stages={stages} onChangeStage={onChangeStage} />
+        <StageBoard applications={matching} stages={stages} onChangeStage={onChangeStage} />
       ) : (
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
             <table className="w-full text-sm">

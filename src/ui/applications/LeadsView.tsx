@@ -3,7 +3,9 @@ import { ExternalLink, Play, Plus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router';
 import { isWebUrl } from '../../domain/application/JobApplication';
 import { JobLead, LeadDetails } from '../../domain/application/JobLead';
+import { matchesQuery } from '../../domain/application/search';
 import PageHeader from '../shell/PageHeader';
+import ViewSearch, { useViewQuery } from '../shell/ViewSearch';
 import { buttonClass, inputClass, labelClass, primaryButtonClass } from './ApplicationsView';
 
 interface Props {
@@ -17,6 +19,8 @@ const emptyLead = (): LeadDetails => ({ postingUrl: '', company: '', role: '' })
 const LeadsView: React.FC<Props> = ({ leads, onAdd, onRemove }) => {
   const [lead, setLead] = useState(emptyLead);
   const [error, setError] = useState('');
+  const [query, setQuery] = useViewQuery();
+  const visible = leads.filter((l) => matchesQuery(query, l.company, l.role, l.postingUrl));
 
   const update = (field: keyof LeadDetails, value: string) => setLead((current) => ({ ...current, [field]: value }));
 
@@ -59,37 +63,41 @@ const LeadsView: React.FC<Props> = ({ leads, onAdd, onRemove }) => {
       {leads.length === 0 ? (
         <p className="text-sm text-slate-500">Nothing saved yet. Paste a job link above to keep it for later.</p>
       ) : (
-        <ul className="space-y-2">
-          {leads.map((saved) => {
-            const company = saved.company || 'Untitled company';
-            return (
-              <li key={saved.id} className="flex flex-wrap items-center gap-3 bg-white rounded-xl border border-slate-200 px-4 py-3">
-                <div className="basis-full sm:basis-0 flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-900 truncate">
-                    {company}
-                    {saved.role && <span className="font-normal text-slate-600"> — {saved.role}</span>}
-                  </p>
-                  {isWebUrl(saved.postingUrl) && (
-                    <a
-                      href={saved.postingUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-xs text-accent underline min-w-0"
-                    >
-                      <span className="truncate">{saved.postingUrl}</span> <ExternalLink size={12} className="shrink-0" />
-                    </a>
-                  )}
-                </div>
-                <Link to={`/applications/new?lead=${saved.id}`} aria-label={`Start application for ${company}`} className={`${primaryButtonClass} flex-1 sm:flex-none`}>
-                  <Play size={14} /> Start application
-                </Link>
-                <button onClick={() => onRemove(saved.id)} aria-label={`Remove ${company}`} className={buttonClass}>
-                  <Trash2 size={14} />
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        <>
+          <ViewSearch label="Search saved jobs" query={query} onChange={setQuery} />
+          {visible.length === 0 && <p className="text-sm text-slate-500">No saved jobs match your search.</p>}
+          <ul className="space-y-2">
+            {visible.map((saved) => {
+              const company = saved.company || 'Untitled company';
+              return (
+                <li key={saved.id} className="flex flex-wrap items-center gap-3 bg-white rounded-xl border border-slate-200 px-4 py-3">
+                  <div className="basis-full sm:basis-0 flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-900 truncate">
+                      {company}
+                      {saved.role && <span className="font-normal text-slate-600"> — {saved.role}</span>}
+                    </p>
+                    {isWebUrl(saved.postingUrl) && (
+                      <a
+                        href={saved.postingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs text-accent underline min-w-0"
+                      >
+                        <span className="truncate">{saved.postingUrl}</span> <ExternalLink size={12} className="shrink-0" />
+                      </a>
+                    )}
+                  </div>
+                  <Link to={`/applications/new?lead=${saved.id}`} aria-label={`Start application for ${company}`} className={`${primaryButtonClass} flex-1 sm:flex-none`}>
+                    <Play size={14} /> Start application
+                  </Link>
+                  <button onClick={() => onRemove(saved.id)} aria-label={`Remove ${company}`} className={buttonClass}>
+                    <Trash2 size={14} />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </>
       )}
     </div>
   );

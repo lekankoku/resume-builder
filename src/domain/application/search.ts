@@ -19,9 +19,13 @@ interface Candidate extends SearchResult {
   text: string;
 }
 
+export const matchesQuery = (query: string, ...fields: string[]): boolean => {
+  const text = fields.join(' ').toLowerCase();
+  return query.toLowerCase().split(/\s+/).filter(Boolean).every((term) => text.includes(term));
+};
+
 export const searchRecords = (query: string, { applications, leads, drafts }: Searchable, limit: number): SearchResult[] => {
-  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
-  if (terms.length === 0) return [];
+  if (!query.trim()) return [];
 
   const candidates: Candidate[] = [
     ...applications.map((a) => ({
@@ -48,10 +52,7 @@ export const searchRecords = (query: string, { applications, leads, drafts }: Se
   ];
 
   return candidates
-    .filter((candidate) => {
-      const text = candidate.text.toLowerCase();
-      return terms.every((term) => text.includes(term));
-    })
+    .filter((candidate) => matchesQuery(query, candidate.text))
     .slice(0, limit)
     .map(({ text: _text, ...result }) => result);
 };

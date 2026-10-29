@@ -4,7 +4,7 @@ import { createCoverLetter } from '../coverLetter/CoverLetter';
 import { ApplicationDraft } from './ApplicationDraft';
 import { ApplicationDetails, createApplication } from './JobApplication';
 import { createJobLead } from './JobLead';
-import { searchRecords } from './search';
+import { matchesQuery, searchRecords } from './search';
 
 const uuid = () => crypto.randomUUID();
 
@@ -91,5 +91,24 @@ describe('searchRecords', () => {
     const lead = aLead('');
 
     expect(searchRecords(lead.role, { ...nothing, leads: [lead] }, 10)[0].title).toBe('Untitled company');
+  });
+});
+
+describe('matchesQuery', () => {
+  it('matches when every word appears in some field, ignoring case', () => {
+    const company = uuid();
+    const role = uuid();
+
+    expect(matchesQuery(`${role.toUpperCase()}  ${company}`, company, role)).toBe(true);
+  });
+
+  it('does not match when any word is missing', () => {
+    const company = uuid();
+
+    expect(matchesQuery(`${company} ${uuid()}`, company, uuid())).toBe(false);
+  });
+
+  it('matches everything for a blank query', () => {
+    expect(matchesQuery('   ', uuid())).toBe(true);
   });
 });
