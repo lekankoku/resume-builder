@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ResumeRepository } from '../../application/ports/repositories';
+import { Notify } from '../shell/Toast';
 import { BulletSection, Layout, ListSection, ListSectionItem, PersonalInfo, Position, Resume } from '../../domain/resume/Resume';
 import {
   addBullet,
   addCrossFunctionalBullet,
   addEarlierPosition,
   addItem,
+  moveBullet,
+  moveCrossFunctionalBullet,
   moveItem,
   removeBullet,
   removeCrossFunctionalBullet,
@@ -32,6 +35,7 @@ export const createResumeActions = (setResume: (change: (resume: Resume) => Resu
     setResume((r) => updateBullet(r, section, index, bulletIndex, value)),
   removeBullet: (section: BulletSection, index: number, bulletIndex: number) =>
     setResume((r) => removeBullet(r, section, index, bulletIndex)),
+  moveBullet: (section: BulletSection, index: number, from: number, to: number) => setResume((r) => moveBullet(r, section, index, from, to)),
   updateLayout: (layout: Layout) => setResume((r) => updateLayout(r, layout)),
   addEarlierPosition: (index: number) => setResume((r) => addEarlierPosition(r, index)),
   updateEarlierPosition: (index: number, positionIndex: number, field: keyof Position, value: string) =>
@@ -41,6 +45,27 @@ export const createResumeActions = (setResume: (change: (resume: Resume) => Resu
   addCrossFunctionalBullet: () => setResume((r) => addCrossFunctionalBullet(r)),
   updateCrossFunctionalBullet: (bulletIndex: number, value: string) => setResume((r) => updateCrossFunctionalBullet(r, bulletIndex, value)),
   removeCrossFunctionalBullet: (bulletIndex: number) => setResume((r) => removeCrossFunctionalBullet(r, bulletIndex)),
+  moveCrossFunctionalBullet: (from: number, to: number) => setResume((r) => moveCrossFunctionalBullet(r, from, to)),
+});
+
+export const withRemovalUndo = (actions: ResumeActions, resume: Resume, restore: (resume: Resume) => void, notify: Notify): ResumeActions => ({
+  ...actions,
+  removeItem: (section, index) => {
+    actions.removeItem(section, index);
+    notify('Entry removed', () => restore(resume));
+  },
+  removeBullet: (section, index, bulletIndex) => {
+    actions.removeBullet(section, index, bulletIndex);
+    notify('Bullet removed', () => restore(resume));
+  },
+  removeEarlierPosition: (index, positionIndex) => {
+    actions.removeEarlierPosition(index, positionIndex);
+    notify('Earlier position removed', () => restore(resume));
+  },
+  removeCrossFunctionalBullet: (bulletIndex) => {
+    actions.removeCrossFunctionalBullet(bulletIndex);
+    notify('Bullet removed', () => restore(resume));
+  },
 });
 
 export const useResume = (repository: ResumeRepository) => {

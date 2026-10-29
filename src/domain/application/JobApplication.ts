@@ -116,12 +116,16 @@ export const updateApplicationField = (
 
 export const isWebUrl = (url: string): boolean => /^https?:\/\//i.test(url.trim());
 
-export const validateDetails = (details: ApplicationDetails): string[] => [
-  ...(details.company.trim() ? [] : ['Company is required']),
-  ...(details.role.trim() ? [] : ['Role is required']),
-  ...(details.appliedOn ? [] : ['Date applied is required']),
-  ...(!details.postingUrl.trim() || isWebUrl(details.postingUrl) ? [] : ['Job posting URL must start with http:// or https://']),
-];
+export type DetailErrors = Partial<Record<'company' | 'role' | 'appliedOn' | 'postingUrl', string>>;
+
+export const detailErrors = (details: ApplicationDetails): DetailErrors => ({
+  ...(details.company.trim() ? {} : { company: 'Company is required' }),
+  ...(details.role.trim() ? {} : { role: 'Role is required' }),
+  ...(details.appliedOn ? {} : { appliedOn: 'Date applied is required' }),
+  ...(!details.postingUrl.trim() || isWebUrl(details.postingUrl) ? {} : { postingUrl: 'Job posting URL must start with http:// or https://' }),
+});
+
+export const validateDetails = (details: ApplicationDetails): string[] => Object.values(detailErrors(details));
 
 export const changeStage = (application: JobApplication, stage: string, now: Date): JobApplication =>
   application.stage === stage

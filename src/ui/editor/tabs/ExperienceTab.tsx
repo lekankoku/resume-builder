@@ -22,7 +22,7 @@ const ExperienceTab = ({ resume, actions }: Props) => (
     onMove={(from, to) => actions.moveItem('experiences', from, to)}
     renderItem={(exp, idx) => (
       <>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <TextField label="Role" value={exp.role} onChange={(v) => actions.updateItemField('experiences', idx, 'role', v)} />
           <TextField label="Company" value={exp.company} onChange={(v) => actions.updateItemField('experiences', idx, 'company', v)} />
           <TextField label="Location" value={exp.location} onChange={(v) => actions.updateItemField('experiences', idx, 'location', v)} />
@@ -52,7 +52,7 @@ const ExperienceTab = ({ resume, actions }: Props) => (
             </button>
           </div>
           {exp.earlierPositions.map((position, pIdx) => (
-            <div key={pIdx} className="grid grid-cols-2 gap-4 p-3 bg-slate-50 rounded-lg">
+            <div key={pIdx} className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-slate-50 rounded-lg">
               <TextField
                 label={`Earlier role ${pIdx + 1}`}
                 value={position.role}
@@ -65,7 +65,7 @@ const ExperienceTab = ({ resume, actions }: Props) => (
               />
               <button
                 onClick={() => actions.removeEarlierPosition(idx, pIdx)}
-                className="text-sm font-medium text-red-500 hover:underline justify-self-start"
+                className="text-sm font-medium text-red-600 hover:underline justify-self-start"
               >
                 Remove earlier role {pIdx + 1}
               </button>
@@ -80,6 +80,7 @@ const ExperienceTab = ({ resume, actions }: Props) => (
           onAdd={() => actions.addBullet('experiences', idx)}
           onChange={(bIdx, v) => actions.updateBullet('experiences', idx, bIdx, v)}
           onRemove={(bIdx) => actions.removeBullet('experiences', idx, bIdx)}
+          onMove={(from, to) => actions.moveBullet('experiences', idx, from, to)}
         />
       </>
     )}

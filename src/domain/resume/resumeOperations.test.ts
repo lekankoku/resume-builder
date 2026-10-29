@@ -7,6 +7,8 @@ import {
   addItem,
   applyProfile,
   mergeImportedResume,
+  moveBullet,
+  moveCrossFunctionalBullet,
   moveItem,
   removeBullet,
   removeCrossFunctionalBullet,
@@ -71,6 +73,29 @@ describe('resumeOperations', () => {
       const updated = removeItem(resume, 'experiences', 1);
 
       expect(updated.experiences).toEqual([resume.experiences[0], resume.experiences[2]]);
+    });
+  });
+
+  describe('moveBullet', () => {
+    it('moves a bullet within its item only', () => {
+      const resume = aResume();
+      const [first, second] = [crypto.randomUUID(), crypto.randomUUID()];
+      const withBullets = { ...resume, experiences: resume.experiences.map((e, i) => (i === 0 ? { ...e, bullets: [first, second] } : e)) };
+
+      const updated = moveBullet(withBullets, 'experiences', 0, 0, 1);
+
+      expect(updated.experiences[0].bullets).toEqual([second, first]);
+      expect(updated.experiences[1]).toEqual(withBullets.experiences[1]);
+    });
+  });
+
+  describe('moveCrossFunctionalBullet', () => {
+    it('moves a highlight', () => {
+      const [a, b, c] = [crypto.randomUUID(), crypto.randomUUID(), crypto.randomUUID()];
+
+      const updated = moveCrossFunctionalBullet(aResume({ crossFunctional: { title: '', bullets: [a, b, c] } }), 2, 0);
+
+      expect(updated.crossFunctional.bullets).toEqual([c, a, b]);
     });
   });
 

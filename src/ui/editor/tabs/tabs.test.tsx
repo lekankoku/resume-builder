@@ -51,6 +51,43 @@ describe('editor tabs', () => {
       expect(latest().experiences[0].earlierPositions).toEqual([{ role, period: '' }]);
     });
 
+    it('moves an experience down with the keyboard-friendly move button', async () => {
+      // Given
+      const user = userEvent.setup();
+      const resume = aResume();
+      const { latest } = renderTab(ExperienceTab, resume);
+
+      // When
+      await user.click(screen.getByRole('button', { name: 'Move Experience 1 down' }));
+
+      // Then
+      expect(latest().experiences.map((e) => e.company)).toEqual([resume.experiences[1].company, resume.experiences[0].company, resume.experiences[2].company]);
+    });
+
+    it('cannot move the first experience up or the last one down', () => {
+      // Given / When
+      renderTab(ExperienceTab, aResume());
+
+      // Then
+      expect(screen.getByRole('button', { name: 'Move Experience 1 up' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Move Experience 3 down' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Drag to reorder Experience 1' })).toBeVisible();
+    });
+
+    it('moves a highlight up', async () => {
+      // Given
+      const user = userEvent.setup();
+      const resume = aResume();
+      const [first, second] = resume.experiences[0].bullets;
+      const { latest } = renderTab(ExperienceTab, resume);
+
+      // When
+      await user.click(screen.getAllByRole('button', { name: 'Move Highlights 2 up' })[0]);
+
+      // Then
+      expect(latest().experiences[0].bullets).toEqual([second, first]);
+    });
+
     it('removes an earlier position', async () => {
       // Given
       const user = userEvent.setup();

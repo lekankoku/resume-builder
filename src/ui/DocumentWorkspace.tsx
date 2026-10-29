@@ -6,11 +6,13 @@ import { applyProfile } from '../domain/resume/resumeOperations';
 import { useApplicationContext } from './applications/ApplicationPage';
 import { PreviewWithSuggestions, SuggestionScope } from './applications/SuggestionsPanel';
 import EditorView, { CV_EDITOR_SECTIONS, EditorSection } from './editor/EditorView';
-import { createResumeActions } from './hooks/useResume';
+import { createResumeActions, withRemovalUndo } from './hooks/useResume';
 import { useJsonSource } from './hooks/useJsonSource';
 import CoverLetterDocument from './preview/CoverLetterDocument';
 import LivePreview from './preview/LivePreview';
+import PreviewPane from './preview/PreviewPane';
 import ResumeDocument from './preview/ResumeDocument';
+import { useToast } from './shell/Toast';
 
 const SidePanel: React.FC<{ scope: SuggestionScope; preview: React.ReactNode }> = ({ scope, preview }) => {
   const { application, actions, ai, jobBank, onRememberAnswers } = useApplicationContext();
@@ -36,7 +38,9 @@ const SidePanel: React.FC<{ scope: SuggestionScope; preview: React.ReactNode }> 
 
 const useApplicationDocuments = () => {
   const { application, actions, profile } = useApplicationContext();
+  const notify = useToast();
   const { id } = application;
+  const setResume = (resume: Resume) => actions.update(id, (a) => ({ ...a, resume }));
 
   const resumeActions = useMemo(
     () => createResumeActions((change) => actions.update(id, (a) => ({ ...a, resume: change(a.resume) }))),
@@ -46,8 +50,8 @@ const useApplicationDocuments = () => {
   return {
     application,
     resume: applyProfile(application.resume, profile),
-    resumeActions,
-    setResume: (resume: Resume) => actions.update(id, (a) => ({ ...a, resume })),
+    resumeActions: withRemovalUndo(resumeActions, application.resume, setResume, notify),
+    setResume,
     onCoverLetterFieldChange: (field: keyof CoverLetter, value: string) =>
       actions.update(id, (a) => ({ ...a, coverLetter: updateCoverLetterField(a.coverLetter, field, value) })),
     onTargetCompanyChange: (company: string) => actions.updateField(id, 'company', company),
@@ -105,7 +109,7 @@ export const CoverLetterTab: React.FC = () => {
           onTargetCompanyChange={onTargetCompanyChange}
         />
       </section>
-      <div className="hidden xl:block min-w-0">
+      <PreviewPane>
         <SidePanel
           scope="coverLetter"
           preview={
@@ -114,7 +118,7 @@ export const CoverLetterTab: React.FC = () => {
             </LivePreview>
           }
         />
-      </div>
+      </PreviewPane>
     </div>
   );
 };

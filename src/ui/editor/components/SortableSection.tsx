@@ -1,5 +1,5 @@
 import React from 'react';
-import { GripVertical, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, GripVertical, Plus, Trash2 } from 'lucide-react';
 import {
   DndContext,
   DragEndEvent,
@@ -19,10 +19,11 @@ import { CSS } from '@dnd-kit/utilities';
 
 interface SortableItemProps {
   id: string;
-  children: React.ReactNode;
+  label: string;
+  children: (handle: React.ReactNode) => React.ReactNode;
 }
 
-const SortableItem: React.FC<SortableItemProps> = ({ id, children }) => {
+const SortableItem: React.FC<SortableItemProps> = ({ id, label, children }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
   const style = {
@@ -32,20 +33,22 @@ const SortableItem: React.FC<SortableItemProps> = ({ id, children }) => {
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="relative group">
-      <div className="absolute left-0 top-0 bottom-0 flex items-start pt-4 -ml-8 opacity-0 group-hover:opacity-100 transition-opacity">
+    <div ref={setNodeRef} style={style}>
+      {children(
         <button
           {...attributes}
           {...listeners}
-          className="p-1.5 hover:bg-slate-100 rounded cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600"
+          aria-label={`Drag to reorder ${label}`}
+          className="p-1.5 -ml-1.5 hover:bg-slate-100 rounded cursor-grab active:cursor-grabbing touch-none text-slate-500 hover:text-slate-700"
         >
           <GripVertical size={16} />
-        </button>
-      </div>
-      {children}
+        </button>,
+      )}
     </div>
   );
 };
+
+const iconButtonClass = 'p-2 text-slate-500 hover:bg-slate-100 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent';
 
 interface SortableSectionProps<T> {
   section: string;
@@ -89,7 +92,7 @@ const SortableSection = <T,>({
         <h2 className="text-xl font-display text-slate-900">{title}</h2>
         <button
           onClick={onAdd}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white text-sm font-medium rounded-xl hover:bg-accent/90"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-xl hover:bg-black transition-all"
         >
           <Plus size={14} /> {addLabel}
         </button>
@@ -98,20 +101,43 @@ const SortableSection = <T,>({
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
           <div className="space-y-6">
             {items.map((item, idx) => (
-              <SortableItem key={ids[idx]} id={ids[idx]}>
-                <div className="p-5 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
-                  <div className="flex justify-between items-start">
-                    <h3 className="text-sm font-semibold text-slate-700">{itemLabel} {idx + 1}</h3>
-                    <button
-                      aria-label={`Remove ${itemLabel} ${idx + 1}`}
-                      onClick={() => onRemove(idx)}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+              <SortableItem key={ids[idx]} id={ids[idx]} label={`${itemLabel} ${idx + 1}`}>
+                {(handle) => (
+                  <div className="p-5 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
+                    <div className="flex justify-between items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        {handle}
+                        <h3 className="text-sm font-semibold text-slate-700">{itemLabel} {idx + 1}</h3>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          aria-label={`Move ${itemLabel} ${idx + 1} up`}
+                          disabled={idx === 0}
+                          onClick={() => onMove(idx, idx - 1)}
+                          className={iconButtonClass}
+                        >
+                          <ArrowUp size={14} />
+                        </button>
+                        <button
+                          aria-label={`Move ${itemLabel} ${idx + 1} down`}
+                          disabled={idx === items.length - 1}
+                          onClick={() => onMove(idx, idx + 1)}
+                          className={iconButtonClass}
+                        >
+                          <ArrowDown size={14} />
+                        </button>
+                        <button
+                          aria-label={`Remove ${itemLabel} ${idx + 1}`}
+                          onClick={() => onRemove(idx)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                    {renderItem(item, idx)}
                   </div>
-                  {renderItem(item, idx)}
-                </div>
+                )}
               </SortableItem>
             ))}
           </div>

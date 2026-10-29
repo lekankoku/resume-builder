@@ -18,6 +18,7 @@ import { CoverLetter } from '../../domain/coverLetter/CoverLetter';
 import { Resume } from '../../domain/resume/Resume';
 import { Loading, Skeleton } from '../shell/Skeleton';
 import { buttonClass, inputClass, labelClass, primaryButtonClass } from './ApplicationsView';
+import { formatDateTime } from '../format';
 
 export type SuggestionScope = 'cv' | 'coverLetter';
 
@@ -148,7 +149,7 @@ const SuggestionsPanel: React.FC<Props> = ({ job, state, scope, ai, jobBank, job
             )}
           </p>
         )}
-        {error && <p role="alert" className="text-red-500 text-xs bg-red-50 p-3 rounded-lg border border-red-100">{error}</p>}
+        {error && <p role="alert" className="text-red-600 text-xs bg-red-50 p-3 rounded-lg border border-red-100">{error}</p>}
       </div>
 
       {loading && !set && (
@@ -170,7 +171,7 @@ const SuggestionsPanel: React.FC<Props> = ({ job, state, scope, ai, jobBank, job
       {set && (
         <>
           <p className="text-xs text-slate-500">
-            Suggested {new Date(set.createdAt).toLocaleString()} · estimated cost {formatUsd(set.usage.costUsd)}
+            Suggested {formatDateTime(set.createdAt)} · estimated cost {formatUsd(set.usage.costUsd)}
             {decided.length > 0 && ` · ${decided.filter((d) => d.status === 'accepted').length} accepted, ${decided.filter((d) => d.status === 'declined').length} declined`}
           </p>
           {set.summary && <p>{set.summary}</p>}

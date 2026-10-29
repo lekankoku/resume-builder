@@ -32,6 +32,7 @@ import SettingsView, {
   WorkAuthorizationSettings,
 } from './settings/SettingsView';
 import AppShell from './shell/AppShell';
+import { useToast } from './shell/Toast';
 
 const PreviewPage = lazy(() => import('./preview/PreviewPage'));
 
@@ -44,15 +45,54 @@ interface AppProps {
 }
 
 const App: React.FC<AppProps> = ({ repositories, documents, ai, saveStatus, onRetrySave }) => {
-  const { applications, actions } = useApplications(repositories.applications);
-  const { stages, add: addStage, remove: removeStage } = useStages(repositories.stages);
+  const { applications, actions: baseActions, restore: restoreApplications } = useApplications(repositories.applications);
+  const { stages, add: addStage, remove: removeStage, restore: restoreStages } = useStages(repositories.stages);
   const { drafts, save: saveDraft, remove: removeDraft } = useDrafts(repositories.drafts);
-  const { leads, add: addLead, remove: removeLead, removeForPosting } = useLeads(repositories.leads);
+  const { leads, add: addLead, remove: removeLead, removeForPosting, restore: restoreLeads } = useLeads(repositories.leads);
   const { profile, updateField: updateProfileField } = useProfile(repositories.profile);
   const { jobBank, setJobBank } = useJobBank(repositories.jobBank);
   const { facts, setFacts } = useCandidateFacts(repositories.facts);
   const { cvGuide, setCvGuide } = useCvGuide(repositories.cvGuide);
   const navigate = useNavigate();
+  const notify = useToast();
+
+  const actions = {
+    ...baseActions,
+    changeStage: (id: string, stage: string) => {
+      const application = applications.find((a) => a.id === id);
+      if (!application || application.stage === stage) return;
+      baseActions.changeStage(id, stage);
+      notify(`${application.company || 'Untitled company'} moved to ${stage}`, () => baseActions.update(id, () => application));
+    },
+    remove: (id: string) => {
+      const index = applications.findIndex((a) => a.id === id);
+      if (index === -1) return;
+      const application = applications[index];
+      baseActions.remove(id);
+      notify(`${application.company || 'Untitled company'} deleted`, () => restoreApplications((current) => insertAt(current, index, application)));
+    },
+  };
+
+  const discardDraft = (id: string) => {
+    const draft = drafts.find((d) => d.id === id);
+    if (!draft) return;
+    removeDraft(id);
+    notify('Draft discarded', () => saveDraft(draft));
+  };
+
+  const removeLeadWithUndo = (id: string) => {
+    const index = leads.findIndex((l) => l.id === id);
+    if (index === -1) return;
+    const lead = leads[index];
+    removeLead(id);
+    notify(`${lead.company || 'Saved job'} removed`, () => restoreLeads((current) => insertAt(current, index, lead)));
+  };
+
+  const removeStageWithUndo = (stage: string) => {
+    const index = stages.indexOf(stage);
+    removeStage(stage, applications);
+    notify(`Stage ${stage} removed`, () => restoreStages((current) => insertAt(current, index, stage)));
+  };
   const location = useLocation();
 
   useEffect(() => {
@@ -75,6 +115,7 @@ const App: React.FC<AppProps> = ({ repositories, documents, ai, saveStatus, onRe
       onRememberAnswers={(answers) => setFacts((current) => rememberAnswers(current, answers))}
       onCreate={(details, source, draftId) => {
         const id = actions.create(details, source, initialStage(stages));
+        notify(`${details.company} added to ${initialStage(stages)}`);
         startTransition(() => {
           navigate(`/applications/${id}`);
           if (draftId) removeDraft(draftId);
@@ -88,10 +129,10 @@ const App: React.FC<AppProps> = ({ repositories, documents, ai, saveStatus, onRe
   return (
     <Routes>
       <Route element={<AppShell saveStatus={saveStatus} onRetrySave={onRetrySave} records={{ applications, leads, drafts }} />}>
-        <Route index element={<HomeView applications={applications} stages={stages} drafts={drafts} leads={leads} onDiscardDraft={removeDraft} />} />
+        <Route index element={<HomeView applications={applications} stages={stages} drafts={drafts} leads={leads} onDiscardDraft={discardDraft} />} />
         <Route path="applications" element={<ApplicationsView applications={applications} stages={stages} onChangeStage={actions.changeStage} />} />
         <Route path="applications/new" element={<NewApplicationRoute leads={leads} wizard={wizard} />} />
-        <Route path="to-apply" element={<LeadsView leads={leads} onAdd={addLead} onRemove={removeLead} />} />
+        <Route path="to-apply" element={<LeadsView leads={leads} onAdd={addLead} onRemove={removeLeadWithUndo} />} />
         <Route path="cvs" element={<CvsView applications={applications.filter((a) => a.hasCv)} />} />
         <Route path="documents" element={<DocumentsView client={documents} />} />
         <Route path="drafts/:id" element={<DraftRoute drafts={drafts} wizard={wizard} />} />
@@ -136,7 +177,7 @@ const App: React.FC<AppProps> = ({ repositories, documents, ai, saveStatus, onRe
                 stages={stages}
                 applications={applications}
                 onAdd={addStage}
-                onRemove={(stage) => removeStage(stage, applications)}
+                onRemove={removeStageWithUndo}
               />
             }
           />
@@ -163,6 +204,8 @@ const App: React.FC<AppProps> = ({ repositories, documents, ai, saveStatus, onRe
     </Routes>
   );
 };
+
+const insertAt = <T,>(items: T[], index: number, item: T): T[] => [...items.slice(0, index), item, ...items.slice(index)];
 
 const NewApplicationRoute: React.FC<{
   leads: JobLead[];

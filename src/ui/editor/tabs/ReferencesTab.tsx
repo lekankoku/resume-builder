@@ -19,7 +19,7 @@ const ReferencesTab = ({ resume, actions }: Props) => (
     onRemove={(idx) => actions.removeItem('references', idx)}
     onMove={(from, to) => actions.moveItem('references', from, to)}
     renderItem={(ref, idx) => (
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <TextField label="Name" value={ref.name} onChange={(v) => actions.updateItemField('references', idx, 'name', v)} />
         <TextField label="Role" value={ref.role} onChange={(v) => actions.updateItemField('references', idx, 'role', v)} />
         <TextField label="Company" value={ref.company} onChange={(v) => actions.updateItemField('references', idx, 'company', v)} />

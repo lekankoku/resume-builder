@@ -51,7 +51,7 @@ const IdentityTab: React.FC<Props> = ({ resume, actions, targetCompany, onTarget
       <p className="text-xs text-slate-500">Your name and contact details are set once in Settings.</p>
     </div>
 
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <TextField label="Current role" value={resume.personal.currentRole} onChange={(v) => actions.updatePersonal('currentRole', v)} />
       <TextField label="Current company" value={resume.personal.currentCompany} onChange={(v) => actions.updatePersonal('currentCompany', v)} />
     </div>

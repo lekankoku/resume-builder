@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Resume Architect - High-Fidelity CV Builder">
-    <title>Resume Architect | Professional CV Builder</title>
+    <meta name="description" content="Resume Builder - track job applications and tailor your CV">
+    <title>Resume Builder</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script>
@@ -48,6 +48,19 @@
             padding: 20mm;
             flex-shrink: 0;
             position: relative;
+        }
+        a:focus-visible,
+        button:focus-visible,
+        select:focus-visible,
+        summary:focus-visible,
+        [tabindex]:not([tabindex="-1"]):focus-visible {
+            outline: 2px solid #0052FF;
+            outline-offset: 2px;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
         }
         .avoid-break {
             break-inside: avoid;

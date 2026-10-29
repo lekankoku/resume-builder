@@ -27,6 +27,12 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 
 const AppShell: React.FC<Props> = ({ saveStatus, onRetrySave, records }) => (
   <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 font-sans">
+    <a
+      href="#main"
+      className="no-print sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-white focus:text-sm focus:font-semibold focus:text-slate-900 focus:shadow-lg"
+    >
+      Skip to content
+    </a>
     <header className="no-print md:hidden sticky top-0 z-20 bg-white border-b border-slate-200 px-4 pt-3 pb-2 space-y-2">
       <div className="flex items-center justify-between gap-3">
         <Link to="/" className="flex items-center gap-2 text-slate-900">
@@ -35,7 +41,16 @@ const AppShell: React.FC<Props> = ({ saveStatus, onRetrySave, records }) => (
           </span>
           <span className="font-display text-base">Resume Builder</span>
         </Link>
-        <SaveIndicator saveStatus={saveStatus} onRetry={onRetrySave} />
+        <div className="flex items-center gap-2">
+          <SaveIndicator saveStatus={saveStatus} onRetry={onRetrySave} />
+          <Link
+            to="/applications/new"
+            aria-label="New application"
+            className="flex items-center justify-center w-9 h-9 bg-slate-900 text-white rounded-xl hover:bg-black"
+          >
+            <Plus size={16} />
+          </Link>
+        </div>
       </div>
       <GlobalSearch records={records} />
       <nav aria-label="Main" className="flex gap-1 overflow-x-auto -mx-1">
@@ -77,7 +92,7 @@ const AppShell: React.FC<Props> = ({ saveStatus, onRetrySave, records }) => (
       </div>
     </aside>
 
-    <main className="flex-1 min-w-0 px-4 py-6 md:px-10 md:py-8">
+    <main id="main" tabIndex={-1} className="flex-1 min-w-0 px-4 py-6 md:px-10 md:py-8 focus:outline-none">
       <Outlet />
     </main>
   </div>

@@ -24,6 +24,7 @@ const LeadershipTab = ({ resume, actions }: Props) => (
       onAdd={actions.addCrossFunctionalBullet}
       onChange={actions.updateCrossFunctionalBullet}
       onRemove={actions.removeCrossFunctionalBullet}
+      onMove={actions.moveCrossFunctionalBullet}
     />
   </div>
 );

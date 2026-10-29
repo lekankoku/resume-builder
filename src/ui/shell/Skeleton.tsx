@@ -61,7 +61,7 @@ export const AppSkeleton: React.FC = () => (
         ))}
       </div>
     </div>
-    <div className="flex-1 min-w-0 px-4 py-6 md:px-10 md:py-8 max-w-6xl space-y-10">
+    <div className="flex-1 min-w-0 px-4 py-6 md:px-10 md:py-8 max-w-[1600px] space-y-10">
       <div className="space-y-2">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-4 w-64" />

@@ -14,7 +14,7 @@ const LivePreview: React.FC<Props> = ({ title, printViewHref, children }) => (
       <h2 className="text-sm font-semibold text-slate-700">{title}</h2>
       {printViewHref && (
         <Link to={printViewHref} className="flex items-center gap-1 text-sm text-accent hover:underline">
-          Print view <Maximize2 size={14} />
+          PDF view <Maximize2 size={14} />
         </Link>
       )}
     </div>

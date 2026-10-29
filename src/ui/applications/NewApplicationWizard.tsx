@@ -12,17 +12,20 @@ import {
   CvSource,
   createBlankCv,
   JobApplication,
+  detailErrors,
   validateDetails,
 } from '../../domain/application/JobApplication';
 import { CoverLetter, updateCoverLetterField } from '../../domain/coverLetter/CoverLetter';
 import { Profile, Resume } from '../../domain/resume/Resume';
 import { applyProfile } from '../../domain/resume/resumeOperations';
 import { EditorSection, TABS } from '../editor/EditorView';
-import { ResumeActions, useResume } from '../hooks/useResume';
+import { ResumeActions, useResume, withRemovalUndo } from '../hooks/useResume';
 import CoverLetterDocument from '../preview/CoverLetterDocument';
 import LivePreview from '../preview/LivePreview';
+import PreviewPane from '../preview/PreviewPane';
 import ResumeDocument from '../preview/ResumeDocument';
 import PageHeader from '../shell/PageHeader';
+import { useToast } from '../shell/Toast';
 import { buttonClass, DetailFields, inputClass, labelClass, primaryButtonClass } from './ApplicationsView';
 import { PreviewWithSuggestions, SuggestionContext } from './SuggestionsPanel';
 
@@ -97,6 +100,7 @@ const NewApplicationWizard: React.FC<Props> = ({
     save: () => {},
   }));
   const { resume, setResume, actions } = useResume(resumeRepository);
+  const notify = useToast();
   const [coverLetter, setCoverLetter] = useState<CoverLetter>(() => draft?.coverLetter ?? createBlankCv(new Date()).coverLetter);
   const [suggestions, setSuggestions] = useState<SuggestionSet | null>(draft?.suggestions ?? null);
 
@@ -131,6 +135,18 @@ const NewApplicationWizard: React.FC<Props> = ({
     (id === 'review' && chosenKey === cvKey);
   const canReach = (index: number) => (draft || index <= CV_STEP) && steps.slice(0, index).every((s) => isDone(s.id));
   const firstOpenStep = steps.findIndex((s) => !isDone(s.id));
+
+  const [attempts, setAttempts] = useState(0);
+  const detailsSection = useRef<HTMLElement>(null);
+  const stepHeading = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (draft) stepHeading.current?.focus();
+  }, [stepId]);
+
+  useEffect(() => {
+    if (attempts) detailsSection.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  }, [attempts]);
 
   const isFirstRender = useRef(true);
   useEffect(() => {
@@ -232,17 +248,17 @@ const NewApplicationWizard: React.FC<Props> = ({
           </li>
         ))}
       </ol>
+      <h2 ref={stepHeading} tabIndex={-1} className="sr-only">
+        Step {step + 1}: {steps[step].label}
+      </h2>
 
       {stepId === 'details' && (
-        <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 max-w-4xl">
-          <DetailFields details={details} onChange={(field, value) => setDetails((d) => ({ ...d, [field]: value }))} />
-          {problems.length > 0 && (
-            <ul className="text-xs text-red-500 space-y-1">
-              {problems.map((problem) => (
-                <li key={problem}>{problem}</li>
-              ))}
-            </ul>
-          )}
+        <section ref={detailsSection} className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 max-w-4xl">
+          <DetailFields
+            details={details}
+            errors={attempts ? detailErrors(details) : {}}
+            onChange={(field, value) => setDetails((d) => ({ ...d, [field]: value }))}
+          />
         </section>
       )}
 
@@ -307,12 +323,14 @@ const NewApplicationWizard: React.FC<Props> = ({
                 spellCheck={false}
               />
               {jsonError && (
-                <div className="text-red-500 text-xs font-mono bg-red-50 p-3 rounded-lg border border-red-100">{jsonError}</div>
+                <div className="text-red-600 text-xs font-mono bg-red-50 p-3 rounded-lg border border-red-100">{jsonError}</div>
               )}
             </div>
           )}
           {cvKey !== null && (
-            <p className="text-xs text-slate-500">Choosing a different CV discards the edits and checks you made in Review.</p>
+            <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              Choosing a different CV discards the edits you made in Review.
+            </p>
           )}
         </section>
       )}
@@ -320,7 +338,7 @@ const NewApplicationWizard: React.FC<Props> = ({
       {stepId === 'review' && (
         <ReviewStep
           resume={displayedResume}
-          actions={actions}
+          actions={withRemovalUndo(actions, resume, setResume, notify)}
           coverLetter={coverLetter}
           onCoverLetterFieldChange={(field, value) => setCoverLetter((letter) => updateCoverLetterField(letter, field, value))}
           company={details.company}
@@ -364,7 +382,11 @@ const NewApplicationWizard: React.FC<Props> = ({
           <ChevronLeft size={14} /> Back
         </button>
         {stepId !== 'confirm' && (
-          <button onClick={() => goTo(step + 1)} disabled={!isDone(stepId)} className={`${primaryButtonClass} disabled:opacity-40`}>
+          <button
+            onClick={() => (isDone(stepId) ? goTo(step + 1) : setAttempts((n) => n + 1))}
+            disabled={stepId !== 'details' && !isDone(stepId)}
+            className={`${primaryButtonClass} disabled:opacity-40`}
+          >
             Next <ChevronRight size={14} />
           </button>
         )}
@@ -433,11 +455,11 @@ const ReviewStep: React.FC<{
                   aria-expanded={isOpen}
                   className="w-full flex items-center gap-3 px-5 py-4 text-left"
                 >
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center bg-slate-100 text-slate-400">
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center bg-slate-100 text-slate-500">
                     <section.icon size={12} />
                   </span>
                   <span className="flex-1 text-sm font-semibold text-slate-900">{section.label}</span>
-                  <ChevronDown size={16} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={16} className={`text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
               </h2>
               {isOpen && (
@@ -458,7 +480,7 @@ const ReviewStep: React.FC<{
         })}
       </div>
 
-      <div className="hidden xl:block min-w-0">
+      <PreviewPane>
         <PreviewWithSuggestions
           {...suggestionContext}
           scope={open === 'coverLetter' ? 'coverLetter' : 'cv'}
@@ -474,7 +496,7 @@ const ReviewStep: React.FC<{
             )
           }
         />
-      </div>
+      </PreviewPane>
     </div>
   );
 };
@@ -493,12 +515,12 @@ const ConfirmStep: React.FC<{
         {items.map(([label, value]) => (
           <div key={label} className="px-4 py-3 rounded-lg border border-slate-200">
             <dt className={labelClass}>{label}</dt>
-            <dd className="text-sm text-slate-900 whitespace-pre-wrap">{value}</dd>
+            <dd className={`text-sm text-slate-900 whitespace-pre-wrap ${label === 'Job description' ? 'line-clamp-6' : ''}`}>{value}</dd>
           </div>
         ))}
       </dl>
       {problems.length > 0 && (
-        <ul className="text-xs text-red-500 space-y-1">
+        <ul className="text-xs text-red-600 space-y-1">
           {problems.map((problem) => (
             <li key={problem}>{problem}</li>
           ))}

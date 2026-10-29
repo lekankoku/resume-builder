@@ -15,10 +15,10 @@ import LeadershipTab from './tabs/LeadershipTab';
 import ProjectsTab from './tabs/ProjectsTab';
 import ReferencesTab from './tabs/ReferencesTab';
 import TechStackTab from './tabs/TechStackTab';
+import PreviewPane from '../preview/PreviewPane';
 import VolunteeringTab from './tabs/VolunteeringTab';
 
 export const TABS = [
-  { id: 'json', label: 'Raw JSON', icon: FileJson },
   { id: 'personal', label: 'Identity', icon: User },
   { id: 'experiences', label: 'Experience', icon: Briefcase },
   { id: 'projects', label: 'Projects', icon: Terminal },
@@ -30,6 +30,7 @@ export const TABS = [
   { id: 'languages', label: 'Languages', icon: Languages },
   { id: 'references', label: 'References', icon: Users },
   { id: 'coverLetter', label: 'Cover Letter', icon: FileText },
+  { id: 'json', label: 'Raw JSON', icon: FileJson },
 ];
 
 interface Props {
@@ -97,7 +98,7 @@ const EditorView: React.FC<Props> = ({
       )}
     </section>
 
-    {preview && <div className="hidden xl:block min-w-0">{preview}</div>}
+    {preview && <PreviewPane>{preview}</PreviewPane>}
   </div>
 );
 

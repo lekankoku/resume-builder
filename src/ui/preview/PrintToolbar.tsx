@@ -43,7 +43,7 @@ const PrintToolbar: React.FC<Props> = ({
         href={downloadUrl ?? undefined}
         download={`${fileName}.pdf`}
         aria-disabled={!downloadUrl}
-        className="flex items-center gap-2 px-5 py-2 bg-accent text-white text-sm font-semibold rounded-xl shadow-sm hover:bg-accent/90 transition-all aria-disabled:opacity-50"
+        className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-xl hover:bg-black transition-all aria-disabled:opacity-50"
       >
         <Download size={16} /> Download PDF
       </a>

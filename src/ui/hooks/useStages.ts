@@ -14,5 +14,5 @@ export const useStages = (repository: StageRepository) => {
   const remove = (name: string, applications: JobApplication[]) =>
     setStages((current) => removeStage(current, name, applications));
 
-  return { stages, add, remove };
+  return { stages, add, remove, restore: setStages };
 };

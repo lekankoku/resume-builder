@@ -30,12 +30,12 @@ const CoverLetterTab: React.FC<Props> = ({ coverLetter, onFieldChange, targetCom
 
       <div className="space-y-4 p-4 bg-slate-50 rounded-xl">
         <h3 className="text-sm font-semibold text-slate-900">Recipient</h3>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1">
             <label htmlFor="cover-letter-recipient-name" className="text-sm font-medium text-slate-700">Recipient Name</label>
             <input
               id="cover-letter-recipient-name"
-              className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-accent/30 focus:border-accent outline-none"
               value={coverLetter.recipientName}
               onChange={(e) => onFieldChange('recipientName', e.target.value)}
               placeholder="Hiring Manager or Name"
@@ -45,30 +45,30 @@ const CoverLetterTab: React.FC<Props> = ({ coverLetter, onFieldChange, targetCom
             <label htmlFor="cover-letter-recipient-title" className="text-sm font-medium text-slate-700">Recipient Title</label>
             <input
               id="cover-letter-recipient-title"
-              className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-accent/30 focus:border-accent outline-none"
               value={coverLetter.recipientTitle}
               onChange={(e) => onFieldChange('recipientTitle', e.target.value)}
               placeholder="Senior Hiring Manager"
             />
           </div>
-          <div className="space-y-1 col-span-2">
+          <div className="space-y-1 sm:col-span-2">
             <label htmlFor="cover-letter-company" className="text-sm font-medium text-slate-700">Company Name</label>
             <input
               id="cover-letter-company"
-              className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-accent/30 focus:border-accent outline-none"
               value={targetCompany}
               onChange={(e) => onTargetCompanyChange(e.target.value)}
               placeholder="Company Inc."
             />
             <p className="text-xs text-slate-500 mt-1">
-              💡 This is shared with your resume. Set it once in the Identity tab.
+              Shared with your CV.
             </p>
           </div>
-          <div className="space-y-1 col-span-2">
+          <div className="space-y-1 sm:col-span-2">
             <label htmlFor="cover-letter-address" className="text-sm font-medium text-slate-700">Company Address</label>
             <input
               id="cover-letter-address"
-              className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none"
+              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-accent/30 focus:border-accent outline-none"
               value={coverLetter.companyAddress}
               onChange={(e) => onFieldChange('companyAddress', e.target.value)}
               placeholder="City, Country"
@@ -93,7 +93,7 @@ const CoverLetterTab: React.FC<Props> = ({ coverLetter, onFieldChange, targetCom
         <p className="text-xs text-slate-500 mb-2">Paste or write your cover letter content here.</p>
         <textarea
           id="cover-letter-body"
-          className="w-full p-4 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-accent outline-none min-h-[400px] leading-relaxed"
+          className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-accent/30 focus:border-accent outline-none min-h-[400px] leading-relaxed"
           value={coverLetter.body}
           onChange={(e) => onFieldChange('body', e.target.value)}
           placeholder="Dear [Recipient Name],&#10;&#10;I am writing to express my strong interest in the [Position] role at [Company]. With [X] years of experience in [field], I am confident that my skills and background make me an excellent fit for this position.&#10;&#10;Throughout my career, I have...&#10;&#10;I am excited about the opportunity to contribute to [Company]'s mission and would welcome the chance to discuss how my experience aligns with your team's needs.&#10;&#10;Thank you for your consideration.&#10;&#10;Sincerely,&#10;[Your Name]"

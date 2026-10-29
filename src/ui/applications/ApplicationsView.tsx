@@ -3,12 +3,13 @@ import { Columns3, GripVertical, Plus, Rows3 } from 'lucide-react';
 import { Announcements, DndContext, DragEndEvent, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { Link, useSearchParams } from 'react-router';
-import { ApplicationDetails, JobApplication } from '../../domain/application/JobApplication';
+import { ApplicationDetails, DetailErrors, JobApplication } from '../../domain/application/JobApplication';
 import { StageColumn, stageColumns } from '../../domain/application/pipeline';
 import { matchesQuery } from '../../domain/application/search';
 import { CLOSED_STAGES, stageOptions } from '../../domain/application/stages';
 import PageHeader from '../shell/PageHeader';
 import ViewSearch, { useViewQuery } from '../shell/ViewSearch';
+import { formatDate } from '../format';
 
 interface Props {
   applications: JobApplication[];
@@ -55,7 +56,7 @@ const ApplicationsView: React.FC<Props> = ({ applications, stages, onChangeStage
         }
       />
 
-      <div className="mb-6 flex items-end justify-between gap-4">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-1 items-center gap-4">
           <div role="group" aria-label="View" className="flex gap-1 p-1 bg-slate-100 rounded-xl">
             {(['board', 'table'] as const).map((option) => (
@@ -87,10 +88,34 @@ const ApplicationsView: React.FC<Props> = ({ applications, stages, onChangeStage
         )}
       </div>
 
-      {view === 'board' ? (
+      {applications.length === 0 ? (
+        <p className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-sm text-slate-500">
+          No applications yet. Use New application to track your first one.
+        </p>
+      ) : (view === 'board' ? matching : visible).length === 0 ? (
+        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-4">
+          <p className="text-sm text-slate-500">No applications match your {view === 'table' && stageFilter ? 'search and stage filter' : 'search'}.</p>
+          <button
+            onClick={() =>
+              setParams(
+                (current) => {
+                  const next = new URLSearchParams(current);
+                  next.delete('q');
+                  next.delete('stage');
+                  return next;
+                },
+                { replace: true },
+              )
+            }
+            className={buttonClass}
+          >
+            Clear {view === 'table' && stageFilter ? 'filters' : 'search'}
+          </button>
+        </div>
+      ) : view === 'board' ? (
         <StageBoard applications={matching} stages={stages} onChangeStage={onChangeStage} />
       ) : (
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs text-slate-500">
                 <tr>
@@ -102,7 +127,7 @@ const ApplicationsView: React.FC<Props> = ({ applications, stages, onChangeStage
               </thead>
               <tbody>
                 {visible.map((application) => (
-                  <tr key={application.id} className={`border-t border-slate-100 hover:bg-slate-50 ${CLOSED_STAGES.includes(application.stage) ? 'text-slate-400' : 'text-slate-900'}`}>
+                  <tr key={application.id} className={`border-t border-slate-100 hover:bg-slate-50 ${CLOSED_STAGES.includes(application.stage) ? 'text-slate-500' : 'text-slate-900'}`}>
                     <td className="px-5 py-3 font-semibold">
                       <Link to={`/applications/${application.id}`} className="hover:underline">
                         {application.company || 'Untitled company'}
@@ -112,14 +137,9 @@ const ApplicationsView: React.FC<Props> = ({ applications, stages, onChangeStage
                     <td className="px-5 py-3">
                       <StageSelect application={application} stages={stages} onChangeStage={onChangeStage} />
                     </td>
-                    <td className="px-5 py-3">{application.appliedOn || '—'}</td>
+                    <td className="px-5 py-3 whitespace-nowrap">{application.appliedOn ? formatDate(application.appliedOn) : '—'}</td>
                   </tr>
                 ))}
-                {visible.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="px-5 py-10 text-center text-slate-500">No applications</td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
@@ -217,7 +237,7 @@ const BoardCard: React.FC<{
         tabIndex={-1}
         aria-hidden="true"
         title="Drag to another stage"
-        className="mt-0.5 p-0.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-grab active:cursor-grabbing"
+        className="mt-0.5 p-0.5 rounded text-slate-500 hover:text-slate-700 hover:bg-slate-100 cursor-grab active:cursor-grabbing"
       >
         <GripVertical size={14} />
       </span>
@@ -225,7 +245,7 @@ const BoardCard: React.FC<{
         <Link to={`/applications/${application.id}`} className="block group">
           <p className="text-sm font-semibold text-slate-900 truncate group-hover:underline">{application.company || 'Untitled company'}</p>
           <p className="text-xs text-slate-600 truncate">{application.role}</p>
-          <p className="text-xs text-slate-400 mt-1">Applied {application.appliedOn || '—'}</p>
+          <p className="text-xs text-slate-500 mt-1">Applied {application.appliedOn ? formatDate(application.appliedOn) : '—'}</p>
         </Link>
         <select
           aria-label={`Move ${application.company || 'application'} to stage`}
@@ -259,18 +279,44 @@ export const StageSelect: React.FC<{
   </select>
 );
 
+const FieldError: React.FC<{ id: string; error?: string }> = ({ id, error }) =>
+  error ? (
+    <p id={id} className="text-xs text-red-600">
+      {error}
+    </p>
+  ) : null;
+
+const errorProps = (id: string, error?: string) => (error ? { 'aria-invalid': true, 'aria-describedby': id } : {});
+
 export const DetailFields: React.FC<{
   details: ApplicationDetails;
   onChange: (field: keyof ApplicationDetails, value: string) => void;
-}> = ({ details, onChange }) => (
-  <div className="grid grid-cols-2 gap-6">
+  errors?: DetailErrors;
+}> = ({ details, onChange, errors }) => (
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
     <div className="space-y-1">
       <label htmlFor="application-company" className={labelClass}>Company</label>
-      <input id="application-company" className={inputClass} value={details.company} onChange={(e) => onChange('company', e.target.value)} />
+      <input
+        id="application-company"
+        required
+        className={inputClass}
+        value={details.company}
+        onChange={(e) => onChange('company', e.target.value)}
+        {...errorProps('application-company-error', errors?.company)}
+      />
+      <FieldError id="application-company-error" error={errors?.company} />
     </div>
     <div className="space-y-1">
       <label htmlFor="application-role" className={labelClass}>Role</label>
-      <input id="application-role" className={inputClass} value={details.role} onChange={(e) => onChange('role', e.target.value)} />
+      <input
+        id="application-role"
+        required
+        className={inputClass}
+        value={details.role}
+        onChange={(e) => onChange('role', e.target.value)}
+        {...errorProps('application-role-error', errors?.role)}
+      />
+      <FieldError id="application-role-error" error={errors?.role} />
     </div>
     <div className="space-y-1">
       <label htmlFor="application-url" className={labelClass}>Job posting URL</label>
@@ -280,19 +326,24 @@ export const DetailFields: React.FC<{
         className={inputClass}
         value={details.postingUrl}
         onChange={(e) => onChange('postingUrl', e.target.value)}
+        {...errorProps('application-url-error', errors?.postingUrl)}
       />
+      <FieldError id="application-url-error" error={errors?.postingUrl} />
     </div>
     <div className="space-y-1">
       <label htmlFor="application-applied-on" className={labelClass}>Date applied</label>
       <input
         id="application-applied-on"
         type="date"
+        required
         className={inputClass}
         value={details.appliedOn}
         onChange={(e) => onChange('appliedOn', e.target.value)}
+        {...errorProps('application-applied-on-error', errors?.appliedOn)}
       />
+      <FieldError id="application-applied-on-error" error={errors?.appliedOn} />
     </div>
-    <div className="space-y-1 col-span-2">
+    <div className="space-y-1 sm:col-span-2">
       <label htmlFor="application-notes" className={labelClass}>Notes</label>
       <textarea
         id="application-notes"
@@ -301,7 +352,7 @@ export const DetailFields: React.FC<{
         onChange={(e) => onChange('notes', e.target.value)}
       />
     </div>
-    <div className="space-y-1 col-span-2">
+    <div className="space-y-1 sm:col-span-2">
       <label htmlFor="application-job-description" className={labelClass}>Job description</label>
       <textarea
         id="application-job-description"

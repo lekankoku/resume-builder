@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Upload } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
 import { AiClient, DocumentClient, StoredDocument } from '../../application/ports/repositories';
 import { formatUsd, UsageReport } from '../../domain/application/cvGeneration';
@@ -15,9 +15,11 @@ import {
 } from '../../domain/candidate/CandidateFacts';
 import { isStageInUse } from '../../domain/application/stages';
 import { Profile } from '../../domain/resume/Resume';
-import { inputClass, labelClass, primaryButtonClass } from '../applications/ApplicationsView';
+import { buttonClass, inputClass, labelClass, primaryButtonClass } from '../applications/ApplicationsView';
 import PageHeader from '../shell/PageHeader';
 import { Loading, Skeleton } from '../shell/Skeleton';
+import { useToast } from '../shell/Toast';
+import { formatDate, formatDateTime } from '../format';
 
 const PROFILE_LABELS: Record<keyof Profile, string> = {
   name: 'Name',
@@ -29,6 +31,16 @@ const PROFILE_LABELS: Record<keyof Profile, string> = {
   linkedin: 'LinkedIn',
   github: 'GitHub',
   photoUrl: 'Photo URL',
+};
+
+const PROFILE_INPUTS: Partial<Record<keyof Profile, { type: string; autoComplete?: string }>> = {
+  name: { type: 'text', autoComplete: 'name' },
+  phone: { type: 'tel', autoComplete: 'tel' },
+  email: { type: 'email', autoComplete: 'email' },
+  website: { type: 'url', autoComplete: 'url' },
+  linkedin: { type: 'url' },
+  github: { type: 'url' },
+  photoUrl: { type: 'url' },
 };
 
 const SECTIONS = [
@@ -43,13 +55,13 @@ const SECTIONS = [
 const SettingsView: React.FC = () => (
   <div className="max-w-3xl">
     <PageHeader title="Settings" />
-    <nav aria-label="Settings" className="flex gap-1 border-b border-slate-200 mb-6">
+    <nav aria-label="Settings" className="flex flex-wrap gap-1 border-b border-slate-200 mb-6">
       {SECTIONS.map((section) => (
         <NavLink
           key={section.to}
           to={section.to}
           className={({ isActive }) =>
-            `px-4 py-2 -mb-px text-sm border-b-2 transition-all ${
+            `px-4 py-2 -mb-px text-sm whitespace-nowrap border-b-2 transition-all ${
               isActive ? 'border-accent text-accent font-semibold' : 'border-transparent text-slate-600 hover:text-slate-900'
             }`
           }
@@ -68,11 +80,17 @@ export const ProfileSettings: React.FC<{
 }> = ({ profile, onChange }) => (
   <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
     <p className="text-sm text-slate-500">Used on every CV and cover letter. Each application only sets its own title.</p>
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       {(Object.keys(PROFILE_LABELS) as (keyof Profile)[]).map((key) => (
         <div key={key} className="space-y-1">
           <label htmlFor={`profile-${key}`} className={labelClass}>{PROFILE_LABELS[key]}</label>
-          <input id={`profile-${key}`} className={inputClass} value={profile[key] ?? ''} onChange={(e) => onChange(key, e.target.value)} />
+          <input
+            id={`profile-${key}`}
+            {...PROFILE_INPUTS[key]}
+            className={inputClass}
+            value={profile[key] ?? ''}
+            onChange={(e) => onChange(key, e.target.value)}
+          />
         </div>
       ))}
     </div>
@@ -99,7 +117,7 @@ export const StageSettings: React.FC<{
               disabled={isStageInUse(stage, applications)}
               title={isStageInUse(stage, applications) ? 'In use by an application' : undefined}
               onClick={() => onRemove(stage)}
-              className="text-slate-400 hover:text-red-500 disabled:opacity-30 disabled:hover:text-slate-400"
+              className="text-slate-500 hover:text-red-600 disabled:opacity-30 disabled:hover:text-slate-500"
             >
               <Trash2 size={14} />
             </button>
@@ -158,7 +176,7 @@ export const WorkAuthorizationSettings: React.FC<{
 }> = ({ facts, onChange }) => (
   <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 mt-6">
     <p className="text-sm text-slate-500">Sent to the AI with your profile, so it doesn't ask again and the cover letter can mention it when it helps.</p>
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <div className="space-y-1">
         <label htmlFor="work-authorization" className={labelClass}>Work authorisation</label>
         <select
@@ -245,8 +263,8 @@ const FactSection: React.FC<{
 
 const FactItem: React.FC<{ label: string; onRemove: () => void; children: React.ReactNode }> = ({ label, onRemove, children }) => (
   <div className="p-4 bg-slate-50 rounded-xl space-y-3">
-    <div className="grid grid-cols-2 gap-4">{children}</div>
-    <button aria-label={`Remove ${label}`} onClick={onRemove} className="flex items-center gap-1 text-sm text-red-500 hover:underline">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{children}</div>
+    <button aria-label={`Remove ${label}`} onClick={onRemove} className="flex items-center gap-1 text-sm text-red-600 hover:underline">
       <Trash2 size={14} /> Remove
     </button>
   </div>
@@ -258,7 +276,11 @@ export const CvFactsSettings: React.FC<{
 }> = ({ facts, onChange }) => {
   const set = <L extends FactList>(list: L, index: number, field: keyof CandidateFacts[L][number], value: string | boolean) =>
     onChange(updateFact(facts, list, index, field, value));
-  const remove = (list: FactList, index: number) => onChange(removeFact(facts, list, index));
+  const notify = useToast();
+  const remove = (list: FactList, index: number) => {
+    onChange(removeFact(facts, list, index));
+    notify('Fact removed', () => onChange(facts));
+  };
 
   return (
     <div className="space-y-6">
@@ -322,7 +344,7 @@ export const CvFactsSettings: React.FC<{
             <FactText label={`Location ${i + 1}`} value={education.location} onChange={(v) => set('education', i, 'location', v)} />
             <FactText label={`Period ${i + 1} (e.g. October 2018 – November 2022)`} value={education.period} onChange={(v) => set('education', i, 'period', v)} />
             <FactCheckbox label={`Degree ${i + 1} completed`} checked={education.completed} onChange={(v) => set('education', i, 'completed', v)} />
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
               <FactText label={`Details ${i + 1}`} value={education.details} multiline onChange={(v) => set('education', i, 'details', v)} />
             </div>
           </FactItem>
@@ -337,7 +359,7 @@ export const CvFactsSettings: React.FC<{
             <button
               aria-label={`Remove saved answer ${i + 1}`}
               onClick={() => remove('answers', i)}
-              className="flex items-center gap-1 text-sm text-red-500 hover:underline"
+              className="flex items-center gap-1 text-sm text-red-600 hover:underline"
             >
               <Trash2 size={14} /> Remove
             </button>
@@ -354,6 +376,7 @@ export const CvGuideSettings: React.FC<{
   onChange: (guide: StoredDocument) => void;
 }> = ({ cvGuide, documents, onChange }) => {
   const [uploading, setUploading] = useState(false);
+  const notify = useToast();
   const [error, setError] = useState<string | null>(null);
 
   const upload = async (file: File) => {
@@ -361,6 +384,7 @@ export const CvGuideSettings: React.FC<{
     setError(null);
     try {
       onChange(await documents.upload(file));
+      notify('CV guide uploaded');
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -380,28 +404,32 @@ export const CvGuideSettings: React.FC<{
           <a href={documents.urlOf(cvGuide.id)} target="_blank" rel="noreferrer" className="font-semibold text-accent hover:underline">
             {cvGuide.name}
           </a>{' '}
-          <span className="text-slate-500">uploaded {new Date(cvGuide.uploadedAt).toLocaleDateString()}</span>
+          <span className="text-slate-500">uploaded {formatDate(cvGuide.uploadedAt)}</span>
         </p>
       ) : (
         <p className="text-sm text-slate-900">No guide uploaded yet.</p>
       )}
-      <div className="space-y-1">
-        <label htmlFor="cv-guide-upload" className={labelClass}>{cvGuide ? 'Replace guide PDF' : 'Upload guide PDF'}</label>
+      <div>
         <input
           id="cv-guide-upload"
           type="file"
           accept=".pdf"
           disabled={uploading}
-          className="block text-sm"
+          className="peer sr-only"
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) upload(file);
             e.target.value = '';
           }}
         />
+        <label
+          htmlFor="cv-guide-upload"
+          className={`${buttonClass} cursor-pointer peer-focus-visible:ring-2 peer-focus-visible:ring-accent peer-focus-visible:ring-offset-2 ${uploading ? 'opacity-60 pointer-events-none' : ''}`}
+        >
+          <Upload size={14} /> {uploading ? 'Uploading…' : cvGuide ? 'Replace guide PDF' : 'Upload guide PDF'}
+        </label>
       </div>
-      {uploading && <p className="text-sm text-slate-500">Uploading…</p>}
-      {error && <p role="alert" className="text-sm text-red-500">{error}</p>}
+      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
     </section>
   );
 };
@@ -414,7 +442,7 @@ export const AiUsageSettings: React.FC<{ client: AiClient }> = ({ client }) => {
     client.usage().then(setReport, (e: Error) => setError(e.message));
   }, [client]);
 
-  if (error) return <p role="alert" className="text-sm text-red-500">{error}</p>;
+  if (error) return <p role="alert" className="text-sm text-red-600">{error}</p>;
   if (!report) {
     return (
       <Loading label="Loading AI usage" className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
@@ -452,31 +480,33 @@ export const AiUsageSettings: React.FC<{ client: AiClient }> = ({ client }) => {
       {report.entries.length === 0 ? (
         <p className="text-sm text-slate-500">No CVs generated yet.</p>
       ) : (
-        <table className="w-full text-sm">
-          <caption className="sr-only">Recent generations</caption>
-          <thead>
-            <tr className="text-left text-xs text-slate-500">
-              <th className="py-2 font-medium">Date</th>
-              <th className="py-2 font-medium">Application</th>
-              <th className="py-2 font-medium">Model</th>
-              <th className="py-2 font-medium text-right">Tokens in / cached / out</th>
-              <th className="py-2 font-medium text-right">Cost</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {report.entries.map((entry) => (
-              <tr key={entry.id}>
-                <td className="py-2">{new Date(entry.createdAt).toLocaleString()}</td>
-                <td className="py-2">{[entry.company, entry.role].filter(Boolean).join(' — ')}</td>
-                <td className="py-2">{entry.model}</td>
-                <td className="py-2 text-right tabular-nums">
-                  {entry.inputTokens.toLocaleString()} / {entry.cachedInputTokens.toLocaleString()} / {entry.outputTokens.toLocaleString()}
-                </td>
-                <td className="py-2 text-right tabular-nums">{formatUsd(entry.costUsd)}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <caption className="sr-only">Recent generations</caption>
+            <thead>
+              <tr className="text-left text-xs text-slate-500">
+                <th className="py-2 font-medium">Date</th>
+                <th className="py-2 font-medium">Application</th>
+                <th className="py-2 font-medium">Model</th>
+                <th className="py-2 font-medium text-right">Tokens in / cached / out</th>
+                <th className="py-2 font-medium text-right">Cost</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {report.entries.map((entry) => (
+                <tr key={entry.id}>
+                  <td className="py-2">{formatDateTime(entry.createdAt)}</td>
+                  <td className="py-2">{[entry.company, entry.role].filter(Boolean).join(' — ')}</td>
+                  <td className="py-2">{entry.model}</td>
+                  <td className="py-2 text-right tabular-nums">
+                    {entry.inputTokens.toLocaleString()} / {entry.cachedInputTokens.toLocaleString()} / {entry.outputTokens.toLocaleString()}
+                  </td>
+                  <td className="py-2 text-right tabular-nums">{formatUsd(entry.costUsd)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

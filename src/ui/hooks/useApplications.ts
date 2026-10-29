@@ -30,6 +30,7 @@ export const useApplications = (repository: ApplicationRepository) => {
         return application.id;
       },
       update,
+      remove: (id: string) => setApplications((apps) => apps.filter((application) => application.id !== id)),
       attachCv: (id: string, source: CvSource) => update(id, (application) => ({ ...application, ...attachCv(source) })),
       updateField: (id: string, field: keyof ApplicationDetails, value: string) =>
         update(id, (application) => updateApplicationField(application, field, value)),
@@ -40,7 +41,7 @@ export const useApplications = (repository: ApplicationRepository) => {
     };
   }, []);
 
-  return { applications, actions };
+  return { applications, actions, restore: setApplications };
 };
 
 export type ApplicationActions = ReturnType<typeof useApplications>['actions'];

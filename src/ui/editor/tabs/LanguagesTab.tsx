@@ -19,7 +19,7 @@ const LanguagesTab = ({ resume, actions }: Props) => (
     onRemove={(idx) => actions.removeItem('languages', idx)}
     onMove={(from, to) => actions.moveItem('languages', from, to)}
     renderItem={(lang, idx) => (
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <TextField label="Name" value={lang.name} onChange={(v) => actions.updateItemField('languages', idx, 'name', v)} />
         <TextField label="Level" value={lang.level} onChange={(v) => actions.updateItemField('languages', idx, 'level', v)} />
       </div>

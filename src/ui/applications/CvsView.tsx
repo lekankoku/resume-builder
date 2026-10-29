@@ -7,6 +7,7 @@ import { matchesQuery } from '../../domain/application/search';
 import PageHeader from '../shell/PageHeader';
 import ViewSearch, { useViewQuery } from '../shell/ViewSearch';
 import { buttonClass, primaryButtonClass } from './ApplicationsView';
+import { formatDate } from '../format';
 
 interface Props {
   applications: JobApplication[];
@@ -17,7 +18,7 @@ const CvsView: React.FC<Props> = ({ applications }) => {
   const visible = applications.filter((a) => matchesQuery(query, a.company, a.role, a.resume.personal.title));
 
   return (
-    <div className="max-w-6xl">
+    <div className="max-w-[1600px]">
       <PageHeader title="CVs" subtitle={`${applications.length} CVs from your applications`} />
 
       {applications.length > 0 && (
@@ -27,7 +28,12 @@ const CvsView: React.FC<Props> = ({ applications }) => {
       )}
 
       {applications.length === 0 ? (
-        <p className="text-sm text-slate-500">No CVs yet.</p>
+        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-4">
+          <p className="text-sm text-slate-500">No CVs yet. Each application can have its own tailored CV.</p>
+          <Link to="/applications/new" className={`${primaryButtonClass} inline-flex`}>
+            New application
+          </Link>
+        </div>
       ) : visible.length === 0 ? (
         <p className="text-sm text-slate-500">No CVs match your search.</p>
       ) : (
@@ -42,8 +48,8 @@ const CvsView: React.FC<Props> = ({ applications }) => {
                   </Link>
                   <p className="text-sm text-slate-600">{application.role}</p>
                   <p className="text-sm text-slate-900">{application.resume.personal.title || 'Untitled CV'}</p>
-                  <p className="text-xs text-slate-400">
-                    Applied {application.appliedOn || '—'} · {application.stage} · {application.versions.length} saved versions
+                  <p className="text-xs text-slate-500">
+                    Applied {application.appliedOn ? formatDate(application.appliedOn) : '—'} · {application.stage} · {application.versions.length} saved versions
                   </p>
                 </div>
                 <div className="mt-auto flex gap-2">

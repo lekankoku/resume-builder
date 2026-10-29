@@ -6,6 +6,7 @@ import { createCoverLetter } from '../../domain/coverLetter/CoverLetter';
 import { changeStage, createApplication, JobApplication } from '../../domain/application/JobApplication';
 import { createJobLead, JobLead } from '../../domain/application/JobLead';
 import { aResume } from '../../testing/resumeFixture';
+import { formatDate } from '../format';
 import HomeView from './HomeView';
 
 const uuid = () => crypto.randomUUID();
@@ -120,7 +121,7 @@ describe('HomeView', () => {
     const chart = within(screen.getByRole('region', { name: 'Applications per week' }));
     expect(chart.getByText('2 in the last 8 weeks')).toBeVisible();
     expect(chart.getAllByRole('listitem')).toHaveLength(8);
-    expect(chart.getByText(`Week ending ${isoDay(new Date())}: 1`)).toBeVisible();
+    expect(chart.getByText(`Week ending ${formatDate(isoDay(new Date()))}: 1`)).toBeVisible();
   });
 
   it('links the active and to apply tiles to their pages', () => {

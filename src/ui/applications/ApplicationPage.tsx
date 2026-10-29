@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronLeft, Eye, GitCompare, History, Plus, Printer, RotateCcw, Save } from 'lucide-react';
-import { Link, Navigate, NavLink, Outlet, useMatch, useOutletContext, useParams } from 'react-router';
+import { ChevronLeft, Eye, GitCompare, History, Plus, Printer, RotateCcw, Save, Trash2 } from 'lucide-react';
+import { Link, Navigate, NavLink, Outlet, useMatch, useNavigate, useOutletContext, useParams } from 'react-router';
 import { AiClient } from '../../application/ports/repositories';
-import { createBlankCv, CvSource, isWebUrl, JobApplication } from '../../domain/application/JobApplication';
+import { createBlankCv, CvSource, detailErrors, isWebUrl, JobApplication } from '../../domain/application/JobApplication';
 import { RememberedAnswer } from '../../domain/candidate/CandidateFacts';
 import { compareCv } from '../../domain/resume/cvDiff';
 import { resumeDocumentTitle } from '../../domain/resume/documentTitle';
@@ -10,7 +10,9 @@ import { Profile } from '../../domain/resume/Resume';
 import { applyProfile } from '../../domain/resume/resumeOperations';
 import { ApplicationActions } from '../hooks/useApplications';
 import PageHeader from '../shell/PageHeader';
+import { useToast } from '../shell/Toast';
 import { buttonClass, DetailFields, inputClass, labelClass, primaryButtonClass, StageSelect } from './ApplicationsView';
+import { formatDateTime } from '../format';
 
 export interface ApplicationContext {
   application: JobApplication;
@@ -31,7 +33,6 @@ const TABS = [
   { to: 'versions', label: 'Versions' },
 ];
 
-const formatTimestamp = (iso: string) => new Date(iso).toLocaleString();
 
 const ApplicationPage: React.FC<Omit<ApplicationContext, 'application'> & { applications: JobApplication[] }> = ({
   applications,
@@ -82,7 +83,7 @@ const ApplicationPage: React.FC<Omit<ApplicationContext, 'application'> & { appl
         }
       />
 
-      <nav aria-label="Application" className="flex gap-1 border-b border-slate-200 mb-6">
+      <nav aria-label="Application" className="flex flex-wrap gap-1 border-b border-slate-200 mb-6">
         {TABS.map((tab) => (
           <NavLink
             key={tab.to}
@@ -142,37 +143,39 @@ const AddCvPanel: React.FC<{ sources: JobApplication[]; onAdd: (source: CvSource
 };
 
 export const OverviewTab: React.FC = () => {
-  const { application, actions, stages } = useApplicationContext();
-  const stageOptions = stages.includes(application.stage) ? stages : [application.stage, ...stages];
+  const { application, actions } = useApplicationContext();
+  const navigate = useNavigate();
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
       <section className="bg-white rounded-2xl border border-slate-200 p-6">
-        <DetailFields details={application} onChange={(field, value) => actions.updateField(application.id, field, value)} />
+        <DetailFields
+          details={application}
+          errors={detailErrors(application)}
+          onChange={(field, value) => actions.updateField(application.id, field, value)}
+        />
       </section>
 
       <aside className="bg-white rounded-2xl border border-slate-200 p-6 space-y-3 h-fit">
-        <label htmlFor="application-stage" className={labelClass}>Stage</label>
-        <select
-          id="application-stage"
-          className={inputClass}
-          value={application.stage}
-          onChange={(e) => actions.changeStage(application.id, e.target.value)}
-        >
-          {stageOptions.map((stage) => (
-            <option key={stage} value={stage}>{stage}</option>
-          ))}
-        </select>
-        <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900 pt-3">
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
           <History size={14} /> Stage history
         </h2>
         <ol className="space-y-1 text-xs text-slate-600">
           {[...application.stageHistory].reverse().map((change) => (
             <li key={change.changedAt + change.stage}>
-              {formatTimestamp(change.changedAt)} — <span className="font-semibold">{change.stage}</span>
+              {formatDateTime(change.changedAt)} — <span className="font-semibold">{change.stage}</span>
             </li>
           ))}
         </ol>
+        <button
+          onClick={() => {
+            navigate('/applications');
+            actions.remove(application.id);
+          }}
+          className={`${buttonClass} mt-3 text-red-700 hover:bg-red-50`}
+        >
+          Delete application <Trash2 size={14} />
+        </button>
       </aside>
     </div>
   );
@@ -180,6 +183,7 @@ export const OverviewTab: React.FC = () => {
 
 export const VersionsTab: React.FC = () => {
   const { application, actions } = useApplicationContext();
+  const notify = useToast();
   const [versionNote, setVersionNote] = useState('');
 
   return (
@@ -206,7 +210,7 @@ export const VersionsTab: React.FC = () => {
         {[...application.versions].reverse().map((version) => (
           <li key={version.id} className="flex justify-between items-center rounded-lg px-4 py-3 border border-slate-200">
             <div>
-              <p className="text-xs text-slate-500">{formatTimestamp(version.savedAt)}</p>
+              <p className="text-xs text-slate-500">{formatDateTime(version.savedAt)}</p>
               <p className="text-sm text-slate-900">{version.note || 'No note'}</p>
             </div>
             <div className="flex gap-2">
@@ -218,9 +222,9 @@ export const VersionsTab: React.FC = () => {
               </Link>
               <button
                 onClick={() => {
-                  if (window.confirm('Replace the current CV with this version? Changes since then will be lost.')) {
-                    actions.restoreVersion(application.id, version.id);
-                  }
+                  const { resume, coverLetter } = application;
+                  actions.restoreVersion(application.id, version.id);
+                  notify('Version restored', () => actions.update(application.id, (a) => ({ ...a, resume, coverLetter })));
                 }}
                 className={buttonClass}
               >
@@ -253,7 +257,7 @@ export const CompareTab: React.FC = () => {
             <ChevronLeft size={16} /> Versions
           </Link>
           <h2 className="text-base font-semibold text-slate-900 mt-2">
-            Changes since “{version.note || 'No note'}” · {formatTimestamp(version.savedAt)}
+            Changes since “{version.note || 'No note'}” · {formatDateTime(version.savedAt)}
           </h2>
           <p className="text-sm text-slate-500">
             <span className="text-red-700">Red</span> lines are only in the saved version, <span className="text-emerald-700">green</span>{' '}

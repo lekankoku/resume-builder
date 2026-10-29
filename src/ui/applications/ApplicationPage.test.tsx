@@ -57,7 +57,7 @@ describe('ApplicationPage without a CV', () => {
     renderPage([application], `/applications/${application.id}/overview`);
 
     // Then
-    expect(screen.getByLabelText('Stage')).toHaveValue('Interviewing');
+    expect(screen.getByRole('combobox', { name: `Stage of ${application.company}` })).toHaveValue('Interviewing');
     expect(screen.queryByRole('link', { name: /Print CV/ })).toBeNull();
   });
 

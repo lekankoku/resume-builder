@@ -22,7 +22,7 @@ const ProjectsTab = ({ resume, actions }: Props) => (
     onMove={(from, to) => actions.moveItem('projects', from, to)}
     renderItem={(proj, idx) => (
       <>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <TextField label="Title" value={proj.title} onChange={(v) => actions.updateItemField('projects', idx, 'title', v)} />
           <TextField label="Company" value={proj.company} onChange={(v) => actions.updateItemField('projects', idx, 'company', v)} />
         </div>
@@ -40,6 +40,7 @@ const ProjectsTab = ({ resume, actions }: Props) => (
           onAdd={() => actions.addBullet('projects', idx)}
           onChange={(bIdx, v) => actions.updateBullet('projects', idx, bIdx, v)}
           onRemove={(bIdx) => actions.removeBullet('projects', idx, bIdx)}
+          onMove={(from, to) => actions.moveBullet('projects', idx, from, to)}
         />
       </>
     )}

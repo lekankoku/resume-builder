@@ -93,4 +93,40 @@ describe('ApplicationsView search', () => {
     expect(screen.getByRole('searchbox', { name: 'Search applications' })).toHaveValue('');
     expect(screen.getByText(other.company)).toBeVisible();
   });
+
+  it('says when nothing matches the search and clears it', async () => {
+    // Given
+    const user = userEvent.setup();
+    const application = anApplication();
+    renderView([application], `/applications?q=${uuid()}`);
+    expect(screen.getByText('No applications match your search.')).toBeVisible();
+
+    // When
+    await user.click(screen.getByRole('button', { name: 'Clear search' }));
+
+    // Then
+    expect(screen.getByText(application.company)).toBeVisible();
+  });
+
+  it('clears both the search and the stage filter in the table', async () => {
+    // Given
+    const user = userEvent.setup();
+    const application = anApplication();
+    renderView([application], `/applications?view=table&stage=${uuid()}&q=${application.company}`);
+
+    // When
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+
+    // Then
+    expect(screen.getByRole('link', { name: application.company })).toBeVisible();
+    expect(screen.getByRole('searchbox', { name: 'Search applications' })).toHaveValue('');
+  });
+
+  it('explains how to start when there are no applications', () => {
+    // Given / When
+    renderView([]);
+
+    // Then
+    expect(screen.getByText('No applications yet. Use New application to track your first one.')).toBeVisible();
+  });
 });

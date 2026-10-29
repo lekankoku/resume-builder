@@ -73,6 +73,9 @@ export const updateBullet = (resume: Resume, section: BulletSection, index: numb
 export const removeBullet = (resume: Resume, section: BulletSection, index: number, bulletIndex: number): Resume =>
   withBullets(resume, section, index, (bullets) => bullets.filter((_, i) => i !== bulletIndex));
 
+export const moveBullet = (resume: Resume, section: BulletSection, index: number, from: number, to: number): Resume =>
+  withBullets(resume, section, index, (bullets) => reorder(bullets, from, to));
+
 export const updateLayout = (resume: Resume, layout: Layout): Resume => ({ ...resume, layout });
 
 export const addEarlierPosition = (resume: Resume, index: number): Resume =>
@@ -104,6 +107,16 @@ export const updateCrossFunctionalBullet = (resume: Resume, bulletIndex: number,
 
 export const removeCrossFunctionalBullet = (resume: Resume, bulletIndex: number): Resume =>
   withCrossFunctionalBullets(resume, (bullets) => bullets.filter((_, i) => i !== bulletIndex));
+
+export const moveCrossFunctionalBullet = (resume: Resume, from: number, to: number): Resume =>
+  withCrossFunctionalBullets(resume, (bullets) => reorder(bullets, from, to));
+
+const reorder = <T,>(items: T[], from: number, to: number): T[] => {
+  const moved = [...items];
+  const [item] = moved.splice(from, 1);
+  moved.splice(to, 0, item);
+  return moved;
+};
 
 export const applyProfile = (resume: Resume, profile: Profile): Resume => ({
   ...resume,

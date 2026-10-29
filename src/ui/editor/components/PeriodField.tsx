@@ -8,7 +8,7 @@ interface PeriodFieldProps {
 }
 
 const inputClass =
-  'w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-accent/30 focus:border-accent outline-none disabled:bg-slate-100 disabled:text-slate-400';
+  'w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-accent/30 focus:border-accent outline-none disabled:bg-slate-100 disabled:text-slate-500';
 
 const PeriodField: React.FC<PeriodFieldProps> = ({ value, onChange, currentLabel }) => {
   const id = useId();
@@ -56,8 +56,8 @@ const PeriodField: React.FC<PeriodFieldProps> = ({ value, onChange, currentLabel
   );
 
   return (
-    <div className="col-span-2 space-y-2">
-      <div className="grid grid-cols-2 gap-4">
+    <div className="sm:col-span-2 space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {monthYear('Start', draft.startMonth, draft.startYear, 'startMonth', 'startYear')}
         {monthYear('End', draft.current ? '' : draft.endMonth, draft.current ? '' : draft.endYear, 'endMonth', 'endYear', draft.current)}
       </div>

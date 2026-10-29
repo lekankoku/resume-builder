@@ -198,4 +198,43 @@ describe('NewApplicationWizard', () => {
       expect(options.map((option) => option.textContent)).toEqual([`${withCv.company} — ${withCv.role}`]);
     });
   });
+
+  describe('details validation', () => {
+    it('shows no errors before you try to continue', () => {
+      // Given / When
+      renderWizard({ draft: aDraft({ stepId: 'details', details: { company: '', role: '', postingUrl: '', appliedOn: '', notes: '' } }), stepId: 'details' });
+
+      // Then
+      expect(screen.queryByText('Company is required')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Next/ })).toBeEnabled();
+    });
+
+    it('shows each error next to its field and focuses the first one when you try to continue', async () => {
+      // Given
+      const user = userEvent.setup();
+      const { onStepChange } = renderWizard({
+        draft: aDraft({ stepId: 'details', details: { company: '', role: crypto.randomUUID(), postingUrl: 'not a url', appliedOn: '2026-10-29', notes: '' } }),
+        stepId: 'details',
+      });
+
+      // When
+      await user.click(screen.getByRole('button', { name: /Next/ }));
+
+      // Then
+      const company = screen.getByRole('textbox', { name: 'Company' });
+      expect(company).toHaveFocus();
+      expect(company).toHaveAccessibleDescription('Company is required');
+      expect(screen.getByRole('textbox', { name: 'Job posting URL' })).toHaveAccessibleDescription('Job posting URL must start with http:// or https://');
+      expect(screen.getByRole('textbox', { name: 'Role' })).not.toHaveAttribute('aria-invalid');
+      expect(onStepChange).not.toHaveBeenCalled();
+    });
+
+    it('moves focus to the step heading so screen readers announce the new step', () => {
+      // Given / When
+      renderWizard({ draft: aDraft({ stepId: 'cv' }), stepId: 'cv' });
+
+      // Then
+      expect(screen.getByRole('heading', { name: 'Step 2: CV' })).toHaveFocus();
+    });
+  });
 });

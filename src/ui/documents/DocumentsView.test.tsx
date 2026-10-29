@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { DocumentClient, StoredDocument } from '../../application/ports/repositories';
+import { ToastProvider } from '../shell/Toast';
 import DocumentsView from './DocumentsView';
 
 const aStoredDocument = (extension = 'pdf'): StoredDocument => ({
@@ -154,6 +155,55 @@ describe('DocumentsView', () => {
 
       // Then
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('keeps keyboard focus inside the preview and returns it to the preview button on close', async () => {
+      // Given
+      const user = userEvent.setup();
+      const document = aStoredDocument();
+      renderView(clientWith([document]));
+      await user.click(await screen.findByRole('button', { name: `Preview ${document.name}` }));
+      const close = screen.getByRole('button', { name: 'Close preview' });
+      expect(close).toHaveFocus();
+
+      // When
+      await user.tab();
+      await user.tab();
+
+      // Then
+      expect(close).toHaveFocus();
+      await user.keyboard('{Escape}');
+      expect(screen.getByRole('button', { name: `Preview ${document.name}` })).toHaveFocus();
+    });
+  });
+
+  describe('upload', () => {
+    it('reports every file that failed and confirms the ones that uploaded', async () => {
+      // Given
+      const user = userEvent.setup();
+      const [first, second] = [crypto.randomUUID(), crypto.randomUUID()];
+      const uploaded = aStoredDocument();
+      const upload = vi
+        .fn()
+        .mockRejectedValueOnce(new Error(first))
+        .mockResolvedValueOnce(uploaded)
+        .mockRejectedValueOnce(new Error(second));
+      render(
+        <MemoryRouter>
+          <ToastProvider>
+            <DocumentsView client={{ ...clientWith([]), upload }} />
+          </ToastProvider>
+        </MemoryRouter>,
+      );
+      const files = ['a.pdf', 'b.pdf', 'c.pdf'].map((name) => new File([''], name, { type: 'application/pdf' }));
+
+      // When
+      await user.upload(await screen.findByLabelText('Upload'), files);
+
+      // Then
+      expect(await screen.findByRole('alert')).toHaveTextContent(`${first} ${second}`);
+      expect(screen.getByRole('status', { name: 'Notifications' })).toHaveTextContent('1 document uploaded');
+      expect(screen.getByRole('link', { name: uploaded.name })).toBeVisible();
     });
   });
 

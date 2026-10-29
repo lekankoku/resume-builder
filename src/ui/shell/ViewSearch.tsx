@@ -19,7 +19,7 @@ export const useViewQuery = (): [string, (query: string) => void] => {
 
 const ViewSearch: React.FC<{ label: string; query: string; onChange: (query: string) => void }> = ({ label, query, onChange }) => (
   <div className="relative w-full max-w-sm">
-    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
     <input
       type="search"
       aria-label={label}

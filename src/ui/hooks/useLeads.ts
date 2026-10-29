@@ -13,5 +13,5 @@ export const useLeads = (repository: LeadRepository) => {
   const remove = (id: string) => setLeads((current) => current.filter((lead) => lead.id !== id));
   const removeForPosting = (postingUrl: string) => setLeads((current) => removeLeadsForPosting(current, postingUrl));
 
-  return { leads, add, remove, removeForPosting };
+  return { leads, add, remove, removeForPosting, restore: setLeads };
 };

@@ -29,6 +29,7 @@ const AbilitiesTab = ({ resume, actions }: Props) => (
           onAdd={() => actions.addBullet('abilities', idx)}
           onChange={(bIdx, v) => actions.updateBullet('abilities', idx, bIdx, v)}
           onRemove={(bIdx) => actions.removeBullet('abilities', idx, bIdx)}
+          onMove={(from, to) => actions.moveBullet('abilities', idx, from, to)}
         />
       </>
     )}
