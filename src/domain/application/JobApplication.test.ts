@@ -3,6 +3,7 @@ import { aResume } from '../../testing/resumeFixture';
 import { createCoverLetter } from '../coverLetter/CoverLetter';
 import {
   ApplicationDetails,
+  attachCv,
   changeStage,
   createApplication,
   createBlankCv,
@@ -12,6 +13,7 @@ import {
   saveVersion,
   updateApplicationField,
   validateDetails,
+  withApplicationDefaults,
 } from './JobApplication';
 
 const uuid = () => crypto.randomUUID();
@@ -83,6 +85,48 @@ describe('JobApplication', () => {
 
       expect(application.resume).toEqual(original.resume);
       expect(application.coverLetter).toEqual(original.coverLetter);
+    });
+
+    it('has a CV when created from one', () => {
+      const application = createApplication(someDetails(), { resume: aResume(), coverLetter: aCoverLetter() }, uuid(), new Date(), uuid());
+
+      expect(application.hasCv).toBe(true);
+    });
+
+    it('has no CV and a blank one to fill in later when created without a source', () => {
+      const now = new Date(2026, 2, 3);
+
+      const application = createApplication(someDetails(), null, uuid(), now, uuid());
+
+      expect(application.hasCv).toBe(false);
+      expect(application.resume).toEqual(createBlankCv(now).resume);
+      expect(application.suggestions).toBeNull();
+    });
+  });
+
+  describe('attachCv', () => {
+    it('copies the source CV and marks the application as having one', () => {
+      const source = { resume: aResume(), coverLetter: aCoverLetter() };
+      const original = structuredClone(source);
+
+      const attached = attachCv(source);
+      source.resume.personal.title = uuid();
+
+      expect(attached).toEqual({ ...original, suggestions: null, hasCv: true });
+    });
+  });
+
+  describe('withApplicationDefaults', () => {
+    it('treats applications saved before CVs were optional as having a CV', () => {
+      const { hasCv, ...legacy } = anApplication();
+
+      expect(withApplicationDefaults(legacy as JobApplication).hasCv).toBe(true);
+    });
+
+    it('keeps an application without a CV that way', () => {
+      const application = createApplication(someDetails(), null, uuid(), new Date(), uuid());
+
+      expect(withApplicationDefaults(application).hasCv).toBe(false);
     });
   });
 

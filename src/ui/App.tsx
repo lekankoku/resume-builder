@@ -91,7 +91,7 @@ const App: React.FC<AppProps> = ({ repositories, documents, ai, saveStatus, onRe
         <Route path="applications" element={<ApplicationsView applications={applications} stages={stages} onChangeStage={actions.changeStage} />} />
         <Route path="applications/new" element={<NewApplicationRoute leads={leads} wizard={wizard} />} />
         <Route path="to-apply" element={<LeadsView leads={leads} onAdd={addLead} onRemove={removeLead} />} />
-        <Route path="cvs" element={<CvsView applications={applications} />} />
+        <Route path="cvs" element={<CvsView applications={applications.filter((a) => a.hasCv)} />} />
         <Route path="documents" element={<DocumentsView client={documents} />} />
         <Route path="drafts/:id" element={<DraftRoute drafts={drafts} wizard={wizard} />} />
         <Route path="drafts/:id/:step" element={<DraftRoute drafts={drafts} wizard={wizard} />} />

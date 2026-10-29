@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { ApplicationDraft, WizardStep } from '../../domain/application/ApplicationDraft';
 import { AiClient } from '../../application/ports/repositories';
-import { createBlankCv } from '../../domain/application/JobApplication';
+import { createApplication, createBlankCv, JobApplication } from '../../domain/application/JobApplication';
 import { createSuggestionSet, Suggestion } from '../../domain/application/suggestions';
 import { aResume } from '../../testing/resumeFixture';
 import NewApplicationWizard from './NewApplicationWizard';
@@ -47,20 +47,22 @@ const renderWizard = ({
   draft = aDraft(),
   stepId = 'cv' as WizardStep,
   suggest = vi.fn<AiClient['suggest']>(),
+  applications = [] as JobApplication[],
 } = {}) => {
   const onSaveDraft = vi.fn();
   const onCreate = vi.fn();
+  const onStepChange = vi.fn();
   render(
     <MemoryRouter>
       <NewApplicationWizard
-        applications={[]}
+        applications={applications}
         stages={['Applied']}
         profile={createBlankCv(new Date()).resume.personal}
         jobBank={crypto.randomUUID()}
         ai={{ suggest, usage: vi.fn() }}
         draft={draft}
         stepId={stepId}
-        onStepChange={vi.fn()}
+        onStepChange={onStepChange}
         onSaveDraft={onSaveDraft}
         onRememberAnswers={vi.fn()}
         onCreate={onCreate}
@@ -68,7 +70,7 @@ const renderWizard = ({
       />
     </MemoryRouter>,
   );
-  return { onSaveDraft, onCreate, suggest, draft };
+  return { onSaveDraft, onCreate, onStepChange, suggest, draft };
 };
 
 describe('NewApplicationWizard', () => {
@@ -150,5 +152,50 @@ describe('NewApplicationWizard', () => {
     expect(screen.queryByRole('checkbox')).toBeNull();
     expect(screen.getByText(draft.details.company)).toBeVisible();
     expect(screen.getByRole('button', { name: /Create application/ })).toBeEnabled();
+  });
+
+  describe('without a CV', () => {
+    it('skips Review and goes straight to Confirm', async () => {
+      // Given
+      const user = userEvent.setup();
+      const { onStepChange, draft } = renderWizard();
+
+      // When
+      await user.click(screen.getByRole('radio', { name: /No CV yet/ }));
+      await user.click(screen.getByRole('button', { name: /Next/ }));
+
+      // Then
+      expect(onStepChange).toHaveBeenCalledWith(draft.id, 'confirm');
+      expect(screen.queryByRole('button', { name: /Review/ })).toBeNull();
+    });
+
+    it('creates the application without a CV', async () => {
+      // Given
+      const user = userEvent.setup();
+      const draft = aDraft({ stepId: 'confirm', cvStart: 'none', cvKey: 'none' });
+      const { onCreate } = renderWizard({ draft, stepId: 'confirm' });
+
+      // When
+      await user.click(screen.getByRole('button', { name: /Create application/ }));
+
+      // Then
+      expect(screen.getByText('No CV yet')).toBeVisible();
+      expect(onCreate).toHaveBeenCalledWith(draft.details, null, draft.id);
+    });
+
+    it('cannot be reused as the CV for another application', async () => {
+      // Given
+      const user = userEvent.setup();
+      const withCv = createApplication(aDraft().details, createBlankCv(new Date()), 'Applied', new Date(), crypto.randomUUID());
+      const withoutCv = createApplication(aDraft().details, null, 'Applied', new Date(), crypto.randomUUID());
+      renderWizard({ applications: [withoutCv, withCv] });
+
+      // When
+      await user.click(screen.getByRole('radio', { name: /Reuse a CV from an application/ }));
+
+      // Then
+      const options = within(screen.getByRole('combobox', { name: 'Application to reuse CV from' })).getAllByRole('option');
+      expect(options.map((option) => option.textContent)).toEqual([`${withCv.company} — ${withCv.role}`]);
+    });
   });
 });

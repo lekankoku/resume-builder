@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronLeft, Eye, GitCompare, History, Printer, RotateCcw, Save } from 'lucide-react';
-import { Link, Navigate, NavLink, Outlet, useOutletContext, useParams } from 'react-router';
+import { ChevronLeft, Eye, GitCompare, History, Plus, Printer, RotateCcw, Save } from 'lucide-react';
+import { Link, Navigate, NavLink, Outlet, useMatch, useOutletContext, useParams } from 'react-router';
 import { AiClient } from '../../application/ports/repositories';
-import { isWebUrl, JobApplication } from '../../domain/application/JobApplication';
+import { createBlankCv, CvSource, isWebUrl, JobApplication } from '../../domain/application/JobApplication';
 import { RememberedAnswer } from '../../domain/candidate/CandidateFacts';
 import { compareCv } from '../../domain/resume/cvDiff';
 import { resumeDocumentTitle } from '../../domain/resume/documentTitle';
@@ -44,6 +44,7 @@ const ApplicationPage: React.FC<Omit<ApplicationContext, 'application'> & { appl
 }) => {
   const { id } = useParams();
   const application = applications.find((a) => a.id === id);
+  const tab = useMatch('/applications/:id/:tab/*')?.params.tab;
 
   useEffect(() => {
     if (application) document.title = resumeDocumentTitle(applyProfile(application.resume, profile).personal, application.company);
@@ -68,14 +69,16 @@ const ApplicationPage: React.FC<Omit<ApplicationContext, 'application'> & { appl
           </span>
         }
         actions={
-          <>
-            <Link to={`/applications/${application.id}/preview/resume`} className={buttonClass}>
-              Print CV <Printer size={14} />
-            </Link>
-            <Link to={`/applications/${application.id}/preview/cover-letter`} className={buttonClass}>
-              Print cover letter <Printer size={14} />
-            </Link>
-          </>
+          application.hasCv && (
+            <>
+              <Link to={`/applications/${application.id}/preview/resume`} className={buttonClass}>
+                Print CV <Printer size={14} />
+              </Link>
+              <Link to={`/applications/${application.id}/preview/cover-letter`} className={buttonClass}>
+                Print cover letter <Printer size={14} />
+              </Link>
+            </>
+          )
         }
       />
 
@@ -95,8 +98,46 @@ const ApplicationPage: React.FC<Omit<ApplicationContext, 'application'> & { appl
         ))}
       </nav>
 
-      <Outlet context={{ application, actions, profile, stages, ai, jobBank, onRememberAnswers } satisfies ApplicationContext} />
+      {!application.hasCv && tab !== 'overview' ? (
+        <AddCvPanel
+          sources={applications.filter((a) => a.hasCv && a.id !== application.id)}
+          onAdd={(source) => actions.attachCv(application.id, source)}
+        />
+      ) : (
+        <Outlet context={{ application, actions, profile, stages, ai, jobBank, onRememberAnswers } satisfies ApplicationContext} />
+      )}
     </div>
+  );
+};
+
+const AddCvPanel: React.FC<{ sources: JobApplication[]; onAdd: (source: CvSource) => void }> = ({ sources, onAdd }) => {
+  const [sourceId, setSourceId] = useState('');
+  const source = sources.find((a) => a.id === sourceId);
+
+  return (
+    <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 max-w-2xl">
+      <div>
+        <h2 className="text-base font-semibold text-slate-900">No CV for this application yet</h2>
+        <p className="text-sm text-slate-500">Add one to tailor, print and keep versions of it here.</p>
+      </div>
+      <div className="space-y-1">
+        <label htmlFor="cv-source" className={labelClass}>Start from</label>
+        <select id="cv-source" className={inputClass} value={sourceId} onChange={(e) => setSourceId(e.target.value)}>
+          <option value="">A new, empty CV</option>
+          {sources.map((a) => (
+            <option key={a.id} value={a.id}>
+              Copy of {[a.company, a.role].filter(Boolean).join(' — ')}
+            </option>
+          ))}
+        </select>
+      </div>
+      <button
+        onClick={() => onAdd(source ? { resume: source.resume, coverLetter: source.coverLetter } : createBlankCv(new Date()))}
+        className={primaryButtonClass}
+      >
+        Add CV <Plus size={14} />
+      </button>
+    </section>
   );
 };
 

@@ -222,7 +222,15 @@ const HomeView: React.FC<Props> = ({ applications, stages, drafts, leads, onDisc
                 </p>
                 <div className="flex gap-2 items-center">
                   <Link to={`/applications/${application.id}/cv`} className={buttonClass}>
-                    Edit CV <Pencil size={14} />
+                    {application.hasCv ? (
+                      <>
+                        Edit CV <Pencil size={14} />
+                      </>
+                    ) : (
+                      <>
+                        Add CV <Plus size={14} />
+                      </>
+                    )}
                   </Link>
                   {isWebUrl(application.postingUrl) && (
                     <a

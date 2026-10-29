@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Check, ChevronDown, ChevronLeft, ChevronRight, Copy, FileJson, FilePlus, Plus, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Copy, FileJson, FilePlus, FileX, Plus, X } from 'lucide-react';
 import { Navigate } from 'react-router';
 import { resumeFromJson } from '../../application/importResumeFromJson';
 import { AiClient, ResumeRepository } from '../../application/ports/repositories';
@@ -38,7 +38,7 @@ interface Props {
   onStepChange: (draftId: string, stepId: WizardStep) => void;
   onSaveDraft: (draft: ApplicationDraft) => void;
   onRememberAnswers: (answers: RememberedAnswer[]) => void;
-  onCreate: (details: ApplicationDetails, cv: CvSource, draftId: string | null) => void;
+  onCreate: (details: ApplicationDetails, cv: CvSource | null, draftId: string | null) => void;
   onCancel: () => void;
 }
 
@@ -88,7 +88,8 @@ const NewApplicationWizard: React.FC<Props> = ({
 }) => {
   const [details, setDetails] = useState(() => draft?.details ?? { ...emptyDetails(), ...initialDetails });
   const [cvStart, setCvStart] = useState<CvStart>(draft?.cvStart ?? 'new');
-  const [sourceId, setSourceId] = useState(draft?.sourceId ?? applications[0]?.id ?? '');
+  const cvApplications = applications.filter((a) => a.hasCv);
+  const [sourceId, setSourceId] = useState(draft?.sourceId ?? cvApplications[0]?.id ?? '');
   const [jsonInput, setJsonInput] = useState(draft?.jsonInput ?? '');
   const [cvKey, setCvKey] = useState<string | null>(draft?.cvKey ?? null);
   const [resumeRepository] = useState<ResumeRepository>(() => ({
@@ -99,17 +100,21 @@ const NewApplicationWizard: React.FC<Props> = ({
   const [coverLetter, setCoverLetter] = useState<CoverLetter>(() => draft?.coverLetter ?? createBlankCv(new Date()).coverLetter);
   const [suggestions, setSuggestions] = useState<SuggestionSet | null>(draft?.suggestions ?? null);
 
-  const step = STEPS.findIndex((s) => s.id === stepId);
-  const sourceApplication = applications.find((a) => a.id === sourceId);
+  const steps = cvStart === 'none' ? STEPS.filter((s) => s.id !== 'review') : STEPS;
+  const step = steps.findIndex((s) => s.id === stepId);
+  const sourceApplication = cvApplications.find((a) => a.id === sourceId);
   const cvLabel =
     cvStart === 'reuse' && sourceApplication
       ? `Copy of ${applicationLabel(sourceApplication)}`
       : cvStart === 'json'
         ? 'Imported from JSON'
-        : 'New CV';
+        : cvStart === 'none'
+          ? 'No CV yet'
+          : 'New CV';
   const jsonError = cvStart === 'json' && jsonInput.trim() ? jsonErrorOf(jsonInput) : null;
   const cvChosen =
     cvStart === 'new' ||
+    cvStart === 'none' ||
     (cvStart === 'reuse' && !!sourceApplication) ||
     (cvStart === 'json' && !!jsonInput.trim() && !jsonError);
   const problems = validateDetails(details);
@@ -118,14 +123,14 @@ const NewApplicationWizard: React.FC<Props> = ({
       ? sourceId
       : cvStart === 'json'
         ? `json:${jsonInput}`
-        : 'new';
+        : cvStart;
 
   const isDone = (id: WizardStep) =>
     (id === 'details' && problems.length === 0) ||
     (id === 'cv' && cvChosen) ||
     (id === 'review' && chosenKey === cvKey);
-  const canReach = (index: number) => (draft || index <= CV_STEP) && STEPS.slice(0, index).every((s) => isDone(s.id));
-  const firstOpenStep = STEPS.findIndex((s) => !isDone(s.id));
+  const canReach = (index: number) => (draft || index <= CV_STEP) && steps.slice(0, index).every((s) => isDone(s.id));
+  const firstOpenStep = steps.findIndex((s) => !isDone(s.id));
 
   const isFirstRender = useRef(true);
   useEffect(() => {
@@ -149,7 +154,7 @@ const NewApplicationWizard: React.FC<Props> = ({
     });
   }, [stepId, details, cvStart, sourceId, jsonInput, cvKey, resume, coverLetter, suggestions]);
 
-  if (draft && step > firstOpenStep) return <Navigate to={`/drafts/${draft.id}/${STEPS[firstOpenStep].id}`} replace />;
+  if (draft && (step === -1 || step > firstOpenStep)) return <Navigate to={`/drafts/${draft.id}/${steps[firstOpenStep].id}`} replace />;
 
   const startDraft = () => {
     if (chosenKey === cvKey) return;
@@ -161,7 +166,7 @@ const NewApplicationWizard: React.FC<Props> = ({
   };
 
   const goTo = (index: number) => {
-    const target = STEPS[index].id;
+    const target = steps[index].id;
     if (!draft) {
       const id = crypto.randomUUID();
       onSaveDraft({
@@ -190,7 +195,7 @@ const NewApplicationWizard: React.FC<Props> = ({
     <div className="max-w-[1600px]">
       <PageHeader
         title="New application"
-        subtitle={`Step ${step + 1} of ${STEPS.length} — ${STEPS[step].label}`}
+        subtitle={`Step ${step + 1} of ${steps.length} — ${steps[step].label}`}
         actions={
           <button onClick={onCancel} className={buttonClass}>
             {draft ? 'Save & exit' : 'Cancel'} <X size={14} />
@@ -199,7 +204,7 @@ const NewApplicationWizard: React.FC<Props> = ({
       />
 
       <ol aria-label="Steps" className="flex gap-2 mb-6">
-        {STEPS.map((s, index) => (
+        {steps.map((s, index) => (
           <li key={s.id} className="flex-1">
             <button
               onClick={() => goTo(index)}
@@ -254,13 +259,13 @@ const NewApplicationWizard: React.FC<Props> = ({
             />
             <CvStartOption
               checked={cvStart === 'reuse'}
-              disabled={applications.length === 0}
+              disabled={cvApplications.length === 0}
               onSelect={() => setCvStart('reuse')}
               icon={<Copy size={18} />}
               title="Reuse a CV from an application"
               description={
-                applications.length === 0
-                  ? 'No applications yet to reuse a CV from.'
+                cvApplications.length === 0
+                  ? 'No applications with a CV yet to reuse from.'
                   : 'Start from a copy. The original application is not changed.'
               }
             >
@@ -271,7 +276,7 @@ const NewApplicationWizard: React.FC<Props> = ({
                   value={sourceId}
                   onChange={(e) => setSourceId(e.target.value)}
                 >
-                  {applications.map((a) => (
+                  {cvApplications.map((a) => (
                     <option key={a.id} value={a.id}>{applicationLabel(a)}</option>
                   ))}
                 </select>
@@ -283,6 +288,13 @@ const NewApplicationWizard: React.FC<Props> = ({
               icon={<FileJson size={18} />}
               title="Import CV from JSON"
               description="Paste CV JSON to fill the sections. The cover letter starts empty."
+            />
+            <CvStartOption
+              checked={cvStart === 'none'}
+              onSelect={() => setCvStart('none')}
+              icon={<FileX size={18} />}
+              title="No CV yet"
+              description="Track this process now, for example when a recruiter reached out. Add a CV later from the application."
             />
           </fieldset>
           {cvStart === 'json' && (
@@ -343,7 +355,7 @@ const NewApplicationWizard: React.FC<Props> = ({
           ]}
           problems={problems}
           stage={initialStage(stages)}
-          onCreate={() => onCreate(details, { resume, coverLetter, suggestions }, draft?.id ?? null)}
+          onCreate={() => onCreate(details, cvStart === 'none' ? null : { resume, coverLetter, suggestions }, draft?.id ?? null)}
         />
       )}
 

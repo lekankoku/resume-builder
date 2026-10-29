@@ -33,6 +33,7 @@ export interface JobApplication extends ApplicationDetails {
   coverLetter: CoverLetter;
   versions: CvVersion[];
   suggestions?: SuggestionSet | null;
+  hasCv: boolean;
 }
 
 export interface CvSource {
@@ -44,6 +45,7 @@ export interface CvSource {
 export const withApplicationDefaults = (application: JobApplication): JobApplication => ({
   ...application,
   suggestions: application.suggestions ?? null,
+  hasCv: application.hasCv ?? true,
   resume: withResumeDefaults(application.resume),
   coverLetter: withCoverLetterDefaults(application.coverLetter),
   versions: application.versions.map((version) => ({
@@ -85,7 +87,7 @@ export const createBlankCv = (now: Date): CvSource => ({
 
 export const createApplication = (
   details: ApplicationDetails,
-  source: CvSource,
+  source: CvSource | null,
   stage: string,
   now: Date,
   id: string,
@@ -94,10 +96,16 @@ export const createApplication = (
   id,
   stage,
   stageHistory: [{ stage, changedAt: now.toISOString() }],
+  ...attachCv(source ?? createBlankCv(now)),
+  versions: [],
+  hasCv: source !== null,
+});
+
+export const attachCv = (source: CvSource): Pick<JobApplication, 'resume' | 'coverLetter' | 'suggestions' | 'hasCv'> => ({
   resume: structuredClone(source.resume),
   coverLetter: structuredClone(source.coverLetter),
-  versions: [],
   suggestions: source.suggestions ?? null,
+  hasCv: true,
 });
 
 export const updateApplicationField = (
