@@ -1,4 +1,5 @@
 import { candidateData, StoredFacts, StoredProfile } from './prompts/candidate';
+import { LengthRequest } from './prompts/length';
 import { Job, SUGGESTIONS_INSTRUCTIONS, SUGGESTIONS_SCHEMA, suggestionsInput } from './prompts/suggestions';
 import { LlmEnv, LlmJsonRequest, LlmJsonResult, LlmNotConfiguredError, LlmUsage, providerFrom } from './llm';
 
@@ -38,6 +39,7 @@ interface JobRequest {
 interface SuggestRequest extends JobRequest {
   resume?: unknown;
   coverLetter?: unknown;
+  length?: LengthRequest;
 }
 
 type Stage = (purpose: string, request: LlmJsonRequest) => Promise<unknown>;
@@ -62,7 +64,7 @@ const suggest = async (request: Request, env: GenerationEnv, fetchFn: typeof fet
   return generating(env, fetchFn, job, async (stage) =>
     (await stage('suggestions', {
       instructions: SUGGESTIONS_INSTRUCTIONS,
-      input: suggestionsInput(candidate, job, body.resume, body.coverLetter ?? null),
+      input: suggestionsInput(candidate, job, body.resume, body.coverLetter ?? null, body.length),
       schemaName: 'cv_suggestions',
       schema: SUGGESTIONS_SCHEMA,
     })) as object,

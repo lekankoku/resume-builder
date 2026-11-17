@@ -8,6 +8,7 @@ interface Props {
   onShowCoverLetter: () => void;
   downloadUrl: string | null;
   fileName: string;
+  status?: React.ReactNode;
 }
 
 const segment = (isActive: boolean) =>
@@ -20,6 +21,7 @@ const PrintToolbar: React.FC<Props> = ({
   onShowCoverLetter,
   downloadUrl,
   fileName,
+  status,
 }) => (
   <nav className="no-print sticky top-0 z-50 w-full flex justify-center py-3 bg-white/95 backdrop-blur-md border-b border-slate-200">
     <div className="max-w-6xl w-full flex justify-between items-center gap-6 px-6">
@@ -36,7 +38,7 @@ const PrintToolbar: React.FC<Props> = ({
             Cover letter
           </button>
         </div>
-
+        {status}
       </div>
 
       <a

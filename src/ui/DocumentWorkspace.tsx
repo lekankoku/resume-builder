@@ -7,14 +7,16 @@ import { useApplicationContext } from './applications/ApplicationPage';
 import { PreviewWithSuggestions, SuggestionScope } from './applications/SuggestionsPanel';
 import EditorView, { CV_EDITOR_SECTIONS, EditorSection } from './editor/EditorView';
 import { createResumeActions, withRemovalUndo } from './hooks/useResume';
+import { useCvFit } from './hooks/useCvFit';
 import { useJsonSource } from './hooks/useJsonSource';
 import CoverLetterDocument from './preview/CoverLetterDocument';
 import LivePreview from './preview/LivePreview';
+import PageCount from './preview/PageCount';
 import PreviewPane from './preview/PreviewPane';
 import ResumeDocument from './preview/ResumeDocument';
 import { useToast } from './shell/Toast';
 
-const SidePanel: React.FC<{ scope: SuggestionScope; preview: React.ReactNode }> = ({ scope, preview }) => {
+const SidePanel: React.FC<{ scope: SuggestionScope; preview: React.ReactNode; pageCount?: number | null }> = ({ scope, preview, pageCount }) => {
   const { application, actions, ai, jobBank, onRememberAnswers } = useApplicationContext();
   return (
     <PreviewWithSuggestions
@@ -25,6 +27,7 @@ const SidePanel: React.FC<{ scope: SuggestionScope; preview: React.ReactNode }> 
       ai={ai}
       jobBank={jobBank}
       jobDescriptionAt={{ label: 'Overview', to: `/applications/${application.id}/overview` }}
+      pageCount={pageCount}
       onUpdate={(change) =>
         actions.update(application.id, (a) => ({
           ...a,
@@ -63,6 +66,7 @@ export const CvTab: React.FC = () => {
   const { application, resume, resumeActions, setResume, onCoverLetterFieldChange, onTargetCompanyChange } =
     useApplicationDocuments();
   const { jsonInput, setJsonInput, jsonError, applyJson } = useJsonSource(application.resume, setResume);
+  const { fit } = useCvFit(resume, application.company);
 
   if (!CV_EDITOR_SECTIONS.some((s) => s.id === section)) return <Navigate to="../personal" relative="path" replace />;
 
@@ -82,8 +86,9 @@ export const CvTab: React.FC = () => {
       preview={
         <SidePanel
           scope="cv"
+          pageCount={fit?.pages}
           preview={
-            <LivePreview title="CV preview" printViewHref={`/applications/${application.id}/preview/resume`}>
+            <LivePreview title="CV preview" printViewHref={`/applications/${application.id}/preview/resume`} status={<PageCount fit={fit} />}>
               <ResumeDocument resume={resume} />
             </LivePreview>
           }

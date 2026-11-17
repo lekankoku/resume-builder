@@ -15,6 +15,7 @@ import {
 } from '../../domain/application/suggestions';
 import { RememberedAnswer } from '../../domain/candidate/CandidateFacts';
 import { CoverLetter } from '../../domain/coverLetter/CoverLetter';
+import { PAGE_BUDGET } from '../../domain/resume/cvLength';
 import { Resume } from '../../domain/resume/Resume';
 import { Loading, Skeleton } from '../shell/Skeleton';
 import { buttonClass, inputClass, labelClass, primaryButtonClass } from './ApplicationsView';
@@ -34,6 +35,8 @@ export interface SuggestionContext {
   ai: AiClient;
   jobBank: string;
   jobDescriptionAt: { label: string; to: string };
+  // Pages the CV prints on, when measured.
+  pageCount?: number | null;
   onUpdate: (change: (state: SuggestionState) => SuggestionState) => void;
   onRememberAnswers: (answers: RememberedAnswer[]) => void;
 }
@@ -87,7 +90,7 @@ export const PreviewWithSuggestions: React.FC<SuggestionContext & { scope: Sugge
   );
 };
 
-const SuggestionsPanel: React.FC<Props> = ({ job, state, scope, ai, jobBank, jobDescriptionAt, onUpdate, onRememberAnswers }) => {
+const SuggestionsPanel: React.FC<Props> = ({ job, state, scope, ai, jobBank, jobDescriptionAt, pageCount, onUpdate, onRememberAnswers }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const set = state.suggestions;
@@ -108,6 +111,7 @@ const SuggestionsPanel: React.FC<Props> = ({ job, state, scope, ai, jobBank, job
         jobDescription: job.jobDescription ?? '',
         resume: { ...state.resume, personal: { title, currentRole, currentCompany } as Resume['personal'] },
         coverLetter: state.coverLetter,
+        length: { pages: pageCount ?? null, budget: PAGE_BUDGET },
       });
       const next = createSuggestionSet(response, new Date(), () => crypto.randomUUID());
       onUpdate((current) => ({ ...current, suggestions: next }));

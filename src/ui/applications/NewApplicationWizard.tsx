@@ -19,9 +19,11 @@ import { CoverLetter, updateCoverLetterField } from '../../domain/coverLetter/Co
 import { Profile, Resume } from '../../domain/resume/Resume';
 import { applyProfile } from '../../domain/resume/resumeOperations';
 import { EditorSection, TABS } from '../editor/EditorView';
+import { useCvFit } from '../hooks/useCvFit';
 import { ResumeActions, useResume, withRemovalUndo } from '../hooks/useResume';
 import CoverLetterDocument from '../preview/CoverLetterDocument';
 import LivePreview from '../preview/LivePreview';
+import PageCount from '../preview/PageCount';
 import PreviewPane from '../preview/PreviewPane';
 import ResumeDocument from '../preview/ResumeDocument';
 import PageHeader from '../shell/PageHeader';
@@ -440,6 +442,7 @@ const ReviewStep: React.FC<{
   suggestionContext,
 }) => {
   const [open, setOpen] = useState<string | null>(CV_SECTIONS[0].id);
+  const { fit } = useCvFit(resume, company);
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
@@ -483,6 +486,7 @@ const ReviewStep: React.FC<{
       <PreviewPane>
         <PreviewWithSuggestions
           {...suggestionContext}
+          pageCount={fit?.pages}
           scope={open === 'coverLetter' ? 'coverLetter' : 'cv'}
           preview={
             open === 'coverLetter' ? (
@@ -490,7 +494,7 @@ const ReviewStep: React.FC<{
                 <CoverLetterDocument resume={resume} coverLetter={coverLetter} targetCompany={company} />
               </LivePreview>
             ) : (
-              <LivePreview title="CV preview">
+              <LivePreview title="CV preview" status={<PageCount fit={fit} />}>
                 <ResumeDocument resume={resume} />
               </LivePreview>
             )

@@ -104,6 +104,18 @@ describe('CV generation', () => {
       expect(await purposes(env)).toEqual(['suggestions']);
     });
 
+    it('sends the measured page count and page budget with the CV', async () => {
+      // Given
+      const fetchFn = vi.fn(async () => anOpenAiResponse({ summary: '', gaps: [], questions: [], suggestions: [] }));
+
+      // When
+      await post('/api/cv/suggest', env, fetchFn, { ...job, length: { pages: 4, budget: 2 } });
+
+      // Then
+      const text = sentBodies(fetchFn)[0].input[0].content[0].text;
+      expect(text).toContain('<length>\npage_budget: 2\ncurrent_pages: 4\nstatus: 2 page(s) over budget');
+    });
+
     it('rejects a request without a CV to review', async () => {
       // Given
       const fetchFn = vi.fn();

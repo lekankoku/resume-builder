@@ -97,6 +97,8 @@ Wrangler only reads `.dev.vars` when it starts. Restart `pnpm dev:api` after cha
 6. Read the summary and gaps, then **Accept** or **Decline** each suggestion. Accepting changes the CV straight away; nothing changes otherwise. If you edited the text a suggestion refers to, it can no longer be applied and you can only decline it.
 7. Answer any questions and click **Save to CV facts**, then **Refresh suggestions** to use the answers.
 
+**Length.** The CV preview shows how many pages the PDF takes. The budget is 2 pages (`PAGE_BUDGET` in `src/domain/resume/cvLength.ts`). The page count goes to the AI with each request. When the CV is over budget, the suggestions include enough cuts to bring it back within 2 pages, and adds are balanced by removals. A CV that spills onto just one extra page is printed at 95% or 90% size if that makes it fit; the badge shows the size used.
+
 The CV tab shows CV suggestions; the Cover letter tab shows cover letter suggestions. Both come from the same request.
 
 The CV guide PDF in **Settings → CV guide** is for your reference only. Its rules are built into the prompt and it is not sent to OpenAI.

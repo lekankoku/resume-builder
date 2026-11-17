@@ -102,6 +102,8 @@ export interface SuggestRequest {
   jobDescription: string;
   resume: Resume;
   coverLetter: CoverLetter;
+  // How long the CV prints, so suggestions can bring it within the page budget.
+  length?: { pages: number | null; budget: number };
 }
 
 export interface AiClient {

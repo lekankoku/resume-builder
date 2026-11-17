@@ -2,12 +2,12 @@ import React, { useEffect } from 'react';
 import { usePDF } from '@react-pdf/renderer';
 import PrintToolbar from '../preview/PrintToolbar';
 import { DocumentPageSkeleton } from '../shell/Skeleton';
-import { registerPdfFonts } from './fonts';
-
-registerPdfFonts((file) => `/fonts/${file}`);
+import './browserFonts';
 
 interface Props {
-  document: React.ReactElement;
+  // null while the document is not ready to render yet.
+  document: React.ReactElement | null;
+  status?: React.ReactNode;
   fileName: string;
   active: 'resume' | 'cover-letter';
   onBack: () => void;
@@ -15,9 +15,11 @@ interface Props {
   onShowCoverLetter: () => void;
 }
 
-const PdfFrame: React.FC<Props> = ({ document, fileName, active, onBack, onShowResume, onShowCoverLetter }) => {
-  const [pdf, update] = usePDF({ document });
-  useEffect(() => update(document), [document, update]);
+const PdfFrame: React.FC<Props> = ({ document, status, fileName, active, onBack, onShowResume, onShowCoverLetter }) => {
+  const [pdf, update] = usePDF();
+  useEffect(() => {
+    if (document) update(document);
+  }, [document, update]);
 
   return (
     <div className="flex flex-col h-screen bg-slate-100">
@@ -28,6 +30,7 @@ const PdfFrame: React.FC<Props> = ({ document, fileName, active, onBack, onShowR
         onShowCoverLetter={onShowCoverLetter}
         downloadUrl={pdf.url}
         fileName={fileName}
+        status={status}
       />
       {pdf.error ? (
         <p role="alert" className="p-8 text-center text-sm text-red-600">

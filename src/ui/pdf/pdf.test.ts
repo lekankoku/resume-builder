@@ -7,6 +7,7 @@ import { Resume } from '../../domain/resume/Resume';
 import { aResume } from '../../testing/resumeFixture';
 import CoverLetterPdf from './CoverLetterPdf';
 import { registerPdfFonts } from './fonts';
+import { pageCountOf } from './pageCount';
 import ResumePdf from './ResumePdf';
 
 const pageCount = (pdf: Buffer) => (pdf.toString('latin1').match(/\/Type \/Page\n/g) ?? []).length;
@@ -109,5 +110,22 @@ describe('CoverLetterPdf', () => {
 
   it('renders an empty letter', async () => {
     expect(pageCount(await render(''))).toBe(1);
+  });
+});
+
+describe('ResumePdf density', () => {
+  it('fits more on a page when printed smaller', async () => {
+    const resume = aLongResume();
+
+    const full = pageCount(await renderToBuffer(createElement(ResumePdf, { resume, targetCompany: 'Acme' })));
+    const small = pageCount(await renderToBuffer(createElement(ResumePdf, { resume, targetCompany: 'Acme', density: 0.9 })));
+
+    expect(small).toBeLessThan(full);
+  });
+
+  it('counts pages the same way as the app', async () => {
+    const pdf = await renderResume(aLongResume());
+
+    expect(pageCountOf(new Uint8Array(pdf))).toBe(pageCount(pdf));
   });
 });

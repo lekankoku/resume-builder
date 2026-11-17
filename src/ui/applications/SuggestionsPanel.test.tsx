@@ -111,6 +111,7 @@ describe('SuggestionsPanel', () => {
       jobDescription: application.jobDescription,
       resume: { ...application.resume, personal: { title, currentRole, currentCompany } },
       coverLetter: application.coverLetter,
+      length: { pages: null, budget: 2 },
     });
     expect(await screen.findByText(response.summary)).toBeVisible();
     expect(screen.getByText(response.gaps[0])).toBeVisible();

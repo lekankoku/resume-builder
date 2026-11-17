@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { createContext, useContext } from 'react';
 import { Document, Image, Link, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import { cleanPhone, cleanUrl, displayUrl } from '../../domain/resume/contactFormat';
 import { resumeDocumentTitle } from '../../domain/resume/documentTitle';
@@ -6,7 +6,7 @@ import { Resume } from '../../domain/resume/Resume';
 import PageFooter from './PageFooter';
 import { colors, documentDate, page } from './theme';
 
-const styles = StyleSheet.create({
+const baseStyles = {
   page: { ...page, fontSize: 9 },
   header: { borderBottomWidth: 1.5, borderBottomColor: colors.ink, paddingBottom: 12, marginBottom: 12 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
@@ -59,74 +59,154 @@ const styles = StyleSheet.create({
   referenceRole: { fontSize: 7, fontWeight: 700, color: colors.muted, textTransform: 'uppercase' },
   referenceCompany: { fontSize: 7, fontWeight: 700, color: colors.accent, textTransform: 'uppercase' },
   referenceLink: { fontSize: 7, color: colors.muted },
-});
+} as const;
 
-const Bullets: React.FC<{ items: string[]; mark?: string; style?: object }> = ({ items, mark = '•', style }) => (
-  <View>
-    {items.map((text, i) => (
-      <View key={i} style={styles.bullet} wrap={false}>
-        <Text style={styles.bulletMark}>{mark}</Text>
-        <Text style={[styles.bulletText, style ?? {}]}>{text}</Text>
+type Styles = { [K in keyof typeof baseStyles]: object };
+
+const SCALED = new Set([
+  'fontSize',
+  'letterSpacing',
+  'width',
+  'height',
+  'marginTop',
+  'marginBottom',
+  'marginLeft',
+  'paddingTop',
+  'paddingBottom',
+  'paddingLeft',
+  'paddingRight',
+  'paddingHorizontal',
+]);
+
+const scaleStyle = (style: object, density: number) =>
+  Object.fromEntries(Object.entries(style).map(([key, value]) => [key, SCALED.has(key) && typeof value === 'number' ? value * density : value]));
+
+const stylesByDensity = new Map<number, Styles>();
+
+// Shrinks text and spacing together so a CV that just spills over fits its page budget.
+const stylesFor = (density: number): Styles => {
+  let styles = stylesByDensity.get(density);
+  if (!styles) {
+    const scaled = Object.fromEntries(Object.entries(baseStyles).map(([name, style]) => [name, scaleStyle(style, density)]));
+    styles = StyleSheet.create(scaled) as Styles;
+    stylesByDensity.set(density, styles);
+  }
+  return styles;
+};
+
+// Bullets kept on the same page as their entry's heading, so a heading never ends a page alone.
+const LEADING_BULLETS = 2;
+
+const StylesContext = createContext<Styles>(stylesFor(1));
+const useStyles = () => useContext(StylesContext);
+
+const Bullets: React.FC<{ items: string[]; mark?: string; style?: object }> = ({ items, mark = '•', style }) => {
+  const styles = useStyles();
+  return (
+    <View>
+      {items.map((text, i) => (
+        <View key={i} style={styles.bullet} wrap={false}>
+          <Text style={styles.bulletMark}>{mark}</Text>
+          <Text style={[styles.bulletText, style ?? {}]}>{text}</Text>
+        </View>
+      ))}
+    </View>
+  );
+};
+
+// An entry may break across pages between bullets; its heading stays with the first bullets.
+const Entry: React.FC<{ heading: React.ReactNode; bullets: string[]; mark?: string }> = ({ heading, bullets, mark }) => {
+  const styles = useStyles();
+  return (
+    <View style={styles.item}>
+      <View wrap={false}>
+        {heading}
+        <Bullets items={bullets.slice(0, LEADING_BULLETS)} mark={mark} />
       </View>
-    ))}
-  </View>
-);
+      <Bullets items={bullets.slice(LEADING_BULLETS)} mark={mark} />
+    </View>
+  );
+};
 
-const Section: React.FC<{ heading: string; keepTogether?: boolean; children: React.ReactNode }> = ({ heading, keepTogether, children }) => {
-  const content = (
+const Section: React.FC<{ heading: string; children: React.ReactNode }> = ({ heading, children }) => {
+  const styles = useStyles();
+  return (
     <>
       <Text style={styles.sectionHeading} minPresenceAhead={120}>{heading}</Text>
       {children}
     </>
   );
-  return keepTogether ? <View wrap={false}>{content}</View> : content;
 };
 
-const SideSection: React.FC<{ heading: string; children: React.ReactNode }> = ({ heading, children }) => (
-  <View style={styles.section}>
-    <Text style={styles.sideHeading} minPresenceAhead={40}>
-      {heading}
+const SideSection: React.FC<{ heading: string; children: React.ReactNode }> = ({ heading, children }) => {
+  const styles = useStyles();
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sideHeading} minPresenceAhead={40}>
+        {heading}
+      </Text>
+      {children}
+    </View>
+  );
+};
+
+const Contact: React.FC<{ label: string; href?: string; children: string }> = ({ label, href, children }) => {
+  const styles = useStyles();
+  return (
+    <Text style={styles.contact}>
+      <Text style={styles.contactLabel}>{label}  </Text>
+      {href ? (
+        <Link src={href} style={styles.link}>
+          {children}
+        </Link>
+      ) : (
+        children
+      )}
     </Text>
-    {children}
-  </View>
+  );
+};
+
+interface Props {
+  resume: Resume;
+  targetCompany: string;
+  density?: number;
+}
+
+const ResumePdf: React.FC<Props> = ({ resume, targetCompany, density = 1 }) => (
+  <StylesContext.Provider value={stylesFor(density)}>
+    <ResumePages resume={resume} targetCompany={targetCompany} />
+  </StylesContext.Provider>
 );
 
-const Contact: React.FC<{ label: string; href?: string; children: string }> = ({ label, href, children }) => (
-  <Text style={styles.contact}>
-    <Text style={styles.contactLabel}>{label}  </Text>
-    {href ? (
-      <Link src={href} style={styles.link}>
-        {children}
-      </Link>
-    ) : (
-      children
-    )}
-  </Text>
-);
-
-const ResumePdf: React.FC<{ resume: Resume; targetCompany: string }> = ({ resume, targetCompany }) => {
+const ResumePages: React.FC<Omit<Props, 'density'>> = ({ resume, targetCompany }) => {
+  const styles = useStyles();
   const { personal } = resume;
   const experience = resume.experiences.length > 0 && (
     <Section key="experience" heading="Experience">
       {resume.experiences.map((exp, i) => (
-        <View key={i} style={styles.item} wrap={false}>
-          <View style={styles.row}>
-            <Text style={styles.itemTitle}>{exp.role}</Text>
-            <Text style={styles.period}>{exp.period}</Text>
-          </View>
-          <Text style={styles.company}>
-            {exp.company}
-            {exp.location ? <Text style={styles.location}>{`  |  ${exp.location}`}</Text> : null}
-            {exp.employmentType ? <Text style={styles.location}>{`  |  ${exp.employmentType}`}</Text> : null}
-          </Text>
-          {exp.earlierPositions.map((position, pi) => (
-            <View key={pi} style={styles.row}>
-              <Text style={styles.earlierRole}>{position.role}</Text>
-              <Text style={styles.period}>{position.period}</Text>
-            </View>
-          ))}
-          <Bullets items={exp.bullets} />
-        </View>
+        <Entry
+          key={i}
+          bullets={exp.bullets}
+          heading={
+            <>
+              <View style={styles.row}>
+                <Text style={styles.itemTitle}>{exp.role}</Text>
+                <Text style={styles.period}>{exp.period}</Text>
+              </View>
+              <Text style={styles.company}>
+                {exp.company}
+                {exp.location ? <Text style={styles.location}>{`  |  ${exp.location}`}</Text> : null}
+                {exp.employmentType ? <Text style={styles.location}>{`  |  ${exp.employmentType}`}</Text> : null}
+              </Text>
+              {exp.earlierPositions.map((position, pi) => (
+                <View key={pi} style={styles.row}>
+                  <Text style={styles.earlierRole}>{position.role}</Text>
+                  <Text style={styles.period}>{position.period}</Text>
+                </View>
+              ))}
+            </>
+          }
+        />
       ))}
     </Section>
   );
@@ -134,14 +214,20 @@ const ResumePdf: React.FC<{ resume: Resume; targetCompany: string }> = ({ resume
   const projects = resume.projects.length > 0 && (
     <Section key="projects" heading="Key Projects">
       {resume.projects.map((proj, i) => (
-        <View key={i} style={styles.item} wrap={false}>
-          <View style={styles.row}>
-            <Text style={styles.itemTitle}>{proj.title}</Text>
-            <Text style={styles.period}>{[proj.company, proj.period].filter(Boolean).join('  ·  ')}</Text>
-          </View>
-          <Text style={styles.scope}>{proj.scope}</Text>
-          <Bullets items={proj.bullets} mark="›" />
-        </View>
+        <Entry
+          key={i}
+          bullets={proj.bullets}
+          mark="›"
+          heading={
+            <>
+              <View style={styles.row}>
+                <Text style={styles.itemTitle}>{proj.title}</Text>
+                <Text style={styles.period}>{[proj.company, proj.period].filter(Boolean).join('  ·  ')}</Text>
+              </View>
+              <Text style={styles.scope}>{proj.scope}</Text>
+            </>
+          }
+        />
       ))}
     </Section>
   );
@@ -149,37 +235,45 @@ const ResumePdf: React.FC<{ resume: Resume; targetCompany: string }> = ({ resume
   const volunteering = resume.volunteering.length > 0 && (
     <Section key="volunteering" heading="Volunteering">
       {resume.volunteering.map((item, i) => (
-        <View key={i} style={styles.item} wrap={false}>
-          <View style={styles.row}>
-            <Text style={styles.itemTitle}>{item.role}</Text>
-            <Text style={styles.period}>{item.period}</Text>
-          </View>
-          <Text style={styles.company}>
-            {item.organization}
-            {item.location ? <Text style={styles.location}>{`  |  ${item.location}`}</Text> : null}
-          </Text>
-          <Bullets items={item.bullets} />
-        </View>
+        <Entry
+          key={i}
+          bullets={item.bullets}
+          heading={
+            <>
+              <View style={styles.row}>
+                <Text style={styles.itemTitle}>{item.role}</Text>
+                <Text style={styles.period}>{item.period}</Text>
+              </View>
+              <Text style={styles.company}>
+                {item.organization}
+                {item.location ? <Text style={styles.location}>{`  |  ${item.location}`}</Text> : null}
+              </Text>
+            </>
+          }
+        />
       ))}
     </Section>
   );
 
   const education = resume.education.length > 0 && (
-    <Section key="education" heading="Academic" keepTogether>
+    <Section key="education" heading="Academic">
       {resume.education.map((edu, i) => (
-        <View key={i} style={styles.item} wrap={false}>
-          <View style={styles.row}>
-            <View style={{ flex: 1, paddingRight: 8 }}>
-              <Text style={styles.degree}>{edu.degree}</Text>
-              <Text style={[styles.company, { color: colors.accent, marginBottom: 0 }]}>{edu.institution}</Text>
+        <Entry
+          key={i}
+          bullets={edu.bullets}
+          heading={
+            <View style={styles.row}>
+              <View style={{ flex: 1, paddingRight: 8 }}>
+                <Text style={styles.degree}>{edu.degree}</Text>
+                <Text style={[styles.company, { color: colors.accent, marginBottom: 0 }]}>{edu.institution}</Text>
+              </View>
+              <View>
+                <Text style={[styles.period, { textAlign: 'right' }]}>{edu.period}</Text>
+                <Text style={[styles.location, { textAlign: 'right' }]}>{edu.location}</Text>
+              </View>
             </View>
-            <View>
-              <Text style={[styles.period, { textAlign: 'right' }]}>{edu.period}</Text>
-              <Text style={[styles.location, { textAlign: 'right' }]}>{edu.location}</Text>
-            </View>
-          </View>
-          <Bullets items={edu.bullets} />
-        </View>
+          }
+        />
       ))}
     </Section>
   );
