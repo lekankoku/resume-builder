@@ -13,7 +13,7 @@ const ResumeDocument: React.FC<{ resume: Resume }> = ({ resume }) => {
         {resume.experiences.map((exp, idx) => (
           <div key={idx} className="avoid-break">
             <div className="flex justify-between items-baseline mb-1">
-              <h3 className="text-lg font-display text-slate-900 uppercase tracking-tight">{exp.role}</h3>
+              <h3 className="text-lg font-sans font-bold text-slate-900 uppercase tracking-tight">{exp.role}</h3>
               <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">{exp.period}</span>
             </div>
             <div className="flex items-center gap-2 mb-2">
@@ -51,7 +51,7 @@ const ResumeDocument: React.FC<{ resume: Resume }> = ({ resume }) => {
         {resume.projects.map((proj, idx) => (
           <div key={idx}>
             <div className="flex justify-between items-start mb-1">
-              <h3 className="text-md font-display text-slate-900 uppercase">{proj.title}</h3>
+              <h3 className="text-md font-sans font-bold text-slate-900 uppercase">{proj.title}</h3>
               <span className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest">
                 {[proj.company, proj.period].filter(Boolean).join(' · ')}
               </span>
@@ -75,7 +75,7 @@ const ResumeDocument: React.FC<{ resume: Resume }> = ({ resume }) => {
         {resume.volunteering.map((item, idx) => (
           <div key={idx} className="avoid-break">
             <div className="flex justify-between items-baseline mb-1">
-              <h3 className="text-md font-display text-slate-900 uppercase tracking-tight">{item.role}</h3>
+              <h3 className="text-md font-sans font-bold text-slate-900 uppercase tracking-tight">{item.role}</h3>
               <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">{item.period}</span>
             </div>
             <div className="flex items-center gap-2 mb-2">
@@ -99,14 +99,14 @@ const ResumeDocument: React.FC<{ resume: Resume }> = ({ resume }) => {
   const education = resume.education.length > 0 && (
     <section key="education">
       <h2 className="text-[12px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4 flex items-center gap-4">
-        Academic <div className="flex-1 h-[2px] bg-slate-900" />
+        Education <div className="flex-1 h-[2px] bg-slate-900" />
       </h2>
       <div className="space-y-3">
         {resume.education.map((edu, idx) => (
           <div key={idx} className="avoid-break">
             <div className="flex justify-between items-start group">
               <div className="space-y-0.5">
-                <h3 className="text-lg font-display text-slate-900 leading-tight uppercase tracking-tight">{edu.degree}</h3>
+                <h3 className="text-lg font-sans font-bold text-slate-900 leading-tight uppercase tracking-tight">{edu.degree}</h3>
                 <p className="text-sm font-bold text-accent uppercase tracking-wide">{edu.institution}</p>
               </div>
               <div className="text-right shrink-0">
@@ -131,7 +131,7 @@ const ResumeDocument: React.FC<{ resume: Resume }> = ({ resume }) => {
       <header className="mb-7 pb-6 border-b-2 border-slate-900">
         <div className="flex justify-between items-start mb-5">
           <div className="pt-2">
-            <h1 className="text-6xl font-display text-slate-900 leading-tight mb-2 uppercase tracking-tighter">
+            <h1 className="text-6xl font-sans font-bold text-slate-900 leading-tight mb-2 uppercase tracking-tighter">
               {resume.personal.name}
             </h1>
             <p className="text-2xl font-bold uppercase tracking-[0.2em] text-accent">{resume.personal.title}</p>

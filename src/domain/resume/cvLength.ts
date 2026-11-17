@@ -1,8 +1,8 @@
 export const PAGE_BUDGET = 2;
 
-// Text sizes and spacing the PDF may shrink to, largest first. The CV is only shrunk when
-// that brings it within the page budget; below 90% it gets hard to read.
-export const DENSITIES = [1, 0.95, 0.9] as const;
+// Text sizes and spacing the PDF may shrink to, largest first: body text 11pt, 10.75pt, 10.5pt.
+// The CV is only shrunk when that brings it within the page budget, and never below 10.5pt.
+export const DENSITIES = [1, 0.977, 0.955] as const;
 
 export interface CvFit {
   density: number;

@@ -10,12 +10,15 @@ export const A4_HEIGHT = 841.89;
 
 export const documentDate = new Date(0);
 
+// 0.75in (54pt) margins on every side; the footer sits inside the bottom margin.
+export const MARGIN = 54;
+
 export const page = {
-  paddingTop: 34,
-  paddingBottom: 46,
-  paddingHorizontal: 36,
+  paddingTop: MARGIN,
+  paddingBottom: MARGIN,
+  paddingHorizontal: MARGIN,
   fontFamily: 'Inter',
-  fontSize: 8.4,
-  lineHeight: 1.35,
+  fontSize: 11,
+  lineHeight: 1.4,
   color: colors.body,
 } as const;

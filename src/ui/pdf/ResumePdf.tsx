@@ -6,59 +6,61 @@ import { Resume } from '../../domain/resume/Resume';
 import PageFooter from './PageFooter';
 import { colors, documentDate, page } from './theme';
 
+// Inter throughout. Body text is 11pt at full size and never below 10.5pt after fitting (see DENSITIES);
+// small labels stay at 9.5pt or more.
 const baseStyles = {
-  page: { ...page, fontSize: 9 },
-  header: { borderBottomWidth: 1.5, borderBottomColor: colors.ink, paddingBottom: 12, marginBottom: 12 },
+  page: { ...page },
+  header: { borderBottomWidth: 1, borderBottomColor: colors.ink, paddingBottom: 14, marginBottom: 6 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  name: { fontFamily: 'Calistoga', fontSize: 28, color: colors.ink, textTransform: 'uppercase', lineHeight: 1.1 },
-  title: { fontWeight: 700, fontSize: 11, letterSpacing: 2, color: colors.accent, textTransform: 'uppercase', marginTop: 4 },
-  currentRole: { fontWeight: 700, fontSize: 8.6, color: colors.body, textTransform: 'uppercase', marginTop: 3 },
-  photo: { width: 84, height: 84, borderRadius: 8, objectFit: 'cover', objectPosition: 'top', marginLeft: 16 },
-  contacts: { flexDirection: 'row', marginTop: 12 },
+  name: { fontWeight: 700, fontSize: 24, color: colors.ink, lineHeight: 1.15 },
+  title: { fontWeight: 700, fontSize: 12.5, color: colors.accent, marginTop: 4 },
+  currentRole: { fontSize: 10.5, color: colors.body, marginTop: 2 },
+  photo: { width: 72, height: 72, borderRadius: 8, objectFit: 'cover', objectPosition: 'top', marginLeft: 18 },
+  contacts: { flexDirection: 'row', marginTop: 10 },
   contactColumn: { flex: 1 },
-  contact: { fontSize: 8.5, marginBottom: 3, color: colors.body },
-  contactLabel: { fontWeight: 700, color: colors.accent },
+  contact: { fontSize: 9.5, marginBottom: 2, color: colors.body },
+  contactLabel: { fontWeight: 700, color: colors.ink },
   link: { color: colors.body },
   columns: { flexDirection: 'row' },
-  main: { flex: 2, paddingRight: 14 },
-  side: { flex: 1, paddingLeft: 12, borderLeftWidth: 0.5, borderLeftColor: colors.rule },
-  section: { marginBottom: 12 },
+  main: { flex: 2, paddingRight: 16 },
+  side: { flex: 1, paddingLeft: 14, borderLeftWidth: 0.5, borderLeftColor: colors.rule },
+  section: { marginTop: 18 },
   sectionHeading: {
-    marginTop: 8,
+    marginTop: 18,
     fontWeight: 700,
-    fontSize: 8,
-    letterSpacing: 2,
+    fontSize: 10,
+    letterSpacing: 1.2,
     color: colors.ink,
     textTransform: 'uppercase',
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.75,
     borderBottomColor: colors.ink,
     paddingBottom: 3,
-    marginBottom: 8,
+    marginBottom: 10,
   },
-  sideHeading: { fontWeight: 700, fontSize: 8, letterSpacing: 1.5, color: colors.ink, textTransform: 'uppercase', marginBottom: 8 },
-  item: { marginBottom: 8 },
+  sideHeading: { fontWeight: 700, fontSize: 10, letterSpacing: 1.2, color: colors.ink, textTransform: 'uppercase', marginBottom: 8 },
+  item: { marginBottom: 12 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  itemTitle: { fontFamily: 'Calistoga', fontSize: 11.5, color: colors.ink, textTransform: 'uppercase', flex: 1, paddingRight: 8, marginBottom: 3 },
-  period: { fontSize: 7.5, fontWeight: 700, color: colors.muted, textTransform: 'uppercase' },
-  degree: { fontFamily: 'Calistoga', fontSize: 11.5, color: colors.ink, textTransform: 'uppercase', marginBottom: 3 },
-  company: { fontWeight: 700, fontSize: 8.6, color: colors.body, textTransform: 'uppercase', marginBottom: 5 },
-  location: { fontWeight: 400, fontSize: 7.5, color: colors.muted },
-  earlierRole: { fontWeight: 700, fontSize: 8, color: colors.muted, textTransform: 'uppercase', marginBottom: 3 },
-  bullet: { flexDirection: 'row', marginBottom: 2 },
-  bulletMark: { width: 10, color: colors.accent, fontWeight: 700 },
+  itemTitle: { fontWeight: 700, fontSize: 11.5, color: colors.ink, flex: 1, paddingRight: 8 },
+  period: { fontSize: 9.5, color: colors.muted },
+  degree: { fontWeight: 700, fontSize: 11.5, color: colors.ink },
+  company: { fontWeight: 700, fontSize: 10.5, color: colors.body, marginBottom: 4 },
+  location: { fontWeight: 400, fontSize: 9.5, color: colors.muted },
+  earlierRole: { fontWeight: 700, fontSize: 10, color: colors.muted, marginBottom: 2 },
+  bullet: { flexDirection: 'row', marginBottom: 3 },
+  bulletMark: { width: 11, color: colors.accent, fontWeight: 700 },
   bulletText: { flex: 1 },
-  scope: { fontWeight: 700, fontSize: 8.6, color: colors.body, marginBottom: 3 },
-  abilityTitle: { fontWeight: 700, fontSize: 8.6, color: colors.ink, textTransform: 'uppercase', marginBottom: 3 },
-  abilityBullet: { fontSize: 8.8 },
-  techCategory: { fontWeight: 700, fontSize: 7, letterSpacing: 1, color: colors.muted, textTransform: 'uppercase' },
-  techSkills: { fontWeight: 700, fontSize: 8.8, color: colors.ink, marginBottom: 6 },
-  language: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3, fontSize: 8.8 },
+  scope: { fontStyle: 'normal', fontSize: 10.5, color: colors.body, marginBottom: 4 },
+  abilityTitle: { fontWeight: 700, fontSize: 10.5, color: colors.ink, marginBottom: 2 },
+  abilityBullet: { fontSize: 10.5 },
+  techCategory: { fontWeight: 700, fontSize: 9.5, color: colors.muted },
+  techSkills: { fontSize: 10.5, color: colors.ink, marginBottom: 6 },
+  language: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3, fontSize: 10.5 },
   languageName: { fontWeight: 700, color: colors.ink },
-  languageLevel: { fontSize: 7, fontWeight: 700, color: colors.accent, textTransform: 'uppercase' },
-  referenceName: { fontWeight: 700, fontSize: 9, color: colors.ink },
-  referenceRole: { fontSize: 7, fontWeight: 700, color: colors.muted, textTransform: 'uppercase' },
-  referenceCompany: { fontSize: 7, fontWeight: 700, color: colors.accent, textTransform: 'uppercase' },
-  referenceLink: { fontSize: 7, color: colors.muted },
+  languageLevel: { fontSize: 9.5, fontWeight: 700, color: colors.accent },
+  referenceName: { fontWeight: 700, fontSize: 10.5, color: colors.ink },
+  referenceRole: { fontSize: 9.5, color: colors.body },
+  referenceCompany: { fontSize: 9.5, fontWeight: 700, color: colors.accent },
+  referenceLink: { fontSize: 9.5, color: colors.muted },
 } as const;
 
 type Styles = { [K in keyof typeof baseStyles]: object };
@@ -87,7 +89,13 @@ const stylesByDensity = new Map<number, Styles>();
 const stylesFor = (density: number): Styles => {
   let styles = stylesByDensity.get(density);
   if (!styles) {
-    const scaled = Object.fromEntries(Object.entries(baseStyles).map(([name, style]) => [name, scaleStyle(style, density)]));
+    // The page margins stay fixed; only its base font size scales.
+    const scaled = Object.fromEntries(
+      Object.entries(baseStyles).map(([name, style]) => [
+        name,
+        name === 'page' ? { ...style, fontSize: baseStyles.page.fontSize * density } : scaleStyle(style, density),
+      ]),
+    );
     styles = StyleSheet.create(scaled) as Styles;
     stylesByDensity.set(density, styles);
   }
@@ -256,7 +264,7 @@ const ResumePages: React.FC<Omit<Props, 'density'>> = ({ resume, targetCompany }
   );
 
   const education = resume.education.length > 0 && (
-    <Section key="education" heading="Academic">
+    <Section key="education" heading="Education">
       {resume.education.map((edu, i) => (
         <Entry
           key={i}

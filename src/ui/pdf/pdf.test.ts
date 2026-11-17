@@ -18,14 +18,16 @@ const renderResume = (resume: Resume, company = 'Acme') =>
 const aLongResume = () => {
   const base = aResume({ personal: { ...aResume().personal, photoUrl: '' } });
   const experience = { ...base.experiences[0], bullets: Array.from({ length: 6 }, () => 'Delivered a measurable improvement '.repeat(4)) };
-  return { ...base, experiences: Array.from({ length: 12 }, () => experience) };
+  // react-pdf fails to lay out documents much past 5 pages, so stay below that.
+  return { ...base, experiences: Array.from({ length: 5 }, () => experience) };
 };
 
 beforeAll(() => registerPdfFonts((file) => path.resolve('public/fonts', file)));
 
 describe('ResumePdf', () => {
   it('fits a short resume on a single A4 page', async () => {
-    const resume = aResume({ personal: { ...aResume().personal, photoUrl: '' } });
+    const base = aResume({ personal: { ...aResume().personal, photoUrl: '' } });
+    const resume = { ...base, experiences: base.experiences.slice(0, 1), projects: [], volunteering: [] };
 
     const pdf = await renderResume(resume);
 
@@ -115,10 +117,28 @@ describe('CoverLetterPdf', () => {
 
 describe('ResumePdf density', () => {
   it('fits more on a page when printed smaller', async () => {
-    const resume = aLongResume();
+    // Fixed text, so page breaks do not depend on random field values.
+    const role = { company: 'Acme GmbH', location: 'Berlin', role: 'Software Engineer', period: '2020 – 2022', earlierPositions: [] };
+    const bullets = Array.from({ length: 6 }, () => 'Cut checkout latency by 40% by moving payment validation to an async queue');
+    const resume = aResume({
+      personal: {
+        ...aResume().personal,
+        ...{ name: 'Alex Example', title: 'Engineer', currentRole: '', photoUrl: '' },
+        ...{ email: 'a', phone: 'b', residence: 'c', website: 'd', linkedin: 'e', github: 'f' },
+      },
+      experiences: Array.from({ length: 5 }, () => ({ ...role, bullets })),
+      abilities: [],
+      projects: [],
+      volunteering: [],
+      education: [],
+      technicalProficiency: [],
+      languages: [],
+      references: [],
+      crossFunctional: { title: '', bullets: [] },
+    });
 
     const full = pageCount(await renderToBuffer(createElement(ResumePdf, { resume, targetCompany: 'Acme' })));
-    const small = pageCount(await renderToBuffer(createElement(ResumePdf, { resume, targetCompany: 'Acme', density: 0.9 })));
+    const small = pageCount(await renderToBuffer(createElement(ResumePdf, { resume, targetCompany: 'Acme', density: 0.955 })));
 
     expect(small).toBeLessThan(full);
   });

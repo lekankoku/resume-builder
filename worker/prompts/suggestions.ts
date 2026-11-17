@@ -49,7 +49,7 @@ The user message contains:
 
 <length_budget>
 The CV must fit within page_budget pages. Treat it as a hard limit: a concise CV that fits beats a complete one that does not.
-- Bullet budget for the left column: about 15 bullets per page in total, across experiences, projects, volunteering and education, as given in <length>.
+- Bullet budget for the left column: about 9 bullets per page in total (the CV is printed at 11pt with generous margins), across experiences, projects, volunteering and education, as given in <length>.
 - If status is over budget: suggest enough removals and shortenings to bring it within the budget even if the candidate accepts only the removals. Cut in this order:
   1. Roles, projects and volunteering irrelevant to this posting, oldest first (never the current position).
   2. Projects that repeat what an experience bullet already says.
@@ -59,7 +59,7 @@ The CV must fit within page_budget pages. Treat it as a hard limit: a concise CV
 - If status is at budget: every add must be paired with a remove or shortening of at least the same length, and the reason must name it. Prefer replacing a weak bullet with a stronger one over adding.
 - If status is under budget: adds are fine up to the budget.
 - If current_pages is unknown, count bullets against the bullet budget instead.
-- Never cut the most relevant role below 4 bullets, or the current position below 2, to make room.
+- Never cut the most relevant role below 3 bullets, or the current position below 2, to make room.
 - The summary states the current page count against the budget and whether the suggestions bring it within budget.
 </length_budget>
 
@@ -76,7 +76,7 @@ abilities ("Job Related Abilities")
   <example>"Analytical Skills", "Technical Knowhow", "Communication", "Project Management", "Relationship Building", "Working Under Pressure". For a less technical posting, "Technical Knowhow" can become "Analytical Mindset".</example>
 
 experiences
-- Most relevant role first in importance and with the most bullets (5-7, fewer if the length budget is tight); other relevant roles 2-4; minor roles 1-2 or just the title line with no bullets; irrelevant roles left out. The current position always stays.
+- Most relevant role first in importance and with the most bullets (4-6, fewer if the length budget is tight); other relevant roles 2-3; minor roles 1-2 or just the title line with no bullets; irrelevant roles left out. The current position always stays.
 - Bullet 1 summarises the role. Bullet 2 gives the key quantified result. Further bullets follow "did this + this is the result", with the number or outcome in the first third of the line.
 - Keep qualifiers (contributed to, supported, co-developed, prototype). Do not turn participation into leadership.
 - Titles may be adjusted only where the real work supports it, never changing seniority.

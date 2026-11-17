@@ -13,7 +13,7 @@ describe('ResumeDocument', () => {
     render(<ResumeDocument resume={aResume()} />);
 
     // Then
-    expect(isBefore(screen.getByRole('heading', { name: 'Experience' }), screen.getByRole('heading', { name: 'Academic' }))).toBe(true);
+    expect(isBefore(screen.getByRole('heading', { name: 'Experience' }), screen.getByRole('heading', { name: 'Education' }))).toBe(true);
   });
 
   it('puts education first for an education-first layout', () => {
@@ -21,7 +21,7 @@ describe('ResumeDocument', () => {
     render(<ResumeDocument resume={aResume({ layout: 'education-first' })} />);
 
     // Then
-    expect(isBefore(screen.getByRole('heading', { name: 'Academic' }), screen.getByRole('heading', { name: 'Experience' }))).toBe(true);
+    expect(isBefore(screen.getByRole('heading', { name: 'Education' }), screen.getByRole('heading', { name: 'Experience' }))).toBe(true);
   });
 
   it('shows the current position, earlier positions, education highlights, volunteering, leadership and reference contact', () => {
@@ -58,7 +58,7 @@ describe('ResumeDocument', () => {
     // Then
     expect(screen.queryByRole('heading', { name: 'Key Projects' })).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Volunteering' })).toBeNull();
-    expect(screen.queryByRole('heading', { name: 'Academic' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Education' })).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Leadership' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'LinkedIn Profile' })).toBeNull();
   });

@@ -12,7 +12,7 @@ const CoverLetterDocument: React.FC<{ resume: Resume; coverLetter: CoverLetter; 
   <article className="resume-container flex flex-col text-slate-900">
     {/* Header with Contact Info */}
     <header className="mb-10">
-      <h1 className="text-4xl font-display text-slate-900 leading-tight mb-1 uppercase tracking-tighter">
+      <h1 className="text-4xl font-sans font-bold text-slate-900 leading-tight mb-1 uppercase tracking-tighter">
         {resume.personal.name}
       </h1>
       <div className="flex flex-wrap gap-3 text-[11px] text-slate-600 mb-6">

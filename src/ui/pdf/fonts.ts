@@ -8,6 +8,5 @@ export const registerPdfFonts = (resolve: (file: string) => string) => {
       { src: resolve('Inter-Bold.ttf'), fontWeight: 700 },
     ],
   });
-  Font.register({ family: 'Calistoga', src: resolve('Calistoga-Regular.ttf') });
   Font.registerHyphenationCallback((word) => [word]);
 };
