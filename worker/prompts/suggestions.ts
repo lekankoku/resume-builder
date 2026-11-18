@@ -33,7 +33,7 @@ The user message contains:
 - Recruiters read the first half to a third of a bullet's first line, so the number or outcome goes early.
 - Many recruiters are not native English speakers. Plain language wins.
 - No candidate fits 100%. The job is to highlight what is most relevant and leave out what distracts. Quality over quantity.
-- The CV must fit the page budget in <length>, normally 2 pages. A longer CV is skimmed less, not read more. It is a two-column layout with experience, the tech stack, projects, volunteering and education on the left, and abilities, leadership, languages and references on the right.
+- The CV must fit the page budget in <length>, normally 2 pages. A longer CV is skimmed less, not read more. It is a two-column layout with experience, projects, volunteering and education on the left, and abilities, leadership, the tech stack, languages and references in the narrow right column.
 </why_this_matters>
 
 <how_to_review>
@@ -100,7 +100,7 @@ languages
 
 technicalProficiency ("Tech Stack")
 - A short, targeted list, not an inventory of everything the candidate has touched. A recruiter should see the posting's stack at a glance.
-- At most 4 groups and about 15 items in total, 3-6 per group. Each group prints as one line, "Group: item, item, item", and should fit on that line. Short standard group names, e.g. "Languages", "Frontend", "Backend", "Data", "Cloud and DevOps".
+- At most 4 groups and about 15 items in total, 3-6 per group. It sits in the narrow right column: each group prints as a small label with its items below, so keep each group to a line or two. Short standard group names, e.g. "Languages", "Frontend", "Backend", "Data", "Cloud and DevOps".
 - Only concrete technologies: languages, frameworks, libraries, databases, platforms and tools. Concepts and practices (e.g. "microservices", "REST API design", "event driven design", "server side rendering", "authorization logic") do not belong here; they are shown in abilities and bullets.
 - Keep the technologies the posting names, then close equivalents and the candidate's core stack for this kind of role. Drop tools unrelated to the posting (e.g. a mobile framework for a backend role).
 - Order groups by how much the posting cares about them, and within a group put the posting's technologies first, using its spelling.

@@ -24,7 +24,7 @@ const baseStyles = {
   columns: { flexDirection: 'row' },
   main: { flex: 2, paddingRight: 14 },
   side: { flex: 1, paddingLeft: 12, borderLeftWidth: 0.5, borderLeftColor: colors.rule },
-  section: { marginTop: 10 },
+  section: { marginTop: 7 },
   sectionHeading: {
     marginTop: 8,
     fontWeight: 700,
@@ -37,7 +37,8 @@ const baseStyles = {
     paddingBottom: 2,
     marginBottom: 7,
   },
-  sideHeading: { fontWeight: 700, fontSize: 8.5, letterSpacing: 1.2, color: colors.ink, textTransform: 'uppercase', marginBottom: 7 },
+  sideHeading: { fontWeight: 700, fontSize: 8, letterSpacing: 1.2, color: colors.ink, textTransform: 'uppercase', marginBottom: 4 },
+  sideItem: { marginBottom: 4 },
   item: { marginBottom: 8 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   itemTitle: { fontWeight: 700, fontSize: 10, color: colors.ink, flex: 1, paddingRight: 8 },
@@ -50,17 +51,17 @@ const baseStyles = {
   bulletMark: { width: 10, color: colors.accent, fontWeight: 700 },
   bulletText: { flex: 1 },
   scope: { fontStyle: 'normal', fontSize: 8.8, color: colors.body, marginBottom: 3 },
-  abilityTitle: { fontWeight: 700, fontSize: 8.8, color: colors.ink, marginBottom: 2 },
-  abilityBullet: { fontSize: 8.8 },
-  techRow: { marginBottom: 2 },
-  techCategory: { fontWeight: 700, color: colors.ink },
-  language: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3, fontSize: 8.8 },
+  abilityTitle: { fontWeight: 700, fontSize: 7.8, color: colors.ink, marginBottom: 1 },
+  abilityBullet: { fontSize: 7.8 },
+  techCategory: { fontWeight: 700, fontSize: 7.8, color: colors.ink },
+  techSkills: { fontSize: 7.8, marginBottom: 3 },
+  language: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2, fontSize: 7.8 },
   languageName: { fontWeight: 700, color: colors.ink },
-  languageLevel: { fontSize: 7.5, fontWeight: 700, color: colors.accent },
-  referenceName: { fontWeight: 700, fontSize: 9, color: colors.ink },
-  referenceRole: { fontSize: 7.8, color: colors.body },
-  referenceCompany: { fontSize: 7.8, fontWeight: 700, color: colors.accent },
-  referenceLink: { fontSize: 7.8, color: colors.muted },
+  languageLevel: { fontSize: 7.8 },
+  referenceName: { fontWeight: 700, fontSize: 7.8, color: colors.ink },
+  referenceRole: { fontSize: 7.8 },
+  referenceCompany: { fontSize: 7.8 },
+  referenceLink: { fontSize: 7.8, color: colors.body },
 } as const;
 
 type Styles = { [K in keyof typeof baseStyles]: object };
@@ -219,20 +220,6 @@ const ResumePages: React.FC<Omit<Props, 'density'>> = ({ resume, targetCompany }
     </Section>
   );
 
-  // One line per group in the wide column: "Backend: Spring Boot, Node.js".
-  const techStack = resume.technicalProficiency.length > 0 && (
-    <Section key="tech-stack" heading="Tech Stack">
-      <View style={styles.item}>
-        {resume.technicalProficiency.map((tp, i) => (
-          <Text key={i} style={styles.techRow} wrap={false}>
-            {tp.category ? <Text style={styles.techCategory}>{`${tp.category}: `}</Text> : null}
-            {tp.skills}
-          </Text>
-        ))}
-      </View>
-    </Section>
-  );
-
   const projects = resume.projects.length > 0 && (
     <Section key="projects" heading="Key Projects">
       {resume.projects.map((proj, i) => (
@@ -332,14 +319,14 @@ const ResumePages: React.FC<Omit<Props, 'density'>> = ({ resume, targetCompany }
         <View style={styles.columns}>
           <View style={styles.main}>
             {resume.layout === 'education-first'
-              ? [education, experience, techStack, projects, volunteering]
-              : [experience, techStack, projects, volunteering, education]}
+              ? [education, experience, projects, volunteering]
+              : [experience, projects, volunteering, education]}
           </View>
 
           <View style={styles.side}>
             <SideSection heading="Job related abilities">
               {resume.abilities.map((ability, i) => (
-                <View key={i} style={styles.item} wrap={false}>
+                <View key={i} style={styles.sideItem} wrap={false}>
                   <Text style={styles.abilityTitle}>{ability.title}</Text>
                   <Bullets items={ability.bullets} style={styles.abilityBullet} />
                 </View>
@@ -349,6 +336,17 @@ const ResumePages: React.FC<Omit<Props, 'density'>> = ({ resume, targetCompany }
             {(resume.crossFunctional.title || resume.crossFunctional.bullets.length > 0) && (
               <SideSection heading={resume.crossFunctional.title || 'Leadership'}>
                 <Bullets items={resume.crossFunctional.bullets} style={styles.abilityBullet} />
+              </SideSection>
+            )}
+
+            {resume.technicalProficiency.length > 0 && (
+              <SideSection heading="Tech Stack">
+                {resume.technicalProficiency.map((tp, i) => (
+                  <View key={i} wrap={false}>
+                    {tp.category ? <Text style={styles.techCategory}>{tp.category}</Text> : null}
+                    <Text style={styles.techSkills}>{tp.skills}</Text>
+                  </View>
+                ))}
               </SideSection>
             )}
 
@@ -363,7 +361,7 @@ const ResumePages: React.FC<Omit<Props, 'density'>> = ({ resume, targetCompany }
 
             <SideSection heading="References">
               {resume.references.map((ref, i) => (
-                <View key={i} style={styles.item} wrap={false}>
+                <View key={i} style={styles.sideItem} wrap={false}>
                   <Text style={styles.referenceName}>{ref.name}</Text>
                   <Text style={styles.referenceRole}>{ref.role}</Text>
                   <Text style={styles.referenceCompany}>{ref.company}</Text>

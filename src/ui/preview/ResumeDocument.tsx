@@ -42,22 +42,6 @@ const ResumeDocument: React.FC<{ resume: Resume }> = ({ resume }) => {
     </section>
   );
 
-  const techStack = resume.technicalProficiency.length > 0 && (
-    <section key="tech-stack">
-      <h2 className="text-[12px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4 flex items-center gap-4">
-        Tech Stack <div className="flex-1 h-[2px] bg-slate-900" />
-      </h2>
-      <ul className="space-y-1 text-[13px] leading-snug text-slate-600">
-        {resume.technicalProficiency.map((tp, idx) => (
-          <li key={idx}>
-            {tp.category && <span className="font-bold text-slate-900">{tp.category}: </span>}
-            {tp.skills}
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-
   const projects = resume.projects.length > 0 && (
     <section key="projects">
       <h2 className="text-[12px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4 flex items-center gap-4">
@@ -204,21 +188,21 @@ const ResumeDocument: React.FC<{ resume: Resume }> = ({ resume }) => {
         <main className="col-span-8 space-y-7">
         
           {resume.layout === 'education-first'
-            ? [education, experience, techStack, projects, volunteering]
-            : [experience, techStack, projects, volunteering, education]}
+            ? [education, experience, projects, volunteering]
+            : [experience, projects, volunteering, education]}
         </main>
 
-        {/* Sidebar Column */}
-        <aside className="col-span-4 space-y-6 border-l border-slate-50 pl-8">
+        {/* Sidebar Column: one plain font and size for every item */}
+        <aside className="col-span-4 space-y-4 border-l border-slate-50 pl-8 font-sans text-[11px] leading-snug text-slate-600">
         
           <section>
-            <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4 uppercase tracking-[0.1em]">Job related abilities</h2>
-            <div className="space-y-5">
+            <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-2">Job related abilities</h2>
+            <div className="space-y-2">
               {resume.abilities.map((ability, idx) => (
                 <div key={idx} className="avoid-break">
-                  <h3 className="text-[11px] font-mono font-black text-slate-900 uppercase border-b border-slate-900/5 pb-1.5 mb-2 tracking-tighter">{ability.title}</h3>
-                  <ul className="space-y-1.5 text-[12px] text-slate-500 italic font-medium leading-snug">
-                    {ability.bullets.map((b, bi) => <li key={bi} className="flex gap-2"><span className="text-accent font-black">•</span> {b}</li>)}
+                  <h3 className="font-bold text-slate-900">{ability.title}</h3>
+                  <ul className="space-y-0.5">
+                    {ability.bullets.map((b, bi) => <li key={bi} className="flex gap-1.5"><span className="text-accent font-bold">•</span> {b}</li>)}
                   </ul>
                 </div>
               ))}
@@ -227,38 +211,52 @@ const ResumeDocument: React.FC<{ resume: Resume }> = ({ resume }) => {
 
           {(resume.crossFunctional.title || resume.crossFunctional.bullets.length > 0) && (
             <section>
-              <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4">
+              <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-2">
                 {resume.crossFunctional.title || 'Leadership'}
               </h2>
-              <ul className="space-y-1.5 text-[12px] text-slate-500 italic font-medium leading-snug">
-                {resume.crossFunctional.bullets.map((b, bi) => <li key={bi} className="flex gap-2"><span className="text-accent font-black">•</span> {b}</li>)}
+              <ul className="space-y-0.5">
+                {resume.crossFunctional.bullets.map((b, bi) => <li key={bi} className="flex gap-1.5"><span className="text-accent font-bold">•</span> {b}</li>)}
               </ul>
             </section>
           )}
 
+          {resume.technicalProficiency.length > 0 && (
+            <section>
+              <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-2">Tech Stack</h2>
+              <div className="space-y-1">
+                {resume.technicalProficiency.map((tp, idx) => (
+                  <div key={idx}>
+                    {tp.category && <h4 className="font-bold text-slate-900">{tp.category}</h4>}
+                    <p>{tp.skills}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           <section>
-            <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4">Languages</h2>
-            <div className="space-y-2">
+            <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-2">Languages</h2>
+            <div className="space-y-0.5">
               {resume.languages.map((lang, idx) => (
-                <div key={idx} className="flex justify-between items-center text-[12px] border-b border-slate-50 pb-1">
-                  <span className="font-bold text-slate-800 uppercase tracking-tighter">{lang.name}</span>
-                  <span className="text-accent text-[9px] font-mono font-bold uppercase">{lang.level}</span>
+                <div key={idx} className="flex justify-between items-center">
+                  <span className="font-bold text-slate-900">{lang.name}</span>
+                  <span>{lang.level}</span>
                 </div>
               ))}
             </div>
           </section>
 
           <section>
-            <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4">References</h2>
-            <div className="space-y-4">
+            <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-2">References</h2>
+            <div className="space-y-2">
               {resume.references.map((ref, idx) => (
-                <div key={idx} className="space-y-0.5">
-                  <p className="text-[13px] font-bold text-slate-900 leading-none">{ref.name}</p>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight leading-tight">{ref.role}</p>
-                  <p className="text-[10px] font-black text-accent uppercase tracking-tighter">{ref.company}</p>
-                  {ref.contact && <p className="text-[10px] text-slate-500">{ref.contact}</p>}
+                <div key={idx}>
+                  <p className="font-bold text-slate-900">{ref.name}</p>
+                  <p>{ref.role}</p>
+                  <p>{ref.company}</p>
+                  {ref.contact && <p>{ref.contact}</p>}
                   {ref.linkedin && (
-                    <a href={cleanUrl(ref.linkedin)} target="_blank" rel="noopener" className="underline text-slate-400 text-[9px] hover:text-accent decoration-slate-200 uppercase font-mono font-bold">LinkedIn Profile</a>
+                    <a href={cleanUrl(ref.linkedin)} target="_blank" rel="noopener" className="underline hover:text-accent">LinkedIn Profile</a>
                   )}
                 </div>
               ))}
