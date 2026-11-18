@@ -54,7 +54,7 @@ The CV should fit within page_budget pages: a concise CV that fits beats a compl
 - The candidate's experience is never removed: never suggest removing an experience entry or any of its bullets, whatever the length. Experience bullets may only be reworded (replace), keeping all their facts.
 - If status is over budget: suggest removals and shortenings that bring it within the budget. Cut in this order:
   1. Projects and volunteering irrelevant to this posting, and projects that repeat what an experience bullet already says.
-  2. Items the posting does not need: tech stack groups and items unrelated to the posting, a third or later reference, abilities beyond 6, ability bullets beyond 2, leadership bullets.
+  2. Items the posting does not need: tech stack groups and items unrelated to the posting or beyond 3 groups of 3, a third or later reference, abilities beyond 6, ability bullets beyond 2, leadership bullets.
   3. Experience bullets longer than they need to be: a replace that says the same facts in fewer words, ideally on one line.
 - If the CV is still over budget after that, say so in the summary rather than cutting experience.
 - If status is at budget: every add must be paired with a remove or shortening of at least the same length, and the reason must name it. Prefer replacing a weak bullet with a stronger one over adding.
@@ -72,7 +72,7 @@ personal
 - currentRole and currentCompany show the most recent position.
 
 abilities ("Job Related Abilities")
-- 4-8 abilities whose titles mirror the posting's language, in the posting's order of priority. Titles matter far more than the 1-2 short, fairly generic bullets under them. Every bullet must be supported by candidate_data.
+- 4-8 abilities whose titles mirror the posting's language, in the posting's order of priority. Titles matter far more than the 1-2 short, fairly generic bullets under them; never more than 3 bullets per ability, as the CV shows no more. Every bullet must be supported by candidate_data.
   <example>"Analytical Skills", "Technical Knowhow", "Communication", "Project Management", "Relationship Building", "Working Under Pressure". For a less technical posting, "Technical Knowhow" can become "Analytical Mindset".</example>
 
 experiences
@@ -93,14 +93,14 @@ projects and volunteering
 - Optional. Only entries relevant to this posting. For technical roles, technical projects tied to a real role come first. Never hobbies.
 
 leadership
-- Optional right-column section for strengths the posting does not ask for directly, such as leadership or public speaking, with team size, audience or result.
+- Optional right-column section for strengths the posting does not ask for directly, such as leadership or public speaking, with team size, audience or result. At most 3 bullets, as the CV shows no more.
 
 languages
 - CEFR (A1-C2), "Native" or "Expert". Never "fluent". Only B2 and above. Levels exactly as candidate_data states them; never award a level. The language the job needs comes first.
 
 technicalProficiency ("Tech Stack")
-- A short, targeted list, not an inventory of everything the candidate has touched. A recruiter should see the posting's stack at a glance.
-- At most 4 groups and about 15 items in total, 3-6 per group. It sits in the narrow right column: each group prints as a small label with its items below, so keep each group to a line or two. Short standard group names, e.g. "Languages", "Frontend", "Backend", "Data", "Cloud and DevOps".
+- A short, focused list, never a dump of everything the candidate has touched. A recruiter should see the posting's stack at a glance.
+- At most 3 groups and at most 3 technologies per group, as the CV shows no more: the 4th group and the 4th technology onward are cut. Only what is relevant to this role: pick the technologies the posting names or most clearly needs, and put the most important first. It sits in the narrow right column: each group prints as a small label with its items below, so keep each group to a line or two. Short standard group names, e.g. "Languages", "Frontend", "Backend", "Data", "Cloud and DevOps".
 - Only concrete technologies: languages, frameworks, libraries, databases, platforms and tools. Concepts and practices (e.g. "microservices", "REST API design", "event driven design", "server side rendering", "authorization logic") do not belong here; they are shown in abilities and bullets.
 - Keep the technologies the posting names, then close equivalents and the candidate's core stack for this kind of role. Drop tools unrelated to the posting (e.g. a mobile framework for a backend role).
 - Order groups by how much the posting cares about them, and within a group put the posting's technologies first, using its spelling.

@@ -2,6 +2,7 @@ import React from 'react';
 import { Flag, Github, Globe, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
 import { cleanPhone, cleanUrl, displayUrl } from '../../domain/resume/contactFormat';
 import { Resume } from '../../domain/resume/Resume';
+import { sidebarBullets, sidebarTechStack } from '../../domain/resume/sidebar';
 
 const ResumeDocument: React.FC<{ resume: Resume }> = ({ resume }) => {
   const experience = resume.experiences.length > 0 && (
@@ -193,16 +194,16 @@ const ResumeDocument: React.FC<{ resume: Resume }> = ({ resume }) => {
         </main>
 
         {/* Sidebar Column: one plain font and size for every item */}
-        <aside className="col-span-4 space-y-4 border-l border-slate-50 pl-8 font-sans text-[11px] leading-snug text-slate-600">
+        <aside className="col-span-4 space-y-3 border-l border-slate-50 pl-8 font-sans text-[11px] leading-snug text-slate-600">
         
           <section>
-            <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-2">Job related abilities</h2>
-            <div className="space-y-2">
+            <h2 className="text-[9px] font-sans font-bold uppercase tracking-wider text-slate-900 mb-1.5">Job related abilities</h2>
+            <div className="space-y-1.5">
               {resume.abilities.map((ability, idx) => (
                 <div key={idx} className="avoid-break">
-                  <h3 className="font-bold text-slate-900">{ability.title}</h3>
+                  <h3 className="text-[10px] font-bold text-slate-900">{ability.title}</h3>
                   <ul className="space-y-0.5">
-                    {ability.bullets.map((b, bi) => <li key={bi} className="flex gap-1.5"><span className="text-accent font-bold">•</span> {b}</li>)}
+                    {sidebarBullets(ability.bullets).map((b, bi) => <li key={bi} className="flex gap-1.5"><span className="text-accent font-bold">•</span> {b}</li>)}
                   </ul>
                 </div>
               ))}
@@ -211,20 +212,20 @@ const ResumeDocument: React.FC<{ resume: Resume }> = ({ resume }) => {
 
           {(resume.crossFunctional.title || resume.crossFunctional.bullets.length > 0) && (
             <section>
-              <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-2">
+              <h2 className="text-[9px] font-sans font-bold uppercase tracking-wider text-slate-900 mb-1.5">
                 {resume.crossFunctional.title || 'Leadership'}
               </h2>
               <ul className="space-y-0.5">
-                {resume.crossFunctional.bullets.map((b, bi) => <li key={bi} className="flex gap-1.5"><span className="text-accent font-bold">•</span> {b}</li>)}
+                {sidebarBullets(resume.crossFunctional.bullets).map((b, bi) => <li key={bi} className="flex gap-1.5"><span className="text-accent font-bold">•</span> {b}</li>)}
               </ul>
             </section>
           )}
 
           {resume.technicalProficiency.length > 0 && (
             <section>
-              <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-2">Tech Stack</h2>
+              <h2 className="text-[9px] font-sans font-bold uppercase tracking-wider text-slate-900 mb-1.5">Tech Stack</h2>
               <div className="space-y-1">
-                {resume.technicalProficiency.map((tp, idx) => (
+                {sidebarTechStack(resume.technicalProficiency).map((tp, idx) => (
                   <div key={idx}>
                     {tp.category && <h4 className="font-bold text-slate-900">{tp.category}</h4>}
                     <p>{tp.skills}</p>
@@ -235,7 +236,7 @@ const ResumeDocument: React.FC<{ resume: Resume }> = ({ resume }) => {
           )}
 
           <section>
-            <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-2">Languages</h2>
+            <h2 className="text-[9px] font-sans font-bold uppercase tracking-wider text-slate-900 mb-1.5">Languages</h2>
             <div className="space-y-0.5">
               {resume.languages.map((lang, idx) => (
                 <div key={idx} className="flex justify-between items-center">
@@ -247,7 +248,7 @@ const ResumeDocument: React.FC<{ resume: Resume }> = ({ resume }) => {
           </section>
 
           <section>
-            <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-2">References</h2>
+            <h2 className="text-[9px] font-sans font-bold uppercase tracking-wider text-slate-900 mb-1.5">References</h2>
             <div className="space-y-2">
               {resume.references.map((ref, idx) => (
                 <div key={idx}>

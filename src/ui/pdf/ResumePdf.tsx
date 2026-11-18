@@ -3,6 +3,7 @@ import { Document, Image, Link, Page, StyleSheet, Text, View } from '@react-pdf/
 import { cleanPhone, cleanUrl, displayUrl } from '../../domain/resume/contactFormat';
 import { resumeDocumentTitle } from '../../domain/resume/documentTitle';
 import { Resume } from '../../domain/resume/Resume';
+import { sidebarBullets, sidebarTechStack } from '../../domain/resume/sidebar';
 import PageFooter from './PageFooter';
 import { colors, documentDate, page } from './theme';
 
@@ -24,7 +25,7 @@ const baseStyles = {
   columns: { flexDirection: 'row' },
   main: { flex: 2, paddingRight: 14 },
   side: { flex: 1, paddingLeft: 12, borderLeftWidth: 0.5, borderLeftColor: colors.rule },
-  section: { marginTop: 7 },
+  section: { marginTop: 6 },
   sectionHeading: {
     marginTop: 8,
     fontWeight: 700,
@@ -37,8 +38,8 @@ const baseStyles = {
     paddingBottom: 2,
     marginBottom: 7,
   },
-  sideHeading: { fontWeight: 700, fontSize: 8, letterSpacing: 1.2, color: colors.ink, textTransform: 'uppercase', marginBottom: 4 },
-  sideItem: { marginBottom: 4 },
+  sideHeading: { fontWeight: 700, fontSize: 7, letterSpacing: 0.6, color: colors.ink, textTransform: 'uppercase', marginBottom: 3 },
+  sideItem: { marginBottom: 3 },
   item: { marginBottom: 8 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   itemTitle: { fontWeight: 700, fontSize: 10, color: colors.ink, flex: 1, paddingRight: 8 },
@@ -51,7 +52,7 @@ const baseStyles = {
   bulletMark: { width: 10, color: colors.accent, fontWeight: 700 },
   bulletText: { flex: 1 },
   scope: { fontStyle: 'normal', fontSize: 8.8, color: colors.body, marginBottom: 3 },
-  abilityTitle: { fontWeight: 700, fontSize: 7.8, color: colors.ink, marginBottom: 1 },
+  abilityTitle: { fontWeight: 700, fontSize: 7.2, color: colors.ink, marginBottom: 0.5 },
   abilityBullet: { fontSize: 7.8 },
   techCategory: { fontWeight: 700, fontSize: 7.8, color: colors.ink },
   techSkills: { fontSize: 7.8, marginBottom: 3 },
@@ -328,20 +329,20 @@ const ResumePages: React.FC<Omit<Props, 'density'>> = ({ resume, targetCompany }
               {resume.abilities.map((ability, i) => (
                 <View key={i} style={styles.sideItem} wrap={false}>
                   <Text style={styles.abilityTitle}>{ability.title}</Text>
-                  <Bullets items={ability.bullets} style={styles.abilityBullet} />
+                  <Bullets items={sidebarBullets(ability.bullets)} style={styles.abilityBullet} />
                 </View>
               ))}
             </SideSection>
 
             {(resume.crossFunctional.title || resume.crossFunctional.bullets.length > 0) && (
               <SideSection heading={resume.crossFunctional.title || 'Leadership'}>
-                <Bullets items={resume.crossFunctional.bullets} style={styles.abilityBullet} />
+                <Bullets items={sidebarBullets(resume.crossFunctional.bullets)} style={styles.abilityBullet} />
               </SideSection>
             )}
 
             {resume.technicalProficiency.length > 0 && (
               <SideSection heading="Tech Stack">
-                {resume.technicalProficiency.map((tp, i) => (
+                {sidebarTechStack(resume.technicalProficiency).map((tp, i) => (
                   <View key={i} wrap={false}>
                     {tp.category ? <Text style={styles.techCategory}>{tp.category}</Text> : null}
                     <Text style={styles.techSkills}>{tp.skills}</Text>
