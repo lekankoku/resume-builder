@@ -1,5 +1,5 @@
 import React from 'react';
-import { Github, Globe, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
+import { Flag, Github, Globe, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
 import { cleanPhone, cleanUrl, displayUrl } from '../../domain/resume/contactFormat';
 import { Resume } from '../../domain/resume/Resume';
 
@@ -39,6 +39,22 @@ const ResumeDocument: React.FC<{ resume: Resume }> = ({ resume }) => {
           </div>
         ))}
       </div>
+    </section>
+  );
+
+  const techStack = resume.technicalProficiency.length > 0 && (
+    <section key="tech-stack">
+      <h2 className="text-[12px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4 flex items-center gap-4">
+        Tech Stack <div className="flex-1 h-[2px] bg-slate-900" />
+      </h2>
+      <ul className="space-y-1 text-[13px] leading-snug text-slate-600">
+        {resume.technicalProficiency.map((tp, idx) => (
+          <li key={idx}>
+            {tp.category && <span className="font-bold text-slate-900">{tp.category}: </span>}
+            {tp.skills}
+          </li>
+        ))}
+      </ul>
     </section>
   );
 
@@ -162,6 +178,11 @@ const ResumeDocument: React.FC<{ resume: Resume }> = ({ resume }) => {
             <p className="flex items-center gap-2.5 text-[11px] font-medium text-slate-600">
               <MapPin size={12} className="text-accent" /> {resume.personal.residence}
             </p>
+            {resume.personal.nationality && (
+              <p className="flex items-center gap-2.5 text-[11px] font-medium text-slate-600">
+                <Flag size={12} className="text-accent" /> {resume.personal.nationality}
+              </p>
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -183,8 +204,8 @@ const ResumeDocument: React.FC<{ resume: Resume }> = ({ resume }) => {
         <main className="col-span-8 space-y-7">
         
           {resume.layout === 'education-first'
-            ? [education, experience, projects, volunteering]
-            : [experience, projects, volunteering, education]}
+            ? [education, experience, techStack, projects, volunteering]
+            : [experience, techStack, projects, volunteering, education]}
         </main>
 
         {/* Sidebar Column */}
@@ -214,18 +235,6 @@ const ResumeDocument: React.FC<{ resume: Resume }> = ({ resume }) => {
               </ul>
             </section>
           )}
-
-          <section>
-            <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4">Tech Stack</h2>
-            <div className="space-y-3">
-              {resume.technicalProficiency.map((tp, idx) => (
-                <div key={idx} className="space-y-1.5">
-                  <h4 className="text-[9px] font-mono font-black text-slate-400 uppercase tracking-widest">{tp.category}</h4>
-                  <p className="text-[12px] font-bold text-slate-700 leading-tight tracking-tight">{tp.skills}</p>
-                </div>
-              ))}
-            </div>
-          </section>
 
           <section>
             <h2 className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-slate-900 mb-4">Languages</h2>

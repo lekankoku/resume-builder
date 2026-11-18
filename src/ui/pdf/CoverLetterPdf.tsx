@@ -8,10 +8,10 @@ import PageFooter from './PageFooter';
 import { colors, documentDate, page } from './theme';
 
 const styles = StyleSheet.create({
-  page: { ...page, lineHeight: 1.55 },
+  page: { ...page, fontSize: 10.5, lineHeight: 1.55, paddingTop: 52, paddingHorizontal: 56 },
   header: { borderBottomWidth: 1.5, borderBottomColor: colors.ink, paddingBottom: 12, marginBottom: 28 },
   name: { fontWeight: 700, fontSize: 24, color: colors.ink, marginBottom: 6 },
-  contact: { fontSize: 9.5, color: colors.body },
+  contact: { fontSize: 8.5, color: colors.body },
   date: { fontWeight: 700, marginBottom: 14 },
   recipient: { marginBottom: 24 },
   bold: { fontWeight: 700 },

@@ -12,12 +12,12 @@ describe('fitToBudget', () => {
   });
 
   it('shrinks to the largest density that fits a one-page overflow', async () => {
-    expect(await fitToBudget(pagesBy({ 1: 3, 0.977: 3, 0.955: 2 }), 2)).toEqual({ density: 0.955, pages: 2, naturalPages: 3 });
-    expect(await fitToBudget(pagesBy({ 1: 3, 0.977: 2, 0.955: 2 }), 2)).toEqual({ density: 0.977, pages: 2, naturalPages: 3 });
+    expect(await fitToBudget(pagesBy({ 1: 3, 0.95: 3, 0.9: 2 }), 2)).toEqual({ density: 0.9, pages: 2, naturalPages: 3 });
+    expect(await fitToBudget(pagesBy({ 1: 3, 0.95: 2, 0.9: 2 }), 2)).toEqual({ density: 0.95, pages: 2, naturalPages: 3 });
   });
 
   it('keeps full size when shrinking does not reach the budget', async () => {
-    expect(await fitToBudget(pagesBy({ 1: 3, 0.977: 3, 0.955: 3 }), 2)).toEqual({ density: 1, pages: 3, naturalPages: 3 });
+    expect(await fitToBudget(pagesBy({ 1: 3, 0.95: 3, 0.9: 3 }), 2)).toEqual({ density: 1, pages: 3, naturalPages: 3 });
   });
 
   it('does not try to shrink a CV that is more than one page over', async () => {

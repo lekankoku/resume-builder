@@ -266,24 +266,31 @@ describe('suggestions', () => {
       expect(second.cv.resume.experiences[0].bullets).toEqual([rewrite.after, addAfter.after, bullets[1]]);
     });
 
-    it('adds at the end when the bullet it follows was removed', () => {
+    // Experience bullets are never removed by suggestions, so these use a project's bullets.
+    const aCvWithProjectBullets = () => {
       const cv = aCv();
-      const { company, bullets } = cv.resume.experiences[0];
-      const remove = aSuggestion({ action: 'remove', item: company, field: 'bullets', before: bullets[0] });
-      const addAfter = aSuggestion({ action: 'add', item: company, field: 'bullets', before: bullets[0], after: uuid() });
+      const project = { ...cv.resume.projects[0], bullets: [uuid(), uuid()] };
+      return { ...cv, resume: { ...cv.resume, projects: [project] } };
+    };
+
+    it('adds at the end when the bullet it follows was removed', () => {
+      const cv = aCvWithProjectBullets();
+      const { title, bullets } = cv.resume.projects[0];
+      const remove = aSuggestion({ action: 'remove', section: 'projects', item: title, field: 'bullets', before: bullets[0] });
+      const addAfter = aSuggestion({ action: 'add', section: 'projects', item: title, field: 'bullets', before: bullets[0], after: uuid() });
       const set = setOf(remove, addAfter);
 
       const first = acceptSuggestion(cv, set, set.items[0].id)!;
       const second = acceptSuggestion(first.cv, first.set, first.set.items[1].id)!;
 
-      expect(second.cv.resume.experiences[0].bullets).toEqual([bullets[1], addAfter.after]);
+      expect(second.cv.resume.projects[0].bullets).toEqual([bullets[1], addAfter.after]);
     });
 
     it('leaves a conflicting change to a removed bullet unapplicable and keeps decided suggestions as they were', () => {
-      const cv = aCv();
-      const { company, bullets } = cv.resume.experiences[0];
-      const remove = aSuggestion({ action: 'remove', item: company, field: 'bullets', before: bullets[0] });
-      const rewrite = aSuggestion({ item: company, field: 'bullets', before: bullets[0], after: uuid() });
+      const cv = aCvWithProjectBullets();
+      const { title, bullets } = cv.resume.projects[0];
+      const remove = aSuggestion({ action: 'remove', section: 'projects', item: title, field: 'bullets', before: bullets[0] });
+      const rewrite = aSuggestion({ section: 'projects', item: title, field: 'bullets', before: bullets[0], after: uuid() });
       const set = setOf(remove, rewrite);
 
       const first = acceptSuggestion(cv, set, set.items[0].id)!;
@@ -325,6 +332,24 @@ describe('suggestions', () => {
         items: response.suggestions.map((s, i) => ({ ...s, id: set.items[i].id, status: 'pending' })),
       });
       expect(decided.items.map((item) => item.status)).toEqual(['pending', 'declined']);
+    });
+
+    it('drops suggestions that remove a role or an experience bullet but keeps rewording and other removals', () => {
+      const removeRole = aSuggestion({ action: 'remove', section: 'experiences', field: '' });
+      const removeBullet = aSuggestion({ action: 'remove', section: 'experiences', field: 'bullets' });
+      const rewordBullet = aSuggestion({ action: 'replace', section: 'experiences', field: 'bullets' });
+      const removeProject = aSuggestion({ action: 'remove', section: 'projects', field: '' });
+      const response: SuggestionsResponse = {
+        summary: uuid(),
+        gaps: [],
+        questions: [],
+        suggestions: [removeRole, removeBullet, rewordBullet, removeProject],
+        usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1, costUsd: 0.01 },
+      };
+
+      const set = createSuggestionSet(response, new Date(), uuid);
+
+      expect(set.items.map(({ id, status, ...suggestion }) => suggestion)).toEqual([rewordBullet, removeProject]);
     });
   });
 

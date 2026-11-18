@@ -33,6 +33,7 @@ describe('ResumeDocument', () => {
 
     // Then
     expect(screen.getByText(`${resume.personal.currentRole} · ${resume.personal.currentCompany}`)).toBeVisible();
+    expect(screen.getByText(resume.personal.nationality)).toBeVisible();
     expect(screen.getByText(resume.experiences[1].earlierPositions[0].role)).toBeVisible();
     expect(screen.getByText(resume.education[0].bullets[0])).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Volunteering' })).toBeVisible();

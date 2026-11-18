@@ -5,8 +5,9 @@ export interface LengthRequest {
 
 const DEFAULT_BUDGET = 2;
 
-// Measured at 11pt with 0.75in margins: about 18 two-line bullets over 4 roles fill 2 pages.
-const BULLETS_PER_PAGE = 9;
+// Measured at 9pt with 0.5in margins: about 34 two-line bullets over 7 roles fill 2 pages. 15 a page
+// leaves room for entry headings, project scopes and education.
+const BULLETS_PER_PAGE = 15;
 
 type Entry = { bullets?: unknown };
 

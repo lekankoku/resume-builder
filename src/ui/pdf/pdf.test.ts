@@ -138,7 +138,7 @@ describe('ResumePdf density', () => {
     });
 
     const full = pageCount(await renderToBuffer(createElement(ResumePdf, { resume, targetCompany: 'Acme' })));
-    const small = pageCount(await renderToBuffer(createElement(ResumePdf, { resume, targetCompany: 'Acme', density: 0.955 })));
+    const small = pageCount(await renderToBuffer(createElement(ResumePdf, { resume, targetCompany: 'Acme', density: 0.9 })));
 
     expect(small).toBeLessThan(full);
   });

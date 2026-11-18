@@ -21,7 +21,7 @@ describe('lengthReport', () => {
         'page_budget: 2',
         'current_pages: 3',
         'status: 1 page(s) over budget',
-        'bullets_in_left_column: 14 (budget about 18)',
+        'bullets_in_left_column: 14 (budget about 30)',
         'experiences "Acme": 8 bullets',
         'experiences "(untitled)": 3 bullets',
         'projects "Search": 2 bullets',

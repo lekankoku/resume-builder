@@ -6,61 +6,61 @@ import { Resume } from '../../domain/resume/Resume';
 import PageFooter from './PageFooter';
 import { colors, documentDate, page } from './theme';
 
-// Inter throughout. Body text is 11pt at full size and never below 10.5pt after fitting (see DENSITIES);
-// small labels stay at 9.5pt or more.
+// Inter throughout. Body text is 9pt at full size and never below 8.1pt after fitting (see DENSITIES);
+// small labels stay at 7.5pt or more.
 const baseStyles = {
   page: { ...page },
-  header: { borderBottomWidth: 1, borderBottomColor: colors.ink, paddingBottom: 14, marginBottom: 6 },
+  header: { borderBottomWidth: 1, borderBottomColor: colors.ink, paddingBottom: 10, marginBottom: 2 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  name: { fontWeight: 700, fontSize: 24, color: colors.ink, lineHeight: 1.15 },
-  title: { fontWeight: 700, fontSize: 12.5, color: colors.accent, marginTop: 4 },
-  currentRole: { fontSize: 10.5, color: colors.body, marginTop: 2 },
-  photo: { width: 72, height: 72, borderRadius: 8, objectFit: 'cover', objectPosition: 'top', marginLeft: 18 },
-  contacts: { flexDirection: 'row', marginTop: 10 },
+  name: { fontWeight: 700, fontSize: 22, color: colors.ink, lineHeight: 1.15 },
+  title: { fontWeight: 700, fontSize: 11, color: colors.accent, marginTop: 3 },
+  currentRole: { fontSize: 8.8, color: colors.body, marginTop: 2 },
+  photo: { width: 68, height: 68, borderRadius: 8, objectFit: 'cover', objectPosition: 'top', marginLeft: 14 },
+  contacts: { flexDirection: 'row', marginTop: 8 },
   contactColumn: { flex: 1 },
-  contact: { fontSize: 9.5, marginBottom: 2, color: colors.body },
+  contact: { fontSize: 8, marginBottom: 2, color: colors.body },
   contactLabel: { fontWeight: 700, color: colors.ink },
   link: { color: colors.body },
   columns: { flexDirection: 'row' },
-  main: { flex: 2, paddingRight: 16 },
-  side: { flex: 1, paddingLeft: 14, borderLeftWidth: 0.5, borderLeftColor: colors.rule },
-  section: { marginTop: 18 },
+  main: { flex: 2, paddingRight: 14 },
+  side: { flex: 1, paddingLeft: 12, borderLeftWidth: 0.5, borderLeftColor: colors.rule },
+  section: { marginTop: 10 },
   sectionHeading: {
-    marginTop: 18,
+    marginTop: 8,
     fontWeight: 700,
-    fontSize: 10,
+    fontSize: 8.5,
     letterSpacing: 1.2,
     color: colors.ink,
     textTransform: 'uppercase',
     borderBottomWidth: 0.75,
     borderBottomColor: colors.ink,
-    paddingBottom: 3,
-    marginBottom: 10,
+    paddingBottom: 2,
+    marginBottom: 7,
   },
-  sideHeading: { fontWeight: 700, fontSize: 10, letterSpacing: 1.2, color: colors.ink, textTransform: 'uppercase', marginBottom: 8 },
-  item: { marginBottom: 12 },
+  sideHeading: { fontWeight: 700, fontSize: 8.5, letterSpacing: 1.2, color: colors.ink, textTransform: 'uppercase', marginBottom: 7 },
+  item: { marginBottom: 8 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  itemTitle: { fontWeight: 700, fontSize: 11.5, color: colors.ink, flex: 1, paddingRight: 8 },
-  period: { fontSize: 9.5, color: colors.muted },
-  degree: { fontWeight: 700, fontSize: 11.5, color: colors.ink },
-  company: { fontWeight: 700, fontSize: 10.5, color: colors.body, marginBottom: 4 },
-  location: { fontWeight: 400, fontSize: 9.5, color: colors.muted },
-  earlierRole: { fontWeight: 700, fontSize: 10, color: colors.muted, marginBottom: 2 },
-  bullet: { flexDirection: 'row', marginBottom: 3 },
-  bulletMark: { width: 11, color: colors.accent, fontWeight: 700 },
+  itemTitle: { fontWeight: 700, fontSize: 10, color: colors.ink, flex: 1, paddingRight: 8 },
+  period: { fontSize: 7.8, color: colors.muted },
+  degree: { fontWeight: 700, fontSize: 10, color: colors.ink },
+  company: { fontWeight: 700, fontSize: 8.8, color: colors.body, marginBottom: 3 },
+  location: { fontWeight: 400, fontSize: 7.8, color: colors.muted },
+  earlierRole: { fontWeight: 700, fontSize: 8.5, color: colors.muted, marginBottom: 2 },
+  bullet: { flexDirection: 'row', marginBottom: 2 },
+  bulletMark: { width: 10, color: colors.accent, fontWeight: 700 },
   bulletText: { flex: 1 },
-  scope: { fontStyle: 'normal', fontSize: 10.5, color: colors.body, marginBottom: 4 },
-  abilityTitle: { fontWeight: 700, fontSize: 10.5, color: colors.ink, marginBottom: 2 },
-  abilityBullet: { fontSize: 10.5 },
-  techCategory: { fontWeight: 700, fontSize: 9.5, color: colors.muted },
-  techSkills: { fontSize: 10.5, color: colors.ink, marginBottom: 6 },
-  language: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3, fontSize: 10.5 },
+  scope: { fontStyle: 'normal', fontSize: 8.8, color: colors.body, marginBottom: 3 },
+  abilityTitle: { fontWeight: 700, fontSize: 8.8, color: colors.ink, marginBottom: 2 },
+  abilityBullet: { fontSize: 8.8 },
+  techRow: { marginBottom: 2 },
+  techCategory: { fontWeight: 700, color: colors.ink },
+  language: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3, fontSize: 8.8 },
   languageName: { fontWeight: 700, color: colors.ink },
-  languageLevel: { fontSize: 9.5, fontWeight: 700, color: colors.accent },
-  referenceName: { fontWeight: 700, fontSize: 10.5, color: colors.ink },
-  referenceRole: { fontSize: 9.5, color: colors.body },
-  referenceCompany: { fontSize: 9.5, fontWeight: 700, color: colors.accent },
-  referenceLink: { fontSize: 9.5, color: colors.muted },
+  languageLevel: { fontSize: 7.5, fontWeight: 700, color: colors.accent },
+  referenceName: { fontWeight: 700, fontSize: 9, color: colors.ink },
+  referenceRole: { fontSize: 7.8, color: colors.body },
+  referenceCompany: { fontSize: 7.8, fontWeight: 700, color: colors.accent },
+  referenceLink: { fontSize: 7.8, color: colors.muted },
 } as const;
 
 type Styles = { [K in keyof typeof baseStyles]: object };
@@ -219,6 +219,20 @@ const ResumePages: React.FC<Omit<Props, 'density'>> = ({ resume, targetCompany }
     </Section>
   );
 
+  // One line per group in the wide column: "Backend: Spring Boot, Node.js".
+  const techStack = resume.technicalProficiency.length > 0 && (
+    <Section key="tech-stack" heading="Tech Stack">
+      <View style={styles.item}>
+        {resume.technicalProficiency.map((tp, i) => (
+          <Text key={i} style={styles.techRow} wrap={false}>
+            {tp.category ? <Text style={styles.techCategory}>{`${tp.category}: `}</Text> : null}
+            {tp.skills}
+          </Text>
+        ))}
+      </View>
+    </Section>
+  );
+
   const projects = resume.projects.length > 0 && (
     <Section key="projects" heading="Key Projects">
       {resume.projects.map((proj, i) => (
@@ -302,6 +316,7 @@ const ResumePages: React.FC<Omit<Props, 'density'>> = ({ resume, targetCompany }
                   <Contact label="Email" href={`mailto:${cleanUrl(personal.email)}`}>{displayUrl(personal.email)}</Contact>
                   <Contact label="Phone" href={`tel:${cleanPhone(personal.phone)}`}>{personal.phone}</Contact>
                   <Contact label="Location">{personal.residence}</Contact>
+                  {personal.nationality ? <Contact label="Nationality">{personal.nationality}</Contact> : null}
                 </View>
                 <View style={styles.contactColumn}>
                   <Contact label="Web" href={cleanUrl(personal.website)}>{displayUrl(personal.website)}</Contact>
@@ -317,8 +332,8 @@ const ResumePages: React.FC<Omit<Props, 'density'>> = ({ resume, targetCompany }
         <View style={styles.columns}>
           <View style={styles.main}>
             {resume.layout === 'education-first'
-              ? [education, experience, projects, volunteering]
-              : [experience, projects, volunteering, education]}
+              ? [education, experience, techStack, projects, volunteering]
+              : [experience, techStack, projects, volunteering, education]}
           </View>
 
           <View style={styles.side}>
@@ -336,15 +351,6 @@ const ResumePages: React.FC<Omit<Props, 'density'>> = ({ resume, targetCompany }
                 <Bullets items={resume.crossFunctional.bullets} style={styles.abilityBullet} />
               </SideSection>
             )}
-
-            <SideSection heading="Tech Stack">
-              {resume.technicalProficiency.map((tp, i) => (
-                <View key={i} wrap={false}>
-                  <Text style={styles.techCategory}>{tp.category}</Text>
-                  <Text style={styles.techSkills}>{tp.skills}</Text>
-                </View>
-              ))}
-            </SideSection>
 
             <SideSection heading="Languages">
               {resume.languages.map((lang, i) => (

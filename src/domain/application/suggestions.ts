@@ -44,13 +44,17 @@ export interface Cv {
   coverLetter: CoverLetter;
 }
 
+// The candidate's experience is never cut by a suggestion, whatever the model returns: no role and
+// none of its bullets. Rewording a bullet is still offered.
+const removesExperience = (suggestion: Suggestion) => suggestion.action === 'remove' && suggestion.section === 'experiences';
+
 export const createSuggestionSet = (response: SuggestionsResponse, now: Date, newId: () => string): SuggestionSet => ({
   createdAt: now.toISOString(),
   summary: response.summary,
   gaps: response.gaps,
   questions: response.questions,
   usage: response.usage,
-  items: response.suggestions.map((suggestion) => ({ ...suggestion, id: newId(), status: 'pending' })),
+  items: response.suggestions.filter((suggestion) => !removesExperience(suggestion)).map((suggestion) => ({ ...suggestion, id: newId(), status: 'pending' })),
 });
 
 export const setSuggestionStatus = (set: SuggestionSet, id: string, status: SuggestionItem['status']): SuggestionSet => ({
